@@ -1,1 +1,4 @@
 *.asv
+*.ini
+*.ai
+backup/**
