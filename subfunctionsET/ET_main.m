@@ -1,12 +1,16 @@
 function ET_main(varargin)
-	%% OT_main Main RF mapper function called every second to check for updates
+	%% ET_main
 	%get globals
 	global sEyeFig;
 	global sET;
 	cellText = {};
 	
 	%retrieve variables
-	objVid = sET.objVid;
+	if isfield(sET,'objVid')
+		objVid = sET.objVid;
+	else
+		return;
+	end
 	
 	%% prepare: set parameters
 	%set initial dummy values

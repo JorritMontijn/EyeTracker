@@ -9,9 +9,15 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	sDevices = imaqhwinfo;
 	
 	%establish connection
-	sCams = imaqhwinfo(sDevices.InstalledAdaptors{1},1);
-	objCam = eval(sCams.VideoDeviceConstructor);%imaq.VideoDevice('gentl', 1)
-	objVid = eval(sCams.VideoInputConstructor);%videoinput('gentl', 1)
+	sCams = imaqhwinfo(sDevices.InstalledAdaptors{1});
+	if isempty(sCams.DeviceIDs)
+		cellText = {'No devices detected'};
+		ET_updateTextInformation(cellText);
+		return;
+	end
+	sChooseCam = imaqhwinfo(sDevices.InstalledAdaptors{1},1);
+	objCam = eval(sChooseCam.VideoDeviceConstructor);%imaq.VideoDevice('gentl', 1)
+	objVid = eval(sChooseCam.VideoInputConstructor);%videoinput('gentl', 1)
 	
 	%get cam properties
 	dblRealFrameRate = objCam.DeviceProperties.ResultingFrameRate;
@@ -51,7 +57,7 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	%% update figure controls to match data
 	%set cam data
 	set(sEyeFig.ptrListSelectAdaptor,'String',sDevices.InstalledAdaptors);
-	set(sEyeFig.ptrListSelectDevice,'String',sCams.DeviceName);
+	set(sEyeFig.ptrListSelectDevice,'String',sChooseCam.DeviceName);
 	set(sEyeFig.ptrTextCamFormat,'String',objCam.VideoFormat);
 	set(sEyeFig.ptrTextCamVideoSize,'String',strcat(num2str(intMaxX),' x ',num2str(intMaxY),' (X by Y)'));
 	set(sEyeFig.ptrTextCamFramerate,'String',sprintf('%.3f',dblRealFrameRate));
@@ -76,6 +82,6 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	
 	%% finalize and set msg
 	cellText = {'Eye Tracker initialized!'};
-	OT_updateTextInformation(cellText);
+	ET_updateTextInformation(cellText);
 end
 

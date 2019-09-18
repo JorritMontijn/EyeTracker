@@ -460,6 +460,18 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles) %#ok<DEFNU>
 	sEyeFig.boolIsRunning = false;
 	
 	%wait for main() to finish
+	
+	%check if busy, otherwise close after 1 second
+	if sEyeFig.boolIsBusy
+		% set timer to wait for one second, otherwise allow force-quit
+		objTimer = timer();
+		objTimer.StartDelay = 1;
+		objTimer.ExecutionMode = 'singleShot';
+		objTimer.TimerFcn = @ET_enableForceQuit;
+		start(objTimer);
+	else
+		delete(sEyeFig.ptrMainGUI);
+	end
 end
 function ptrPanelSwitchRecordVideo_SelectionChangedFcn(hObject, eventdata, handles) 
 	%% globals

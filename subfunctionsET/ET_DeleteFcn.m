@@ -4,5 +4,5 @@ function ET_DeleteFcn(varargin)
 	global sEyeFig
 	
 	%stop timer
-	stop(sEyeFig.objTimer);
+	%stop(sEyeFig.objTimer);
 end
