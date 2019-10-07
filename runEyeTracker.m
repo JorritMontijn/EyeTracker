@@ -179,6 +179,7 @@ function ptrSliderSyncROIStopLocY_Callback(hObject, eventdata, handles) %#ok<DEF
 	dblNewLocFrac = (dblVal-dblMin) / (dblMax-dblMin);
 	intNewStop = round(dblNewLocFrac*vecMax(intDim)-sET.vecRectSync(intDim));
 	sET.vecRectSync(intDim+2) = intNewStop;
+    
 end
 %% pupil ROI
 function ptrSliderPupilROIStartLocX_Callback(hObject, eventdata, handles) %#ok<DEFNU>
