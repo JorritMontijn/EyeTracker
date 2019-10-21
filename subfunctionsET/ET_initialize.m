@@ -54,6 +54,9 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	sET.objVid = objVid;
 	sET.dblRealFrameRate = dblRealFrameRate;
 	
+    %% set default output
+    sET.strDirDataOut = strcat('C:\_Data\Exp',getDate());
+    
 	%% update figure controls to match data
 	%set cam data
 	set(sEyeFig.ptrListSelectAdaptor,'String',sDevices.InstalledAdaptors);

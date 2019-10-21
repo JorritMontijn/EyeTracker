@@ -59,7 +59,7 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	%set closing function
 	set(hObject,'DeleteFcn','ET_DeleteFcn')
 	
-	% set rainbow logo
+	% set logo
 	I = imread('EyeTracker.jpg');
 	axes(handles.ptrAxesLogo);
 	imshow(I);
@@ -276,13 +276,16 @@ function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU
 	% get file location
 	%switch path
 	try
-		oldPath = cd('D:\Data\');
+        if ~exist(sET.strDirDataOut,'dir')
+            mkdir(sET.strDirDataOut);
+        end
+		oldPath = cd(sET.strDirDataOut);
 	catch
 		oldPath = cd();
 	end
 
 	%get file
-	[strRecFile, strRecPath] = uiputfile(cellVidExtensions{intUseFormat}, sprintf('Save Video As (*.%s)',cellVidExtensions{intUseFormat}),strcat('EyeTrackingRaw',getDate));
+	[strRecFile, strRecPath] = uiputfile(cellVidExtensions{intUseFormat}, sprintf('Save Video As (*.%s)',cellVidExtensions{intUseFormat}),strcat('EyeTrackingRaw',getDate,'_R'));
 	
 	%back to old path
 	cd(oldPath);
