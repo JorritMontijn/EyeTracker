@@ -160,12 +160,13 @@ function ET_main(varargin)
 				%% perform pupil detection
 				%select ROI
 				vecUseFrames = (size(matVidRaw,4)-intTempAvg+1):size(matVidRaw,4);
-				matVid = mean(single(matVidRaw(:,:,1,vecUseFrames)),4);
+				matVid = imnorm(mean(single(matVidRaw(:,:,1,vecUseFrames)),4));
 				gMatVid = gpuArray(matVid(vecKeepY,vecKeepX));
 				
 				%show video
-				imshow(matVidRaw(:,:,1,end),'Parent',sEyeFig.ptrAxesMainVideo);
-				
+				imagesc(sEyeFig.ptrAxesMainVideo,matVidRaw(:,:,1,end));
+				colormap(sEyeFig.ptrAxesMainVideo,'grey');
+                
 				%detect pupil?
 				if boolDetectPupil
 					%find pupil
