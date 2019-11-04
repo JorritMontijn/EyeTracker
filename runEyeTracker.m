@@ -334,7 +334,8 @@ function ptrEditBlurWidth_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	
 	%% set value
 	%get value
-	dblVal = round(str2double(get(hObject,'String')));
+	dblVal = str2double(get(hObject,'String'));
+    dblVal = max([min([dblVal 100]) 0]); %range: 0-100
 	%set to within bounds
 	sET.dblGaussWidth = roundi(dblVal,1);
 	%re-assign, just in case
@@ -346,9 +347,9 @@ function ptrEditPupilLum_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	
 	%% set value
 	%get value
-	intVal = round(str2double(get(hObject,'String')));
+	dblVal = str2double(get(hObject,'String'));
 	%set to within bounds
-	sET.dblThreshPupil = max([min([intVal 256]) 0]); %range: 0-256
+	sET.dblThreshPupil = max([min([dblVal 256]) 0]); %range: 0-256
 	%re-assign, just in case
 	set(hObject,'String',num2str(sET.dblThreshPupil));
 end
@@ -358,9 +359,9 @@ function ptrEditReflectLum_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	
 	%% set value
 	%get value
-	intVal = round(str2double(get(hObject,'String')));
+	dblVal = str2double(get(hObject,'String'));
 	%set to within bounds
-	sET.dblThreshReflect = max([min([intVal 256]) 0]); %range: 0-256
+	sET.dblThreshReflect = max([min([dblVal 256]) 0]); %range: 0-256
 	%re-assign, just in case
 	set(hObject,'String',num2str(sET.dblThreshReflect));
 end
@@ -370,7 +371,7 @@ function ptrEditSyncLum_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	
 	%% set value
 	%get value
-	dblVal = round(str2double(get(hObject,'String')));
+	dblVal = str2double(get(hObject,'String'));
 	%set to within bounds
 	sET.dblThreshSync = roundi(dblVal,1);
 	%re-assign, just in case
@@ -382,7 +383,7 @@ function ptrEditMinRadius_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	
 	%% set value
 	%get value
-	dblVal = round(str2double(get(hObject,'String')));
+	dblVal = str2double(get(hObject,'String'));
 	%set to within bounds
 	sET.dblPupilMinRadius = roundi(dblVal,1);
 	%re-assign, just in case

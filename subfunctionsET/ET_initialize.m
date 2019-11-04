@@ -73,8 +73,8 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	
 	set(sEyeFig.ptrSliderSyncROIStartLocX,'Value',sET.vecRectSync(1)/intMaxX);
 	set(sEyeFig.ptrSliderSyncROIStartLocY,'Value',sET.vecRectSync(2)/intMaxY);
-	set(sEyeFig.ptrSliderSyncROIStopLocX,'Value',(sET.vecRectSync(3)+sET.vecRectROI(1))/intMaxX);
-	set(sEyeFig.ptrSliderSyncROIStopLocY,'Value',(sET.vecRectSync(4)+sET.vecRectROI(2))/intMaxY);
+	set(sEyeFig.ptrSliderSyncROIStopLocX,'Value',(sET.vecRectSync(3)+sET.vecRectSync(1))/intMaxX);
+	set(sEyeFig.ptrSliderSyncROIStopLocY,'Value',(sET.vecRectSync(4)+sET.vecRectSync(2))/intMaxY);
 	
 	%set pupil detection settings
 	set(sEyeFig.ptrEditTempAvg,'String',num2str(sET.intTempAvg));
@@ -82,6 +82,7 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	set(sEyeFig.ptrEditMinRadius,'String',sprintf('%.1f',sET.dblPupilMinRadius));
 	set(sEyeFig.ptrEditReflectLum,'String',num2str(sET.dblThreshReflect));
 	set(sEyeFig.ptrEditPupilLum,'String',num2str(sET.dblThreshPupil));
+	set(sEyeFig.ptrEditSyncLum,'String',num2str(sET.dblThreshSync));
 	
 	%% finalize and set msg
 	cellText = {'Eye Tracker initialized!'};

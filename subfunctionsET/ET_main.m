@@ -104,13 +104,17 @@ function ET_main(varargin)
 			end
 			%blur width
 			if dblGaussWidth ~= sET.dblGaussWidth
-				dblGaussWidth = sET.dblGaussWidth;
-				intGaussSize = ceil(dblGaussWidth*2);
-				vecFilt = normpdf(-intGaussSize:intGaussSize,0,dblGaussWidth);
-				matFilt = vecFilt' * vecFilt;
-				matFilt = matFilt / sum(matFilt(:));
-				gMatFilt = gpuArray(single(matFilt));
-			end
+                dblGaussWidth = sET.dblGaussWidth;
+                if dblGaussWidth == 0
+                    gMatFilt = gpuArray(single(1));
+                else
+                    intGaussSize = ceil(dblGaussWidth*2);
+                    vecFilt = normpdf(-intGaussSize:intGaussSize,0,dblGaussWidth);
+                    matFilt = vecFilt' * vecFilt;
+                    matFilt = matFilt / sum(matFilt(:));
+                    gMatFilt = gpuArray(single(matFilt));
+                end
+            end
 			
 			%thresholds: reflection/pupil
 			if dblThreshReflect ~= sET.dblThreshReflect
@@ -269,6 +273,7 @@ function ET_main(varargin)
 		sET2.dblGaussWidth = sET.dblGaussWidth;
 		sET2.vecRectROI = sET.vecRectROI;
 		sET2.vecRectSync = sET.vecRectSync;
+		sET2.dblThreshSync = sET.dblThreshSync;
 		sET2.dblThreshReflect = sET.dblThreshReflect;
 		sET2.dblThreshPupil = sET.dblThreshPupil;
 		sET2.dblPupilMinRadius = sET.dblPupilMinRadius;
