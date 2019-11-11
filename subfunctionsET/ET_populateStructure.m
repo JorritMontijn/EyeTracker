@@ -38,12 +38,12 @@ end
 function sET = ET_defaultValues()
 	%define defaults
 	sET.intTempAvg = 1; %number of frames to average over; higher values limit detection rates
-	sET.dblGaussWidth = 2; %blur width
+	sET.dblGaussWidth = 0.5; %blur width
 	sET.vecRectROI = [100 50 450 400]; %crop
 	sET.vecRectSync = [50 50 100 100];
-	sET.dblThreshReflect = 215;%threshold for reflection (invert brightness if above)
-	sET.dblThreshPupil = 50;%threshold for pupil (potential pupil if below)
-	sET.dblPupilMinRadius = 22.5; %minimum radius of pupil (remove area if below)
-	sET.dblThreshSync = 128;%threshold for sync pulse
+	sET.dblThreshReflect = 255;%threshold for reflection (invert brightness if above)
+	sET.dblThreshPupil = 8;%threshold for pupil (potential pupil if below)
+	sET.dblPupilMinRadius = 2; %minimum radius of pupil (remove area if below)
+	sET.dblThreshSync = 18;%threshold for sync pulse
 	sET.intSubSample = 1;%subsample factor
 end

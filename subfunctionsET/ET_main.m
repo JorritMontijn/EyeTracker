@@ -22,12 +22,14 @@ function ET_main(varargin)
 	dblThreshPupil = -1;%threshold for pupil (potential pupil if below)
 	dblPupilMinRadius = -1; %minimum radius of pupil (remove area if below)
 	intRadStrEl = 0;
+	vecPrevLoc = [0;0];
 	
 	%morph close iters
 	%pupil size min/max
 	dblDetectRate = 0;
 	boolSyncHigh = 0;
-	intSyncPulse = 0;
+	sET.intSyncPulse = 0;
+	sET.dblRecStart = 0;
 	dblThreshSync = 0;
 	
 	%% run for all eternity
@@ -48,8 +50,8 @@ function ET_main(varargin)
 			boolRecording = sET.boolRecording;
 			
 			%build structuring elements
-			if sET.intSubSample == 1 && intRadStrEl ~= 4
-				intRadStrEl = 4;
+			if sET.intSubSample == 1 && intRadStrEl ~= 2
+				intRadStrEl = 2; %switched to 2, 2019-11-11
 				objSE = strel('disk',intRadStrEl,4);
 			elseif sET.intSubSample == 2 && intRadStrEl ~= 2
 				intRadStrEl = 2;
@@ -104,17 +106,17 @@ function ET_main(varargin)
 			end
 			%blur width
 			if dblGaussWidth ~= sET.dblGaussWidth
-                dblGaussWidth = sET.dblGaussWidth;
-                if dblGaussWidth == 0
-                    gMatFilt = gpuArray(single(1));
-                else
-                    intGaussSize = ceil(dblGaussWidth*2);
-                    vecFilt = normpdf(-intGaussSize:intGaussSize,0,dblGaussWidth);
-                    matFilt = vecFilt' * vecFilt;
-                    matFilt = matFilt / sum(matFilt(:));
-                    gMatFilt = gpuArray(single(matFilt));
-                end
-            end
+				dblGaussWidth = sET.dblGaussWidth;
+				if dblGaussWidth == 0
+					gMatFilt = gpuArray(single(1));
+				else
+					intGaussSize = ceil(dblGaussWidth*2);
+					vecFilt = normpdf(-intGaussSize:intGaussSize,0,dblGaussWidth);
+					matFilt = vecFilt' * vecFilt;
+					matFilt = matFilt / sum(matFilt(:));
+					gMatFilt = gpuArray(single(matFilt));
+				end
+			end
 			
 			%thresholds: reflection/pupil
 			if dblThreshReflect ~= sET.dblThreshReflect
@@ -174,18 +176,19 @@ function ET_main(varargin)
 				%detect pupil?
 				if boolDetectPupil
 					%find pupil
-					[sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,dblPupilMinPixSize);
+					[sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,dblPupilMinPixSize,vecPrevLoc);
 					
 					%get synchronization pulse window luminance
 					dblSyncLum = mean(flat(matVidRaw(vecSyncY,vecSyncX,1,end)));
 					boolLastSyncHigh = boolSyncHigh;
 					boolSyncHigh = dblSyncLum > dblThreshSync;
 					if boolSyncHigh && (boolLastSyncHigh ~= boolSyncHigh)
-						intSyncPulse = intSyncPulse + 1;
+						sET.intSyncPulse = sET.intSyncPulse + 1;
 					end
 					
 					%extract parameters
 					vecCentroid = sPupil.vecCentroid;
+					vecPrevLoc = vecCentroid;
 					dblMajAx = sPupil.dblMajAx;
 					dblMinAx = sPupil.dblMinAx;
 					dblOri = sPupil.dblOri;
@@ -226,19 +229,19 @@ function ET_main(varargin)
 				end
 				
 				%% update figure
-				set(sEyeFig.ptrTextDetectRate,'String',sprintf('%.2f',dblDetectRate));
-				set(sEyeFig.ptrTextVidTime,'String',sprintf('%.2f',vecTime(end)));
+				set(sEyeFig.ptrTextDetectRate,'String',sprintf('%.3f',dblDetectRate));
+				set(sEyeFig.ptrTextVidTime,'String',sprintf('%.3f',vecTime(end)-sET.dblRecStart));
 				set(sEyeFig.ptrTextVidMB,'String',sprintf('%.2f',dblVidMB));
 				set(sEyeFig.ptrTextPupilRoundness,'String',sprintf('%.3f',dblRoundness));
 				set(sEyeFig.ptrTextSyncLum,'String',sprintf('%.1f',dblSyncLum));
-				set(sEyeFig.ptrTextSyncPulseCount,'String',sprintf('%.0f',intSyncPulse));
+				set(sEyeFig.ptrTextSyncPulseCount,'String',sprintf('%.0f',sET.intSyncPulse));
 				
 				
 				%% output pupil properties
 				if boolRecording && boolDetectPupil && isfield(sET,'ptrDataOut')
 					%prepare data line
 					%Time,VidFrame,SyncLum,SyncPulse,CenterX,CenterY,MajorAx,MinorAx,Orient,Eccentric,Roundness
-					vecData = [vecTime(end) sET.objVidWriter.FrameCount dblSyncLum intSyncPulse vecCentroid(1) vecCentroid(2) dblMajAx dblMinAx dblOri dblEccentricity dblRoundness];
+					vecData = [vecTime(end) sET.objVidWriter.FrameCount dblSyncLum sET.intSyncPulse vecCentroid(1) vecCentroid(2) dblMajAx dblMinAx dblOri dblEccentricity dblRoundness];
 					strData = sprintf('"%.3f",',vecData);
 					strData = strcat(strData(1:(end-1)),'\n');
 					%write to file
@@ -256,45 +259,11 @@ function ET_main(varargin)
 			drawnow;pause(0.01);
 		end
 		
-		%clean up
+		%stop video stream
 		delete(objVid);
-		if isfield(sET,'objVidWriter'),close(sET.objVidWriter);end
-		try,fclose(sET.ptrDataOut);catch,end
 		
-		%save config to ini
-		strPathFile = mfilename('fullpath');
-		cellDirs = strsplit(strPathFile,filesep);
-		strPath = strjoin(cellDirs(1:(end-2)),filesep);
-		strIni = strcat(strPath,filesep,'config.ini');
-		
-		%save settings to ini
-		sET2=struct;
-		sET2.intTempAvg = sET.intTempAvg;
-		sET2.dblGaussWidth = sET.dblGaussWidth;
-		sET2.vecRectROI = sET.vecRectROI;
-		sET2.vecRectSync = sET.vecRectSync;
-		sET2.dblThreshSync = sET.dblThreshSync;
-		sET2.dblThreshReflect = sET.dblThreshReflect;
-		sET2.dblThreshPupil = sET.dblThreshPupil;
-		sET2.dblPupilMinRadius = sET.dblPupilMinRadius;
-		
-		%save ini
-		strData = struct2ini(sET2,'sET');
-		fFile = fopen(strIni,'wt');
-		fprintf(fFile,strData);
-		fclose(fFile);
-		
-		%save sET
-		if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Filename') && ~isempty(sET.objVidWriter.Filename)
-			%build filename
-			strFile = sET.objVidWriter.Filename;
-			cellFile = strsplit(strFile,'.');
-			strNoExt = strjoin(cellFile(1:(end-1)),'.');
-			strMatFile = strcat(strNoExt,'.mat');
-			strDataOutPath = sET.objVidWriter.Path;
-			sET = rmfield(sET,{'sDevices','objCam','objVid','objVidWriter'});
-			save(strcat(strDataOutPath,filesep,strMatFile),'sET');
-		end
+		%stop recording and save data
+		ET_stopRecording();
 		
 		%close program
 		delete(sEyeFig.ptrMainGUI);

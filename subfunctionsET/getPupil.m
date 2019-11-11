@@ -1,6 +1,6 @@
-function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,dblPupilMinPixSize)
+function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,dblPupilMinPixSize,vecPrevLoc)
 	%getPupil Detects pupil in image using GPU-accelerated image processing
-	%syntax: [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,intReflT,intPupilT,objSE,dblPupilMinPixSize)
+	%syntax: [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,intReflT,intPupilT,objSE,dblPupilMinPixSize,vecPrevLoc)
 	%	input:
 	%	- gMatVid [Y x X]: gpuArray-class 2D image
 	%	- gMatFilt [Y x X]: gpuArray-class 2D smoothing filter
@@ -36,6 +36,7 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 	
 	%% perform pupil detection
 	%move to GPU and rescale
+%	gMatVid = gather(gMatVidOrig);
 	gMatVid = (gMatVid - min(gMatVid(:)));
 	gMatVid = (gMatVid / max(gMatVid(:)))*255;
 	
@@ -45,7 +46,7 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 	
 	%reflection threshold, set reflection to black (>253)
 	gMatVid(gMatVid > sglReflT) = 0;
-	if boolSaveIms,im1 = gather(gMatVid);end
+	if boolSaveIms,im1 = double(gather(gMatVid));end
 	
 	%pupil threshold, binarize and invert so pupil is white (<15)
 	gMatVid = gMatVid < sglPupilT;
@@ -56,7 +57,7 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 	gMatVid = imclose(gMatVid,objSE);
 	gMatVid = imclose(gMatVid,objSE);
 	gMatVid = imclose(gMatVid,objSE);
-	if boolSaveIms,imClosed = gather(gMatVid);end
+	gClosed = gMatVid;
 	%fill small holes
 	gMatVid = imfill(gMatVid,4,'holes');
 	%morphological opening (erode+dilate) to remove small connections
@@ -64,8 +65,19 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 	
 	%get regions of sufficient size
 	imBW = gather(gMatVid);
-	sCC = bwconncomp(imBW, 26);
+	sCC = bwconncomp(imBW, 4);
 	sS = regionprops(sCC, 'Area');
+	%regress if empty
+	if isempty(sS)
+		imBW = gather(gClosed);
+		sCC = bwconncomp(imBW, 4);
+		sS = regionprops(sCC, 'Area');
+		%2nd try...
+		if isempty(sS)
+			sCC = bwconncomp(im1 < sglPupilT, 4);
+			sS = regionprops(sCC, 'Area');
+		end
+	end
 	vecArea = [sS.Area];
 	vecKeep = find(vecArea >= dblPupilMinPixSize);
 	matL = labelmatrix(sCC);
@@ -89,7 +101,7 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 		vecPerimeter(i) = cellProps.Perimeter;
 	end
 	%save image if requested
-	if boolSaveIms,im2=imClosed+imBW+2*matObjects;end
+	if boolSaveIms,im2=gather(gClosed)+imBW+2*matObjects;end
 	
 	%what is area to perimeter ratio?
 	vecAreaToPerim = vecArea./vecPerimeter;
@@ -97,6 +109,9 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 	vecCircAreaToPerim = (vecMinAx+vecMajAx)/8;
 	vecRoundness = vecAreaToPerim ./ vecCircAreaToPerim;
 	vecEccentricity = sqrt(1-((vecMinAx ./ vecMajAx).^2));
+	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,vecPrevLoc).^2,1));
+	dblSd = sqrt(sum(size(imBW).^2));
+	vecProbChoose = 1 - normcdf(vecDist,0,dblSd/2) + normcdf(-vecDist,0,dblSd/2);
 	%dblCircPerim = 2*pi*r;
 	%dblCircArea = pi*r^2;
 	%dblAreaToPerim = r/2;
@@ -105,12 +120,13 @@ function [sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,d
 	if isempty(vecRoundness)
 		dblRoundness = 0;
 		dblEccentricity = 0;
-		vecCentroid = [0 0];
+		vecCentroid = [0;0];
 		dblMajAx = 0;
 		dblMinAx = 0;
 		dblOri = 0;
 	else
-		[dblRoundness,intUse]=max(vecRoundness);
+		[dummy,intUse]=max(vecRoundness.*vecProbChoose);
+		dblRoundness = vecRoundness(intUse);
 		dblEccentricity = vecEccentricity(intUse);
 		vecCentroid = matCentroids(:,intUse);
 		dblMajAx = vecMajAx(intUse);

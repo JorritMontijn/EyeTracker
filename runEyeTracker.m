@@ -3,8 +3,17 @@ function varargout = runEyeTracker(varargin)
 	% runEyeTracker Acquire eye-tracking video while performing online
 	% pupil detection with GUI
 	%
-	%Version 1.0 [2019-11-16]
+	%Version 1.0 [2019-09-16]
 	%	Created by Jorrit Montijn
+	%Version 1.1 [2019-11-11]
+	%	Major update:
+	%	-Added offline analysis
+	%	-Tweaked default parameters
+	%	-Added regressive location selection if no primaries are found
+	%	-Added weighting by distance to previous location
+	%	-Updated recording program to reset variables at recording start and save all variables at recording end
+	%	-Some other minor changes
+	%	-To do: fix sliders...
 	
 	%set tags
 	%#ok<*INUSL>
@@ -422,6 +431,8 @@ function ptrToggleRecord_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 			%lock gui
 			ET_lock(handles);
 			sET.boolRecording = true;
+			sET.intSyncPulse = 0; %reset sync pulses
+			sET.dblRecStart = str2double(get(sEyeFig.ptrTextVidTime,'String')); %reset recording start
 		else
 			set(hObject,'Value',0);
 		end
@@ -429,6 +440,7 @@ function ptrToggleRecord_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 		set(sEyeFig.ptrTextRecording,'String','Idle','ForegroundColor',[0 0 0]);
 		ET_unlock(handles);
 		sET.boolRecording = false;
+		ET_stopRecording();
 	end
 end
 function ptrButtonToggleSubSize_Callback(hObject, eventdata, handles) %#ok<DEFNU>
