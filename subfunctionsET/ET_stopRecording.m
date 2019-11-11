@@ -9,7 +9,9 @@ function ET_stopRecording()
 	if isfield(sET,'objVidWriter'),close(sET.objVidWriter);end
 	%close csv file
 	try,fclose(sET.ptrDataOut);catch,end
-	
+    %set switch to off
+	sET.boolRecording = false;
+    
 	%save config to ini
 	strPathFile = mfilename('fullpath');
 	cellDirs = strsplit(strPathFile,filesep);
@@ -47,12 +49,11 @@ function ET_stopRecording()
 		sET = sET3;
 	end
 	
-	%clear target filename
-	sET.objVidWriter.Filename = [];
-	
 	%switch raw video recording to off
-	ptrPanelSwitchRecordVideo_SelectionChangedFcn('Off');
-	
+	sET.boolSaveToDisk = false;
+	set(sEyeFig.ptrButtonRecordVidOff,'Value',1);
+	close(sET.objVidWriter);
+        
 	%disable recording button
 	set(sEyeFig.ptrToggleRecord,'Enable','off');
 	

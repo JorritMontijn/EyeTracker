@@ -238,7 +238,7 @@ function ET_main(varargin)
 				
 				
 				%% output pupil properties
-				if boolRecording && boolDetectPupil && isfield(sET,'ptrDataOut')
+				if sET.boolRecording && boolDetectPupil && isfield(sET,'ptrDataOut')
 					%prepare data line
 					%Time,VidFrame,SyncLum,SyncPulse,CenterX,CenterY,MajorAx,MinorAx,Orient,Eccentric,Roundness
 					vecData = [vecTime(end) sET.objVidWriter.FrameCount dblSyncLum sET.intSyncPulse vecCentroid(1) vecCentroid(2) dblMajAx dblMinAx dblOri dblEccentricity dblRoundness];
