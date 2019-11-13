@@ -52,8 +52,10 @@ function ET_stopRecording()
 	%switch raw video recording to off
 	sET.boolSaveToDisk = false;
 	set(sEyeFig.ptrButtonRecordVidOff,'Value',1);
-	close(sET.objVidWriter);
-        
+    if isfield(sET,'objVidWriter')
+        close(sET.objVidWriter);
+    end
+    
 	%disable recording button
 	set(sEyeFig.ptrToggleRecord,'Enable','off');
 	
