@@ -12,7 +12,7 @@ cellRec{2}{6} = 'P:\Montijn\DataNeuropixels\Exp2019-12-17\20191217_MP3_RunDrifti
 cellRec{3}{1} = 'P:\Montijn\DataNeuropixels\Exp2020-01-15\20200115_MP4_RunDriftingGratingsR01_g0';%eye-tracking bad at end
 cellRec{3}{2} = 'P:\Montijn\DataNeuropixels\Exp2020-01-16\20200116_MP4_RunDriftingGratingsR01_g0';
 cellRec{3}{3} = 'P:\Montijn\DataNeuropixels\Exp2020-01-16\20200116_MP4_RunDriftingGratingsR02_g0';
-
+%{
 matRunPre = [...
 	1 3;...
 	2 2;...
@@ -26,39 +26,50 @@ matRunPre = [...
 	2 4;...
 	2 6;...
 	];
+%}
+matRunPre = [...
+	1 1;...
+	1 2;...
+	2 1;...
+	2 3;...
+	2 4;...
+	2 6;...
+	];
 
 for intRunPrePro=1:size(matRunPre,1)
-%% clear variables and select session to preprocess
+	%% prepare
+% clear variables and select session to preprocess
 clearvars -except cellRec matRunPre intRunPrePro
 runPreGLX = matRunPre(intRunPrePro,:);
 fprintf('Starting pre-processing of "%s" [%s]\n',cellRec{runPreGLX(1)}{runPreGLX(2)},getTime);
 
-%% path definitions
+% path definitions
 strThisPath = mfilename('fullpath');
 strThisPath = strThisPath(1:(end-numel(mfilename)));
-addpath(genpath('C:\Code\Acquisition\Kilosort2')); % path to kilosort folder
-addpath('C:\Code\Acquisition\npy-matlab'); % for converting to Phy
-rootZ = cellRec{runPreGLX(1)}{runPreGLX(2)}; % the raw data binary file is in this folder
+strSourcePath = cellRec{runPreGLX(1)}{runPreGLX(2)}; % the raw data binary file is in this folder
+cellSourcePath = strsplit(strSourcePath,filesep);
+strMasterPath = strjoin(cellSourcePath(1:(end-1)),filesep);
 strTempDirDefault = 'E:\_TempData'; % path to temporary binary file (same size as data, should be on fast SSD)
-strPathToConfigFile = strcat(strThisPath,'subfunctionsPP',filesep); % take from Github folder and put it somewhere else (together with the master_file)
-chanMapFile = 'neuropixPhase3B2_kilosortChanMap.mat';
 
-%% check which temp folder to use & clear data
-sTempFiles = dir(fullfile(strTempDirDefault,'*.dat'));
-for intTempFile=1:numel(sTempFiles)
-	boolDir = sTempFiles(intTempFile).isdir;
-	strFile = sTempFiles(intTempFile).name;
-	if ~boolDir
-		delete(fullfile(strTempDirDefault,strFile));
-		fprintf('Deleted "%s" from temporary path "%s" [%s]\n',strFile,strTempDirDefault,getTime);
-	end
+% search for file
+strThisMouseIdx = getFlankedBy(cellSourcePath{end},'_M','_','last');
+if runPreGLX(1) < 2
+	strThisRecIdx = getFlankedBy(cellSourcePath{end},'_R','_','first');
+	strRec = ['*' strThisMouseIdx '*R' strThisRecIdx '*'];
+else
+	strThisRecIdx = getFlankedBy(cellSourcePath{end},'R','_','last');
+	strRec = ['*R' strThisRecIdx '*' strThisMouseIdx '*'];
 end
-fs          = [dir(fullfile(rootZ, '*.bin')) dir(fullfile(rootZ, '*.dat'))];
-objFile      = java.io.File('C:\');
+
+%Exp2019-11-21
+%Frame 27808 is blink
+%Frame 37879 is blink
+%Frame 40641 is paw
+
+%check temp path free space
+objFile      = java.io.File('E:\');
 dblFreeBytes   = objFile.getFreeSpace;
-dblFileSize = fs(1).bytes;
-fprintf('Processing "%s" (%.1fGB)\n',fs(1).name,dblFileSize/(1024.^3));
-if dblFreeBytes > (dblFileSize*1.05)
+if dblFreeBytes > (10*(1024.^3)) %10 gb min
 	strTempDir = strTempDirDefault;
 	fprintf('Using temp dir "%s" (%.1fGB free)\n',strTempDir,dblFreeBytes/(1024.^3));
 else
@@ -66,25 +77,12 @@ else
 	fprintf('Not enough space on SSD (%.1fGB free). Using temp dir "%s"\n',dblFreeBytes/(1024.^3),strTempDir);
 end
 
-%% set params
-strExp = 'Exp2019-11-22';
-strRec = 'M*_R01*';
-
-%Exp2019-11-21
-%Frame 27808 is blink
-%Frame 37879 is blink
-%Frame 40641 is paw
-
 %% fixed
-if ~strcmp(strExp(end),filesep),strExp(end+1) = filesep;end
-strMasterPath = 'P:\Montijn\DataNeuropixels\';
-strSubPath = 'EyeTracking\';
-strSearchFile = ['EyeTrackingRaw*' strRec];
-strTempDir = 'C:\_TempData\';
+strSearchFile = ['EyeTrackingRaw' strRec];
 strMiniVidPath = 'D:\Data\Processed\Neuropixels\minivid\';
 
 %find video file
-sVidFiles = dir(strcat(strMasterPath,strExp,strSubPath,strSearchFile,'.mp4'));
+sVidFiles = dir(fullfile(strMasterPath,'EyeTracking',strcat(strSearchFile,'.mp4')));
 if numel(sVidFiles) == 1
 	strVideoFile = sVidFiles.name;
 	strPath = sVidFiles.folder;
@@ -95,7 +93,7 @@ if ~strcmp(strPath(end),filesep),strPath(end+1) = filesep;end
 if ~strcmp(strTempDir(end),filesep),strTempDir(end+1) = filesep;end
 
 %find params file
-sParamsFiles = dir(strcat(strMasterPath,strExp,strSubPath,strSearchFile,'.mat'));
+sParamsFiles = dir(fullfile(strMasterPath,'EyeTracking',strcat(strSearchFile,'.mat')));
 if numel(sParamsFiles) == 1
 	strParamsFile = sParamsFiles.name;
 else
@@ -103,7 +101,7 @@ else
 end
 
 %find csv file
-sCsvFiles = dir(strcat(strMasterPath,strExp,strSubPath,strSearchFile,'.csv'));
+sCsvFiles = dir(fullfile(strMasterPath,'EyeTracking',strcat(strSearchFile,'.csv')));
 if numel(sCsvFiles) == 1
 	strCSVFile = sCsvFiles.name;
 else
@@ -158,7 +156,6 @@ intTempAvg = sET.intTempAvg;
 vecRectROI = round(sET.vecRectROI);
 vecKeepY = vecRectROI(2):(vecRectROI(2)+vecRectROI(4));
 vecKeepX = vecRectROI(1):(vecRectROI(1)+vecRectROI(3));
-matMiniVid = zeros(numel(vecKeepY),numel(vecKeepX),intTotFrames,'uint8');
 
 %rebuild ROI
 vecPlotRectX = [vecRectROI(1) vecRectROI(1) vecRectROI(1)+vecRectROI(3) vecRectROI(1)+vecRectROI(3) vecRectROI(1)];
@@ -187,8 +184,9 @@ end
 dblThreshReflect = sET.dblThreshReflect;
 sglReflT = 200;%single(dblThreshReflect);
 dblThreshPupil = sET.dblThreshPupil;
-sglPupilT = single(dblThreshPupil);
-vecPupilT = (-4:1:1) + sglPupilT;
+sglPupilTOld = single(dblThreshPupil);
+sglPupilT = 14;
+vecPupilT = (-3:1:1) + sglPupilT;
 vecBlinkWindow = round([-0.125 0.125]*dblFrameRate);
 
 %% pre-allocate
@@ -226,7 +224,11 @@ hTicCompStart = tic;
 dblLastShow = -inf;
 dblShowInterval = 0.5;
 vecPrevLoc = [0;0];
+strMiniOut = strrep(strVideoFile,'Raw','MiniVid');
 objVid = VideoReader([strTempDir strVideoFile]); %recreate becase of NumberOfFrames... don't ask why...
+objMiniVid = VideoWriter([strTempDir strMiniOut],'MPEG-4');
+objMiniVid.FrameRate = objVid.FrameRate;
+open(objMiniVid);				
 boolInitDone = false;
 intFrame = 0;
 intSyncPulse = 0;
@@ -247,7 +249,9 @@ while hasFrame(objVid)
 	dblAbsVidLum = mean(flat(matVidBuffer(:,:,1,:)));
 	matVid = imnorm(mean(single(matVidBuffer(:,:,1,:)),4));
 	gMatVid = gpuArray(matVid(vecKeepY,vecKeepX));
-	matMiniVid(:,:,intFrame) = matVid(vecKeepY,vecKeepX)*255;
+	
+	%write mini vid
+	writeVideo(objMiniVid,matVid(vecKeepY,vecKeepX));
 	
 	%find pupil
 	[sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT);
@@ -386,10 +390,11 @@ while hasFrame(objVid)
 	vecPupilApproxRadius(intFrame) = dblApproxRadius;
 	
 end
-%{
+close(objMiniVid);		
+
 %% interpolate detection failures
 %initial roundness check
-indWrongA = vecPupilApproxConfidence < 1 | vecPupilApproxConfidence > 1.2;
+indWrongA = sqrt(zscore(vecPupilCenterX).^2 + zscore(vecPupilCenterY).^2) > 4;
 indWrong1 = conv(indWrongA,ones(1,5),'same')>0;
 vecAllPoints1 = 1:numel(indWrong1);
 vecGoodPoints1 = find(~indWrong1);
@@ -403,14 +408,10 @@ vecAllPoints = 1:numel(indWrong);
 vecGoodPoints = find(~indWrong);
 
 %fix
-vecPupilFixedCenterX = interp1(vecGoodPoints,vecPupilCenterX(~indWrong),vecAllPoints);
-vecPupilFixedCenterY = interp1(vecGoodPoints,vecPupilCenterY(~indWrong),vecAllPoints);
-vecPupilFixedMajorAxis = interp1(vecGoodPoints,vecPupilRadius(~indWrong),vecAllPoints);
-vecPupilFixedMinorAxis = interp1(vecGoodPoints,vecPupilEdgeHardness(~indWrong),vecAllPoints);
-vecPupilFixedOrientation = interp1(vecGoodPoints,vecPupilMeanPupilLum(~indWrong),vecAllPoints);
-vecPupilFixedEccentricity = interp1(vecGoodPoints,vecPupilSdPupilLum(~indWrong),vecAllPoints);
-vecPupilFixedRoundness = interp1(vecGoodPoints,vecPupilApproxConfidence(~indWrong),vecAllPoints);
-%}
+vecPupilFixedCenterX = interp1(vecGoodPoints,vecPupilCenterX(~indWrong),vecAllPoints,'linear','extrap');
+vecPupilFixedCenterY = interp1(vecGoodPoints,vecPupilCenterY(~indWrong),vecAllPoints,'linear','extrap');
+vecPupilFixedRadius = interp1(vecGoodPoints,vecPupilRadius(~indWrong),vecAllPoints,'linear','extrap');
+
 %% gather data
 %check which frames to remove
 intLastFrame = find(~(isnan(vecPupilApproxConfidence) | vecPupilApproxConfidence == 0),1,'last');
@@ -428,36 +429,35 @@ vecPupilSdPupilLum = vecPupilSdPupilLum(1:intLastFrame);
 vecPupilApproxConfidence = vecPupilApproxConfidence(1:intLastFrame);
 vecPupilApproxRoundness = vecPupilApproxRoundness(1:intLastFrame);
 vecPupilApproxRadius = vecPupilApproxRadius(1:intLastFrame);
-	
+
+vecPupilFixedCenterX = vecPupilFixedCenterX(1:intLastFrame);
+vecPupilFixedCenterY = vecPupilFixedCenterY(1:intLastFrame);
+vecPupilFixedRadius = vecPupilFixedRadius(1:intLastFrame);
+
 %put in struct
 sPupil = struct;
 sPupil.vecPupilTime = vecPupilTime;
 sPupil.vecPupilVidFrame = vecPupilVidFrame;
 sPupil.vecPupilSyncLum = vecPupilSyncLum;
 sPupil.vecPupilSyncPulse = vecPupilSyncPulse;
-%fixed
-%{
-sPupil.vecPupilIsInterpolated = [];%indWrong;
-sPupil.vecPupilCenterX = vecPupilFixedCenterX;
-sPupil.vecPupilCenterY = vecPupilFixedCenterY;
-sPupil.vecPupilMajorAxis = vecPupilFixedMajorAxis;
-sPupil.vecPupilMinorAxis = vecPupilFixedMinorAxis;
-sPupil.vecPupilOrientation = vecPupilFixedOrientation;
-sPupil.vecPupilEccentricity = vecPupilFixedEccentricity;
-sPupil.vecPupilRoundness = vecPupilFixedRoundness;
-%}
-%raw
-sPupil.vecPupilRawCenterX = vecPupilCenterX;
-sPupil.vecPupilRawCenterY = vecPupilCenterY;
-sPupil.vecPupilRawRadius = vecPupilRadius;
-sPupil.vecPupilRawEdgeHardness = vecPupilEdgeHardness;
-sPupil.vecPupilRawMeanPupilLum = vecPupilMeanPupilLum;
-sPupil.vecPupilRawAbsVidLum = vecPupilAbsVidLum;
 
-sPupil.vecPupilRawSdPupilLum = vecPupilSdPupilLum;
-sPupil.vecPupilRawApproxConfidence = vecPupilApproxConfidence;
-sPupil.vecPupilRawApproxRoundness = vecPupilApproxRoundness;
-sPupil.vecPupilRawApproxRadius = vecPupilApproxRadius;
+%raw
+sPupil.vecPupilCenterX = vecPupilCenterX;
+sPupil.vecPupilCenterY = vecPupilCenterY;
+sPupil.vecPupilRadius = vecPupilRadius;
+sPupil.vecPupilEdgeHardness = vecPupilEdgeHardness;
+sPupil.vecPupilMeanPupilLum = vecPupilMeanPupilLum;
+sPupil.vecPupilAbsVidLum = vecPupilAbsVidLum;
+
+sPupil.vecPupilSdPupilLum = vecPupilSdPupilLum;
+sPupil.vecPupilApproxConfidence = vecPupilApproxConfidence;
+sPupil.vecPupilApproxRoundness = vecPupilApproxRoundness;
+sPupil.vecPupilApproxRadius = vecPupilApproxRadius;
+
+%fixed
+sPupil.vecPupilFixedCenterX = vecPupilFixedCenterX;
+sPupil.vecPupilFixedCenterY = vecPupilFixedCenterY;
+sPupil.vecPupilFixedRadius = vecPupilFixedRadius;
 
 %create filename
 strVideoOut = strrep(strVideoFile,'Raw','Processed');
@@ -475,19 +475,29 @@ sPupil.strMiniVidFile = strVideoOut;
 save([strPath strVideoOut],'sPupil');
 fprintf('Saved data to %s (source: %s, path: %s) [%s]\n',strVideoOut,strVideoFile,strPath,getTime);
 
-%save mini vid
-save([strPath strVideoOut],'matMiniVid');
-save([strMiniVidPath strVideoOut],'matMiniVid');
-fprintf('Saved data to %s (source: %s, path: %s) [%s]\n',strVideoOut,strVideoFile,strPath,getTime);
+%copy mini vid
+copyfile([strTempDir strMiniOut],[strPath strMiniOut]);
+fprintf('Saved minivid to %s (source: %s, path: %s) [%s]\n',strMiniOut,strTempDir,strMiniOut,getTime);
 
 %% plot
 figure
-plot(sPupil.vecPupilTime,sPupil.vecPupilRawCenterX);
-hold on
+subplot(2,1,1)
 plot(sPupil.vecPupilTime,sPupil.vecPupilCenterX);
+hold on
+plot(sPupil.vecPupilTime,sPupil.vecPupilFixedCenterX);
 hold off
-title(sprintf('Pupil x-pos, %s',strVideoFile),'Interpreter','none');
+title(sprintf('Pupil pos x, %s',strVideoFile),'Interpreter','none');
 xlabel('Time (s)');
-ylabel('Horizontal position (pixels)');
+ylabel('Pupil x-position');
+fixfig
+
+subplot(2,1,2)
+plot(sPupil.vecPupilTime,sPupil.vecPupilCenterY);
+hold on
+plot(sPupil.vecPupilTime,sPupil.vecPupilFixedCenterY);
+hold off
+title(sprintf('Pupil pos y, %s',strVideoFile),'Interpreter','none');
+xlabel('Time (s)');
+ylabel('Pupil y-position');
 fixfig
 end

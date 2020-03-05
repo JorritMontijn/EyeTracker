@@ -1,6 +1,6 @@
 function [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
 	%getPupil Detects pupil in image using GPU-accelerated image processing
-	%syntax: [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT,vecPupilT,objSE,vecPrevLoc)
+	%syntax: [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
 	%	input:
 	%	- gMatVid [Y x X]: gpuArray-class 2D image
 	%	- gMatFilt [Y x X]: gpuArray-class 2D smoothing filter
