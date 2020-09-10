@@ -54,7 +54,7 @@ for intRunPrePro=1:size(matRunPre,1)
 	% search for file
 	strThisMouseIdx = getFlankedBy(cellSourcePath{end},'_M','_','last');
 	if runPreGLX(1) < 2
-		strThisRecIdx = getFlankedBy(cellSourcePath{end},'_R','_','first');
+		strThisRecIdx = getFlankedBy(cellSourcePath{end},'R','_','last');
 		strRec = ['*' strThisMouseIdx '*R' strThisRecIdx '*'];
 	else
 		strThisRecIdx = getFlankedBy(cellSourcePath{end},'R','_','last');
