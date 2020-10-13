@@ -1,6 +1,6 @@
-function [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
+function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
 	%getPupil Detects pupil in image using GPU-accelerated image processing
-	%syntax: [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
+	%syntax: [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
 	%	input:
 	%	- gMatVid [Y x X]: gpuArray-class 2D image
 	%	- gMatFilt [Y x X]: gpuArray-class 2D smoothing filter
@@ -17,8 +17,10 @@ function [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT
 	%		- sPupil.dblMajAx
 	%		- sPupil.dblMinAx
 	%		- sPupil.dblOri
-	%	- im1; 2D image after reflection removal
-	%	- im2; 2D image containing thresholded area labels
+	%	- imPupil; 2D 
+	%	- imReflection; 2D reflection mask
+	%	- imBW;
+	%	- imGrey; 2D image after reflection removal
 	%
 	%Note: requesting im1 and im2 as optional outputs slightly reduces
 	%performance, but this should be barely noticeable on most systems.
@@ -44,11 +46,15 @@ function [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT
 	if ~isempty(gMatFilt) && ~isscalar(gMatFilt)
 		gMatVid = imfilt(gMatVid,gMatFilt);
 	end
-	
 	%detect reflection; dilate area and ignore for fit later on
 	imReflection = gMatVid > sglReflT;
 	imReflection = gather(imdilate(imReflection,objSE));
-		
+	if nargout > 4
+		imGrey = gather(gMatVid);
+		imGrey(imReflection) = 0;
+	end
+	
+	
 	%% get pupil estimate at different thresholds
 	vecImSize = size(gMatVid);
 	intThreshNum = numel(vecPupilT);
@@ -67,7 +73,7 @@ function [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT
 		imStack(:,:,intThresholdIdx) = imBW;
 	end
 	
-	%% define likelihood of pupil based on roundness, area, and 
+	%% define likelihood of pupil based on roundness, area, and
 	%calculate distance from previous location
 	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,vecPrevLoc(:)).^2,1));
 	dblSd = sqrt(sum(vecImSize.^2));
@@ -90,7 +96,7 @@ function [sPupil,imPupil,imReflection,imBW] = getPupil(gMatVid,gMatFilt,sglReflT
 	%turn BW image into double with slight gradient
 	matDbl = double(gather(imfilt(gpuArray(double(imBW)),gMatFilt)));
 	%matDbl = double(imBW);
-	%for fitting, impose ridge (L2) regularization for x&y location and radius 
+	%for fitting, impose ridge (L2) regularization for x&y location and radius
 	%	(all three relative to initial approximate pupil estimate
 	[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,0);
 	

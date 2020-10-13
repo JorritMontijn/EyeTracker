@@ -176,7 +176,7 @@ function ET_main(varargin)
 				%detect pupil?
 				if boolDetectPupil
 					%find pupil
-					[sPupil,imDummy,im2,im1] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc);
+					[sPupil,im1,im2] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc);
 					
 					%get synchronization pulse window luminance
 					dblSyncLum = mean(flat(matVidRaw(vecSyncY,vecSyncX,1,end)));

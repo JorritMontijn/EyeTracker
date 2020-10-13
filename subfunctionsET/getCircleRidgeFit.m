@@ -34,6 +34,7 @@ function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(mat
 	%sOpt.TolX = 1e-15;
 	vecLB = [0 0 0.5];
 	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1)];
+	
 	[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@getCircFit,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
 	
 	%[vecParamsFit,dblVal,flag,out] = fminsearch(fCircFit,vecParams0,sOpt);
