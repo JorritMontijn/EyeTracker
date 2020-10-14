@@ -98,8 +98,14 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%matDbl = double(imBW);
 	%for fitting, impose ridge (L2) regularization for x&y location and radius
 	%	(all three relative to initial approximate pupil estimate
-	[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,0);
-	
+	try
+		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,0);
+	catch
+		vecCentroid = vecApproxCentroid;
+		dblRadius = dblApproxRadius;
+		dblEdgeHardness = 0;
+		imPupil = 0*imReflection;
+	end
 	%retrieve original brightness of fitted area
 	vecPixVals = flat(gMatVid(imPupil));
 	dblMeanPupilLum = gather(mean(vecPixVals));

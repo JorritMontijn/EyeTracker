@@ -176,7 +176,7 @@ function ET_main(varargin)
 				%detect pupil?
 				if boolDetectPupil
 					%find pupil
-					[sPupil,imDummy,im2,im1] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc);
+					[sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc);
 					
 					%get synchronization pulse window luminance
 					dblSyncLum = mean(flat(matVidRaw(vecSyncY,vecSyncX,1,end)));
@@ -205,12 +205,12 @@ function ET_main(varargin)
 					hold(sEyeFig.ptrAxesMainVideo,'off');
 					
 					%closed
-					imagesc(sEyeFig.ptrAxesSubVid1,im1);
+					imagesc(sEyeFig.ptrAxesSubVid1,imGrey);
 					colormap(sEyeFig.ptrAxesSubVid1,'grey');
 					axis(sEyeFig.ptrAxesSubVid1,'off');
 					
 					%regions
-					imagesc(sEyeFig.ptrAxesSubVid2,im2);
+					imagesc(sEyeFig.ptrAxesSubVid2,imBW);
 					colormap(sEyeFig.ptrAxesSubVid2,'parula');
 					axis(sEyeFig.ptrAxesSubVid2,'off');
 					dblLastDetectRate = dblDetectRate;
