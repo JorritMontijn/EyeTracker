@@ -46,4 +46,5 @@ function sET = ET_defaultValues()
 	sET.dblPupilMinRadius = 2; %minimum radius of pupil (remove area if below)
 	sET.dblThreshSync = 18;%threshold for sync pulse
 	sET.intSubSample = 1;%subsample factor
+	sET.boolInvertImage = 0;%invert image for albinos
 end

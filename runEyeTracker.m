@@ -5,7 +5,7 @@ function varargout = runEyeTracker(varargin)
 	%
 	%Version 1.0 [2019-09-16]
 	%	Created by Jorrit Montijn
-	%Version 1.1 [2019-11-11]
+	%Version 1.1 [2019-11-11] by JM
 	%	Major update:
 	%	-Added offline analysis
 	%	-Tweaked default parameters
@@ -14,6 +14,14 @@ function varargout = runEyeTracker(varargin)
 	%	-Updated recording program to reset variables at recording start and save all variables at recording end
 	%	-Some other minor changes
 	%	-To do: fix sliders...
+	%Version 2.0 [2020-10-19] by JM
+	%	Major, non-backwards compatible update:
+	%	-Updated to use new detection algorithm
+	%	-Added luminance inversion to detect bright pupils
+	%	-Added CPU-based processing as backup to GPU-accelerated detection
+	%	-Can now use cameras that have no "RealFrameRate" property
+	%	-To do: add selectable pupil range, e.g. -2 ... +1 around base lum
+	%	-To do: fix sync lum sliders?
 	
 	%set tags
 	%#ok<*INUSL>
@@ -563,9 +571,15 @@ function ptrPanelSwitchOnlineDetection_SelectionChangedFcn(hObject, eventdata, h
 		end
 	end
 end
+function ptrButtonInvertPupilThreshold_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	%% globals
+	global sET
+	
+	%% set inversion
+	sET.boolInvertImage = hObject.Value;
+end
 %% dummies
 function ptrButtonDetectPupilOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonDetectPupilOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonRecordVidOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonRecordVidOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
-

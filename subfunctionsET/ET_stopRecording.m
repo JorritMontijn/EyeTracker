@@ -28,6 +28,7 @@ function ET_stopRecording()
 	sET2.dblThreshReflect = sET.dblThreshReflect;
 	sET2.dblThreshPupil = sET.dblThreshPupil;
 	sET2.dblPupilMinRadius = sET.dblPupilMinRadius;
+	sET2.boolInvertImage = sET.boolInvertImage;
 	
 	%save ini
 	strData = struct2ini(sET2,'sET');

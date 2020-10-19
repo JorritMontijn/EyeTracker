@@ -108,13 +108,21 @@ function ET_main(varargin)
 			if dblGaussWidth ~= sET.dblGaussWidth
 				dblGaussWidth = sET.dblGaussWidth;
 				if dblGaussWidth == 0
-					gMatFilt = gpuArray(single(1));
+					if sET.boolUseGPU
+						gMatFilt = gpuArray(single(1));
+					else
+						gMatFilt = single(1);
+					end
 				else
 					intGaussSize = ceil(dblGaussWidth*2);
 					vecFilt = normpdf(-intGaussSize:intGaussSize,0,dblGaussWidth);
 					matFilt = vecFilt' * vecFilt;
 					matFilt = matFilt / sum(matFilt(:));
-					gMatFilt = gpuArray(single(matFilt));
+					if sET.boolUseGPU
+						gMatFilt = gpuArray(single(matFilt));
+					else
+						gMatFilt = single(matFilt);
+					end
 				end
 			end
 			
@@ -167,16 +175,22 @@ function ET_main(varargin)
 				%select ROI
 				vecUseFrames = (size(matVidRaw,4)-intTempAvg+1):size(matVidRaw,4);
 				matVid = imnorm(mean(single(matVidRaw(:,:,1,vecUseFrames)),4));
-				gMatVid = gpuArray(matVid(vecKeepY,vecKeepX));
+				if sET.boolUseGPU
+					gMatVid = gpuArray(matVid(vecKeepY,vecKeepX));
+				else
+					gMatVid = matVid(vecKeepY,vecKeepX);
+				end
 				
 				%show video
 				imagesc(sEyeFig.ptrAxesMainVideo,matVidRaw(:,:,1,end));
 				colormap(sEyeFig.ptrAxesMainVideo,'grey');
-                
+                axis(sEyeFig.ptrAxesMainVideo,'off');
+				
 				%detect pupil?
 				if boolDetectPupil
 					%find pupil
-					[sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc);
+					vecPupil = sglPupilT;%(sglPupilT-2):(sglPupilT+1);
+					[sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupil,sET);
 					
 					%get synchronization pulse window luminance
 					dblSyncLum = mean(flat(matVidRaw(vecSyncY,vecSyncX,1,end)));
@@ -194,7 +208,8 @@ function ET_main(varargin)
 					dblOri = 0;
 					dblRoundness = sPupil.dblApproxRoundness;
 					dblEccentricity = sPupil.dblApproxConfidence;
-                    
+                    dblEdgeHardness = sPupil.dblEdgeHardness;
+					
 					%orig with overlays
 					hold(sEyeFig.ptrAxesMainVideo,'on');
 					plot(sEyeFig.ptrAxesMainVideo,vecPlotSyncX,vecPlotSyncY,'c--');
@@ -223,6 +238,7 @@ function ET_main(varargin)
 					dblOri = -1;
 					dblEccentricity = -1;
 					dblRoundness = 0;
+					dblEdgeHardness = 0;
 					dblLastDetectRate = 0;
 					dblDetectRate = 0;
 					dblSyncLum = 0;
@@ -232,7 +248,7 @@ function ET_main(varargin)
 				set(sEyeFig.ptrTextDetectRate,'String',sprintf('%.3f',dblDetectRate));
 				set(sEyeFig.ptrTextVidTime,'String',sprintf('%.3f',vecTime(end)-sET.dblRecStart));
 				set(sEyeFig.ptrTextVidMB,'String',sprintf('%.2f',dblVidMB));
-				set(sEyeFig.ptrTextPupilRoundness,'String',sprintf('%.3f',dblRoundness));
+				set(sEyeFig.ptrTextPupilRoundness,'String',sprintf('%.3f',dblEdgeHardness));
 				set(sEyeFig.ptrTextSyncLum,'String',sprintf('%.1f',dblSyncLum));
 				set(sEyeFig.ptrTextSyncPulseCount,'String',sprintf('%.0f',sET.intSyncPulse));
 				

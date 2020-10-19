@@ -1,4 +1,4 @@
-function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
+function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT,sET)
 	%getPupil Detects pupil in image using GPU-accelerated image processing
 	%syntax: [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
 	%	input:
@@ -11,12 +11,16 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%
 	%	output:
 	%	- sPupil; structure with pupil parameters:
-	%		- sPupil.dblRoundness
-	%		- sPupil.dblEccentricity
-	%		- sPupil.vecCentroid
-	%		- sPupil.dblMajAx
-	%		- sPupil.dblMinAx
-	%		- sPupil.dblOri
+	%		sPupil.vecCentroid;			center in pixel coordinates
+	%		sPupil.dblRadius;			radius in pixels
+	%		sPupil.dblEdgeHardness;		0 if uniform (no edge), 1 if mask drops from 1 to 0 at exactly the fitted boundary
+	%		sPupil.dblMeanPupilLum;		average pupil area intensity
+	%		sPupil.dblSdPupilLum;		sd of pupil area intensity
+	%		sPupil.dblApproxConfidence; confidence of approximated pupil parameters
+	%		sPupil.dblApproxRoundness;	approximated pupil roundness
+	%		sPupil.vecApproxCentroid;	approximated pupil centroid
+	%		sPupil.dblApproxRadius;		approximated pupil radius
+	%		
 	%	- imPupil; 2D 
 	%	- imReflection; 2D reflection mask
 	%	- imBW;
@@ -49,11 +53,13 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%detect reflection; dilate area and ignore for fit later on
 	imReflection = gMatVid > sglReflT;
 	imReflection = gather(imdilate(imReflection,objSE));
+	if sET.boolInvertImage
+		gMatVid = -(gMatVid - max(gMatVid));
+	end
 	if nargout > 4
 		imGrey = gather(gMatVid);
 		imGrey(imReflection) = 0;
 	end
-	
 	
 	%% get pupil estimate at different thresholds
 	vecImSize = size(gMatVid);
@@ -94,7 +100,11 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	
 	%% fit with circle
 	%turn BW image into double with slight gradient
-	matDbl = double(gather(imfilt(gpuArray(double(imBW)),gMatFilt)));
+	if sET.boolUseGPU
+		matDbl = double(gather(imfilt(gpuArray(double(imBW)),gMatFilt)));
+	else
+		matDbl = double(imfilt(double(imBW),gMatFilt));
+	end
 	%matDbl = double(imBW);
 	%for fitting, impose ridge (L2) regularization for x&y location and radius
 	%	(all three relative to initial approximate pupil estimate

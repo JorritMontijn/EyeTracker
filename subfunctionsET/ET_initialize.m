@@ -1,6 +1,6 @@
 function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	%OT_initialize initializes all fields when data paths are set
-	
+	global objCam
 	%% initialize camera
 	%set parameters
 	intTriggerType = 1;
@@ -20,7 +20,14 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	objVid = eval(sChooseCam.VideoInputConstructor);%videoinput('gentl', 1)
 	
 	%get cam properties
-	dblRealFrameRate = objCam.DeviceProperties.ResultingFrameRate;
+	if isprop(objCam.DeviceProperties,'ResultingFrameRate')
+		dblRealFrameRate = objCam.DeviceProperties.ResultingFrameRate;
+	else
+		dblRealFrameRate = objCam.DeviceProperties.FrameRate;
+	end
+	if ischar(dblRealFrameRate)
+		dblRealFrameRate = str2double(dblRealFrameRate);
+	end
 	
 	%set trigger mode
 	if intTriggerType == 1
@@ -54,6 +61,19 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	sET.objVid = objVid;
 	sET.dblRealFrameRate = dblRealFrameRate;
 	
+	%% check GPU
+	try
+		gpuArray(true);
+		boolUseGPU = true;
+		objGPU = gpuDevice(1);
+		strGPU = ['Using GPU-filtering on ' objGPU.Name];
+	catch
+		boolUseGPU = false;
+		warning([mfilename ':CUDA_Error'],'Could not use gpuDevice; GPU-acceleration is disabled')
+		strGPU = 'CUDA error: could not use gpuDevice!';
+	end
+	sET.boolUseGPU = boolUseGPU;
+	
     %% set default output
     sET.strDirDataOut = strcat('C:\_Data\Exp',getDate());
     
@@ -83,9 +103,11 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	set(sEyeFig.ptrEditReflectLum,'String',num2str(sET.dblThreshReflect));
 	set(sEyeFig.ptrEditPupilLum,'String',num2str(sET.dblThreshPupil));
 	set(sEyeFig.ptrEditSyncLum,'String',num2str(sET.dblThreshSync));
+	set(sEyeFig.ptrButtonInvertPupilThreshold,'Value',sET.boolInvertImage);
+	
 	
 	%% finalize and set msg
-	cellText = {'Eye Tracker initialized!'};
+	cellText = {'Eye Tracker initialized!',strGPU};
 	ET_updateTextInformation(cellText);
 end
 
