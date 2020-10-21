@@ -52,9 +52,13 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	end
 	%detect reflection; dilate area and ignore for fit later on
 	imReflection = gMatVid > sglReflT;
-	imReflection = gather(imdilate(imReflection,objSE));
+	imReflection = logical(gather(imdilate(imReflection,objSE)));
 	if sET.boolInvertImage
-		gMatVid = -(gMatVid - max(gMatVid));
+		if all(imReflection(:))
+			imReflection = false;
+		end
+		gMatVid = -(gMatVid - max(flat(gMatVid(~imReflection))));
+		gMatVid(gMatVid<0) = 255;
 	end
 	if nargout > 4
 		imGrey = gather(gMatVid);
@@ -114,9 +118,13 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		vecCentroid = vecApproxCentroid;
 		dblRadius = dblApproxRadius;
 		dblEdgeHardness = 0;
-		imPupil = 0*imReflection;
+		imPupil = false.*imReflection;
 	end
+	imPupil = logical(imPupil);
 	%retrieve original brightness of fitted area
+	if all(~imPupil(:))
+		imPupil(1,1) = true;
+	end
 	vecPixVals = flat(gMatVid(imPupil));
 	dblMeanPupilLum = gather(mean(vecPixVals));
 	dblSdPupilLum = gather(std(vecPixVals));
