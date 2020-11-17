@@ -40,6 +40,9 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	if ~exist('vecPupilT','var') || isempty(vecPupilT)
 		vecPupilT = sglPupilT;
 	end
+	if ~exist('sET','var')
+		sET.boolUseGPU = true;
+	end
 	
 	%% perform pupil detection
 	%move to GPU and rescale
@@ -53,7 +56,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%detect reflection; dilate area and ignore for fit later on
 	imReflection = gMatVid > sglReflT;
 	imReflection = logical(gather(imdilate(imReflection,objSE)));
-	if sET.boolInvertImage
+	if isfield(sET,'boolInvertImage') && sET.boolInvertImage
 		if all(imReflection(:))
 			imReflection = false;
 		end
@@ -104,7 +107,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	
 	%% fit with circle
 	%turn BW image into double with slight gradient
-	if sET.boolUseGPU
+	if isfield(sET,'boolInvertImage') && sET.boolUseGPU
 		matDbl = double(gather(imfilt(gpuArray(double(imBW)),gMatFilt)));
 	else
 		matDbl = double(imfilt(double(imBW),gMatFilt));
