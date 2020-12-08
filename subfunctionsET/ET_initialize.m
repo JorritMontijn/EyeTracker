@@ -49,10 +49,20 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	
 	%set disk logging to videowriter
 	objVid.LoggingMode = 'memory';
-	
 	%video size
-	intMaxX = objCam.ROI(3); %video size x
-	intMaxY = objCam.ROI(4); %video size y
+	sET.intOrigX = objCam.ROI(3); %video size x
+	sET.intOrigY = objCam.ROI(4); %video size y
+		
+	%check if we rotate the image
+	if sET.boolRotateImage
+		%video size
+		intMaxX = sET.intOrigY;
+		intMaxY = sET.intOrigX;
+	else
+		%video size
+		intMaxX = sET.intOrigX;
+		intMaxY = sET.intOrigY;
+	end
 	%assign to global
 	sET.intMaxX = intMaxX;
 	sET.intMaxY = intMaxY;
@@ -104,6 +114,7 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	set(sEyeFig.ptrEditPupilLum,'String',num2str(sET.dblThreshPupil));
 	set(sEyeFig.ptrEditSyncLum,'String',num2str(sET.dblThreshSync));
 	set(sEyeFig.ptrButtonInvertPupilThreshold,'Value',sET.boolInvertImage);
+	set(sEyeFig.ptrButtonRotateImage,'Value',sET.boolRotateImage);
 	
 	
 	%% finalize and set msg

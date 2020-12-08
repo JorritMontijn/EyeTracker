@@ -22,6 +22,10 @@ function varargout = runEyeTracker(varargin)
 	%	-Can now use cameras that have no "RealFrameRate" property
 	%	-To do: add selectable pupil range, e.g. -2 ... +1 around base lum
 	%	-To do: fix sync lum sliders?
+	%Version 2.1 [2020-12-08] by JM
+	%	Minor update:
+	%	-Added 90-degree rotation button
+	%	-Fixed sync lum sliders
 	
 	%set tags
 	%#ok<*INUSL>
@@ -137,7 +141,7 @@ function ptrSliderSyncROIStartLocX_Callback(hObject, eventdata, handles) %#ok<DE
 	dblNewLocFrac = (dblVal-dblMin) / (dblMax-dblMin);
 	intNewStart = round(dblNewLocFrac*vecMax(intDim));
 	intOldStart = sET.vecRectSync(intDim);
-	sET.vecRectSync([intDim intDim+2]) = [intNewStart (sET.vecRectSync(intDim+2)-intOldStart + intNewStart)];
+	sET.vecRectSync([intDim intDim+2]) = [intNewStart (sET.vecRectSync(intDim+2)+intOldStart - intNewStart)];
 end
 function ptrSliderSyncROIStartLocY_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% get global
@@ -157,7 +161,7 @@ function ptrSliderSyncROIStartLocY_Callback(hObject, eventdata, handles) %#ok<DE
 	dblNewLocFrac = (dblVal-dblMin) / (dblMax-dblMin);
 	intNewStart = round(dblNewLocFrac*vecMax(intDim));
 	intOldStart = sET.vecRectSync(intDim);
-	sET.vecRectSync([intDim intDim+2]) = [intNewStart (sET.vecRectSync(intDim+2)-intOldStart + intNewStart)];
+	sET.vecRectSync([intDim intDim+2]) = [intNewStart (sET.vecRectSync(intDim+2)+intOldStart - intNewStart)];
 end
 function ptrSliderSyncROIStopLocX_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% get global
@@ -196,7 +200,7 @@ function ptrSliderSyncROIStopLocY_Callback(hObject, eventdata, handles) %#ok<DEF
 	dblNewLocFrac = (dblVal-dblMin) / (dblMax-dblMin);
 	intNewStop = round(dblNewLocFrac*vecMax(intDim)-sET.vecRectSync(intDim));
 	sET.vecRectSync(intDim+2) = intNewStop;
-    
+	
 end
 %% pupil ROI
 function ptrSliderPupilROIStartLocX_Callback(hObject, eventdata, handles) %#ok<DEFNU>
@@ -218,7 +222,7 @@ function ptrSliderPupilROIStartLocX_Callback(hObject, eventdata, handles) %#ok<D
 	intNewStart = round(dblNewLocFrac*vecMax(intDim));
 	intOldStart = sET.vecRectROI(intDim);
 	sET.vecRectROI([intDim intDim+2]) = [intNewStart (sET.vecRectROI(intDim+2)+intOldStart - intNewStart)];
-
+	
 end
 function ptrSliderPupilROIStartLocY_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% get global
@@ -293,20 +297,20 @@ function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU
 	% get file location
 	%switch path
 	try
-        if ~exist(sET.strDirDataOut,'dir')
-            mkdir(sET.strDirDataOut);
-        end
+		if ~exist(sET.strDirDataOut,'dir')
+			mkdir(sET.strDirDataOut);
+		end
 		oldPath = cd(sET.strDirDataOut);
 	catch
 		oldPath = cd();
 	end
-
+	
 	%get file
 	[strRecFile, strRecPath] = uiputfile(cellVidExtensions{intUseFormat}, sprintf('Save Video As (*.%s)',cellVidExtensions{intUseFormat}),strcat('EyeTrackingRaw',getDate,'_R'));
 	
 	%back to old path
 	cd(oldPath);
-
+	
 	%check if output is okay
 	if isempty(strRecFile) || ~ischar(strRecFile)
 		return;
@@ -352,7 +356,7 @@ function ptrEditBlurWidth_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% set value
 	%get value
 	dblVal = str2double(get(hObject,'String'));
-    dblVal = max([min([dblVal 100]) 0]); %range: 0-100
+	dblVal = max([min([dblVal 100]) 0]); %range: 0-100
 	%set to within bounds
 	sET.dblGaussWidth = roundi(dblVal,1);
 	%re-assign, just in case
@@ -498,7 +502,7 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles) %#ok<DEFNU>
 		delete(sEyeFig.ptrMainGUI);
 	end
 end
-function ptrPanelSwitchRecordVideo_SelectionChangedFcn(hObject, eventdata, handles) 
+function ptrPanelSwitchRecordVideo_SelectionChangedFcn(hObject, eventdata, handles)
 	%% globals
 	global sET
 	global sEyeFig
@@ -577,6 +581,28 @@ function ptrButtonInvertPupilThreshold_Callback(hObject, eventdata, handles) %#o
 	
 	%% set inversion
 	sET.boolInvertImage = hObject.Value;
+end
+function ptrButtonRotateImage_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	%% globals
+	global sET
+	
+	%% set rotation
+	sET.boolRotateImage = hObject.Value;
+	
+	%check if we rotate the image
+	if sET.boolRotateImage
+		%video size
+		sET.intMaxX = sET.intOrigY;
+		sET.intMaxY = sET.intOrigX;
+	else
+		%video size
+		sET.intMaxX = sET.intOrigX;
+		sET.intMaxY = sET.intOrigY;
+	end
+	
+	%% swap boxes
+	sET.vecRectSync = sET.vecRectSync([2 1 4 3]);
+	sET.vecRectROI = sET.vecRectROI([2 1 4 3]);
 end
 %% dummies
 function ptrButtonDetectPupilOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>

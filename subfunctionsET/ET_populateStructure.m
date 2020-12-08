@@ -47,4 +47,5 @@ function sET = ET_defaultValues()
 	sET.dblThreshSync = 18;%threshold for sync pulse
 	sET.intSubSample = 1;%subsample factor
 	sET.boolInvertImage = 0;%invert image for albinos
+	sET.boolRotateImage = 1;%rotate image by 90 degrees
 end

@@ -152,6 +152,9 @@ function ET_main(varargin)
 				vecSubY = 1:sET.intSubSample:size(matVidRaw,1);
 				vecSubX = 1:sET.intSubSample:size(matVidRaw,2);
 				matVidRaw = matVidRaw(vecSubY,vecSubX,:,:);
+				if sET.boolRotateImage
+					matVidRaw = permute(matVidRaw,[2 1 3:ndims(matVidRaw)]);
+				end
 				
 				%% flush to disk
 				if boolRecording && boolSaveToDisk
@@ -216,7 +219,7 @@ function ET_main(varargin)
 					plot(sEyeFig.ptrAxesMainVideo,vecPlotRectX,vecPlotRectY,'b--');
 					dblX = vecCentroid(1) + vecPlotRectX(1);
 					dblY = vecCentroid(2) + vecPlotRectY(1);
-					ellipse(sEyeFig.ptrAxesMainVideo,dblX,dblY,dblMajAx/2,dblMinAx/2,deg2rad(dblOri)-pi/4,'Color','r','LineStyle','--');
+					ellipse(sEyeFig.ptrAxesMainVideo,dblX,dblY,dblMajAx,dblMinAx,deg2rad(dblOri)-pi/4,'Color','r','LineStyle','--');
 					hold(sEyeFig.ptrAxesMainVideo,'off');
 					
 					%closed
