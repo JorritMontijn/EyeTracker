@@ -63,5 +63,19 @@ function ET_stopRecording()
 	%remove target file
 	set(sEyeFig.ptrTextVidOutFile,'String','');
 	set(sEyeFig.ptrTextVidOutPath,'String','');
+	
+	%save sync data as separate file
+	if isfield(sET,'sSyncData')
+		sSyncData=sET.sSyncData;
+		sET = rmfield(sET,{'sSyncData'});
+		
+		%build filename
+		strFile = sET.objVidWriter.Filename;
+		cellFile = strsplit(strFile,'.');
+		strNoExt = strjoin(cellFile(1:(end-1)),'.');
+		strMatFile = strcat(strNoExt,'SyncData.mat');
+		strDataOutPath = sET.objVidWriter.Path;
+		save(strcat(strDataOutPath,filesep,strMatFile),'sSyncData');
+	end
 end
 

@@ -26,6 +26,9 @@ function varargout = runEyeTracker(varargin)
 	%	Minor update:
 	%	-Added 90-degree rotation button
 	%	-Fixed sync lum sliders
+	%Version 2.2 [2021-02-08] by JM
+	%	Major update:
+	%	-Added SpikeGLX timestamp logging
 	
 	%set tags
 	%#ok<*INUSL>
@@ -558,7 +561,7 @@ function ptrPanelSwitchOnlineDetection_SelectionChangedFcn(hObject, eventdata, h
 			if ~isfield(sET,'ptrDataOut')
 				sET.ptrDataOut = fopen(strcat(sET.strDataOutPath,filesep,sET.strDataOutFile),'wt+');
 				%write variable names
-				strData = '"Time","VidFrame","SyncLum","SyncPulse","CenterX","CenterY","MajorAx","MinorAx","Orient","Eccentric","Roundness"';
+				strData = '"Time","VidFrame","SyncLum","SyncPulse","CenterX","CenterY","MajorAx","MinorAx","Orient","Eccentric","Roundness","FrameNI","SecsNI"';
 				strData = strcat(strData,'\n');
 				fprintf(sET.ptrDataOut,strData);
 			else
@@ -604,8 +607,62 @@ function ptrButtonRotateImage_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	sET.vecRectSync = sET.vecRectSync([2 1 4 3]);
 	sET.vecRectROI = sET.vecRectROI([2 1 4 3]);
 end
+
+function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	% hObject    handle to ptrToggleConnectSGL (see GCBO)
+	% eventdata  reserved - to be defined in a future version of MATLAB
+	% handles    structure with handles and user data (see GUIDATA)
+	
+	%% get globals
+	global sEyeFig;
+	global sET;
+	
+	%% set string
+	intConnect = get(hObject,'Value');
+	if intConnect == 1
+		%connect
+		set(sEyeFig.ptrTextConnectedSGL,'String','Connecting','ForegroundColor',[0 0 0]);
+		drawnow;
+		
+		%get host address
+		strHost = get(sEyeFig.ptrEditHostAddress,'String');
+		try
+			%connect
+			sET.hSGL = SpikeGL(strHost);
+			%retrieve name & NI sampling rate
+			sET.intStreamNI = -1;
+			sET.strRecordingNI = GetRunName(sET.hSGL);
+			sET.dblSampFreqNI = GetSampleRate(sET.hSGL, sET.intStreamNI);
+			%success
+			boolSuccess = true;
+		catch
+			sET.hSGL = [];
+			boolSuccess = false;
+		end
+		
+		%set message
+		if boolSuccess
+			%connected
+			set(sEyeFig.ptrTextConnectedSGL,'String','Linked','ForegroundColor',[0 0 0]);
+			set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
+			ET_updateTextInformation('Connection to SpikeGLX established');
+		else
+			%connection failed
+			set(hObject,'Value',0);
+			set(sEyeFig.ptrTextRecordingNI,'String','...','ForegroundColor',[0 0 0]);
+			set(sEyeFig.ptrTextConnectedSGL,'String','Available','ForegroundColor',[0 0 0]);
+			ET_updateTextInformation('Connection failed; check host address');
+		end
+	else
+		%disconnect
+		ET_updateTextInformation('Disconnected from SpikeGLX');
+		set(sEyeFig.ptrTextConnectedSGL,'String','Available','ForegroundColor',[0 0 0]);
+	end
+end
 %% dummies
 function ptrButtonDetectPupilOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonDetectPupilOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonRecordVidOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonRecordVidOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
+function ptrEditHostAddress_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
+function ptrEditHostAddress_CreateFcn(hObject, eventdata, handles),end %#ok<DEFNU>

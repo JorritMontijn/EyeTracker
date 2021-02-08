@@ -1,10 +1,9 @@
 function ET_updateTextInformation(varargin)
 	%update cell information window
 	global sEyeFig;
-	global sET;
 	
 	%check if data has been loaded
-	if isempty(sEyeFig) || (isempty(sET) && nargin == 0)
+	if isempty(sEyeFig)
 		return;
 	else
 		try
@@ -20,7 +19,11 @@ function ET_updateTextInformation(varargin)
 	else
 		cellText = {'...'};
 	end
-	if numel(cellText) > 6,cellText(7:end) = [];end
-	set(sEyeFig.ptrTextInformation, 'string', cellText );
+	if ~iscell(cellText)
+		cellText = {cellText};
+	end
+	cellNewText = [cellOldText(:); cellText(:)];
+	if numel(cellNewText) > 2,cellNewText(1:(end-2)) = [];end
+	set(sEyeFig.ptrTextInformation, 'string', cellNewText );
 	drawnow;
 end

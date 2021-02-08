@@ -48,4 +48,6 @@ function sET = ET_defaultValues()
 	sET.intSubSample = 1;%subsample factor
 	sET.boolInvertImage = 0;%invert image for albinos
 	sET.boolRotateImage = 1;%rotate image by 90 degrees
+	sET.strHostSGL = '192.87.10.238'; %default host address
+	sET.hSGL = []; %SGL object placeholder
 end

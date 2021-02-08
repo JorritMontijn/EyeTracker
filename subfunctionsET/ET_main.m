@@ -142,7 +142,7 @@ function ET_main(varargin)
 			
 			%% check new frames
 			if objVid.FramesAvailable >= sET.intTempAvg
-				%% get data
+				%% get video data
 				warning('off','imaq:getdata:infFramesPerTrigger');
 				intFrAvail = objVid.FramesAvailable;
 				[matVidRaw, vecTime, sMetadata] = getdata(objVid);
@@ -154,6 +154,32 @@ function ET_main(varargin)
 				matVidRaw = matVidRaw(vecSubY,vecSubX,:,:);
 				if sET.boolRotateImage
 					matVidRaw = permute(matVidRaw,[2 1 3:ndims(matVidRaw)]);
+				end
+				
+				%% get spikeGLX timestamp
+				if ~isempty(sET.hSGL)
+					intCurCountNI = GetScanCount(sET.hSGL, sET.intStreamNI);
+					dblEphysTimeNI = intCurCountNI/sET.dblSampFreqNI;
+					
+					%create sync matrix
+					if ~isfield(sET,'sSyncData')
+						sET.sSyncData = struct;
+						sET.sSyncData.MatrixEntries = 'matSyncData([TimeVid FrameVid TimeNI FrameNI],t)';
+						sET.sSyncData.intSyncCounter = 1;
+						sET.sSyncData.matSyncData = nan(4,10000);
+					end
+					
+					%enlarge matrix
+					if sET.sSyncData.intSyncCounter > size(sET.sSyncData.matSyncData,2)
+						sET.sSyncData.matSyncData = cat(2,sET.sSyncData.matSyncData,nan(size(sET.sSyncData.matSyncData,1),10000));
+					end
+					%save data & update counter
+					sET.sSyncData.matSyncData(:,sET.sSyncData.intSyncCounter) = [vecTime(end) sET.objVidWriter.FrameCount dblEphysTimeNI intCurCountNI];
+					sET.sSyncData.intSyncCounter = sET.sSyncData.intSyncCounter + 1;
+					
+				else
+					intCurCountNI = 0;
+					dblEphysTimeNI = 0;
 				end
 				
 				%% flush to disk
@@ -254,13 +280,13 @@ function ET_main(varargin)
 				set(sEyeFig.ptrTextPupilRoundness,'String',sprintf('%.3f',dblEdgeHardness));
 				set(sEyeFig.ptrTextSyncLum,'String',sprintf('%.1f',dblSyncLum));
 				set(sEyeFig.ptrTextSyncPulseCount,'String',sprintf('%.0f',sET.intSyncPulse));
-				
+				set(sEyeFig.ptrTextNITime,'String',sprintf('%.3f',dblEphysTimeNI));
 				
 				%% output pupil properties
 				if sET.boolRecording && boolDetectPupil && isfield(sET,'ptrDataOut')
 					%prepare data line
-					%Time,VidFrame,SyncLum,SyncPulse,CenterX,CenterY,MajorAx,MinorAx,Orient,Eccentric,Roundness
-					vecData = [vecTime(end) sET.objVidWriter.FrameCount dblSyncLum sET.intSyncPulse vecCentroid(1) vecCentroid(2) dblMajAx dblMinAx dblOri dblEccentricity dblRoundness];
+					%Time,VidFrame,SyncLum,SyncPulse,CenterX,CenterY,MajorAx,MinorAx,Orient,Eccentric,Roundness,FrameNI,SecsNI
+					vecData = [vecTime(end) sET.objVidWriter.FrameCount dblSyncLum sET.intSyncPulse vecCentroid(1) vecCentroid(2) dblMajAx dblMinAx dblOri dblEccentricity dblRoundness intCurCountNI dblEphysTimeNI];
 					strData = sprintf('"%.3f",',vecData);
 					strData = strcat(strData(1:(end-1)),'\n');
 					%write to file
