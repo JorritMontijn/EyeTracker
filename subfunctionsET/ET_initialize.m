@@ -116,6 +116,8 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	set(sEyeFig.ptrButtonInvertPupilThreshold,'Value',sET.boolInvertImage);
 	set(sEyeFig.ptrButtonRotateImage,'Value',sET.boolRotateImage);
 	
+	%SGL host address
+	set(sEyeFig.ptrEditHostAddress,'String',sET.strHostSGL);
 	
 	%% finalize and set msg
 	cellText = {'Eye Tracker initialized!',strGPU};

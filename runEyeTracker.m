@@ -29,6 +29,9 @@ function varargout = runEyeTracker(varargin)
 	%Version 2.2 [2021-02-08] by JM
 	%	Major update:
 	%	-Added SpikeGLX timestamp logging
+	%Version 2.2.1 [2021-02-10] by JM
+	%	Several bug fixes
+	%	- to do: manual gain control of camera
 	
 	%set tags
 	%#ok<*INUSL>
@@ -445,6 +448,7 @@ function ptrToggleRecord_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 			set(sEyeFig.ptrTextRecording,'String','Recording','ForegroundColor',[0 0.8 0]);
 			%lock gui
 			ET_lock(handles);
+			set(sEyeFig.ptrToggleConnectSGL,'Enable','off');
 			sET.boolRecording = true;
 			sET.intSyncPulse = 0; %reset sync pulses
 			sET.dblRecStart = str2double(get(sEyeFig.ptrTextVidTime,'String')); %reset recording start
@@ -454,6 +458,7 @@ function ptrToggleRecord_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	else
 		set(sEyeFig.ptrTextRecording,'String','Idle','ForegroundColor',[0 0 0]);
 		ET_unlock(handles);
+		set(sEyeFig.ptrToggleConnectSGL,'Enable','on');
 		sET.boolRecording = false;
 		ET_stopRecording();
 	end
@@ -593,7 +598,7 @@ function ptrButtonRotateImage_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	sET.boolRotateImage = hObject.Value;
 	
 	%check if we rotate the image
-	if sET.boolRotateImage
+	if sET.boolRotateImage == 1
 		%video size
 		sET.intMaxX = sET.intOrigY;
 		sET.intMaxY = sET.intOrigX;
@@ -659,10 +664,15 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 		set(sEyeFig.ptrTextConnectedSGL,'String','Available','ForegroundColor',[0 0 0]);
 	end
 end
+function ptrEditHostAddress_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	%update structure
+	global sET;
+	sET.strHostSGL = get(hObject,'String');
+end
 %% dummies
 function ptrButtonDetectPupilOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonDetectPupilOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonRecordVidOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonRecordVidOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
-function ptrEditHostAddress_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
+
 function ptrEditHostAddress_CreateFcn(hObject, eventdata, handles),end %#ok<DEFNU>
