@@ -18,7 +18,16 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	sChooseCam = imaqhwinfo(sDevices.InstalledAdaptors{1},1);
 	objCam = eval(sChooseCam.VideoDeviceConstructor);%imaq.VideoDevice('gentl', 1)
 	objVid = eval(sChooseCam.VideoInputConstructor);%videoinput('gentl', 1)
+	objProps=objCam.DeviceProperties;
 	
+	%set properties
+	objProps.AutoGainLowerLimit = 1.0052000000000001;
+	objProps.AutoGainUpperLimit = 1.0052000000000001;
+	objProps.Gain = 29.904700000000002;
+	objProps.Gamma = 1;
+	%objProps.BlackLevel = 6.1094; %what does this do?
+	objVid.ROIPosition = [0 0 658 494];
+
 	%get cam properties
 	if isprop(objCam.DeviceProperties,'ResultingFrameRate')
 		dblRealFrameRate = objCam.DeviceProperties.ResultingFrameRate;

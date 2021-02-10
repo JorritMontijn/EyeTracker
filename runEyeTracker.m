@@ -31,7 +31,9 @@ function varargout = runEyeTracker(varargin)
 	%	-Added SpikeGLX timestamp logging
 	%Version 2.2.1 [2021-02-10] by JM
 	%	Several bug fixes
-	%	- to do: manual gain control of camera
+	%	- to do: manual gain: objProps.Gain = 29.904700000000002;
+	%	- to do: manual gamma: objProps.Gamma = 1;
+	%	- to do: manual roi: objVid.ROIPosition = [0 0 658 494];
 	
 	%set tags
 	%#ok<*INUSL>
@@ -108,12 +110,12 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	[sEyeFig,sET] = ET_initialize(sEyeFig,sET);
 	
 	% set timer to query whether there is a data update every second
-	objTimer = timer();
-	objTimer.Period = 1;
-	objTimer.StartDelay = 1;
-	objTimer.ExecutionMode = 'fixedSpacing';
-	objTimer.TimerFcn = @ET_timer;
-	sEyeFig.objTimer = objTimer;
+	%objTimer = timer();
+	%objTimer.Period = 1;
+	%objTimer.StartDelay = 1;
+	%objTimer.ExecutionMode = 'fixedSpacing';
+	%objTimer.TimerFcn = @ET_timer;
+	%sEyeFig.objTimer = objTimer;
 	%start(objTimer);
 	
 	% Update handles structure
