@@ -34,6 +34,7 @@ function varargout = runEyeTracker(varargin)
 	%	- to do: manual gain: objProps.Gain = 29.904700000000002;
 	%	- to do: manual gamma: objProps.Gamma = 1;
 	%	- to do: manual roi: objVid.ROIPosition = [0 0 658 494];
+	%	- to do: add NaN removal of sync file 
 	
 	%set tags
 	%#ok<*INUSL>
