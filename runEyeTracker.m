@@ -354,7 +354,7 @@ function ptrEditTempAvg_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%get value
 	intVal = round(str2double(get(hObject,'String')));
 	%set to within bounds
-	sET.intTempAvg = max([min([intVal 10]) 1]); %range: 1-10
+	sET.intTempAvg = max([min([intVal 100]) 1]); %range: 1-10
 	%re-assign, just in case
 	set(hObject,'String',num2str(sET.intTempAvg));
 end

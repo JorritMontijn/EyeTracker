@@ -65,7 +65,7 @@ function ET_main(varargin)
 			end
 			%temp averaging
 			if intTempAvg ~= sET.intTempAvg
-				sET.intTempAvg = max([min([sET.intTempAvg 10]) 1]); %range: 1-10
+				sET.intTempAvg = max([min([sET.intTempAvg inf]) 1]); %range: 1-10
 				intTempAvg = sET.intTempAvg;
 			end
 			%Pupil ROI: [x-from-left y-from-top x-width y-height]

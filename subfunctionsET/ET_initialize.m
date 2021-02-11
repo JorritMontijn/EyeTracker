@@ -21,10 +21,8 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	objProps=objCam.DeviceProperties;
 	
 	%set properties
-	objProps.AutoGainLowerLimit = 1.0052000000000001;
-	objProps.AutoGainUpperLimit = 1.0052000000000001;
 	objProps.Gain = 29.904700000000002;
-	objProps.Gamma = 1;
+	objProps.Gamma = 0.4;
 	%objProps.BlackLevel = 6.1094; %what does this do?
 	objVid.ROIPosition = [0 0 658 494];
 
