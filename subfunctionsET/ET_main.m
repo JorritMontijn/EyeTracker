@@ -298,6 +298,25 @@ function ET_main(varargin)
 					sET.IsInitialized = true;
 					ET_unlock(sEyeFig);
 				end
+				
+				%% check for auto-run
+				if ~sET.boolRecording && ~isempty(sET.hSGL) && sET.boolAutoStart
+					%update run name
+					strOldName = sET.strRecordingNI;
+					strNewName = GetRunName(sET.hSGL);
+					if ~strcmp(strOldName,strNewName)
+						sET.strRecordingNI = GetRunName(sET.hSGL);
+						set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
+					end
+					
+					%check if recording has started
+					if IsSaving(sET.hSGL)
+						vecTime = fix(clock);
+						strTime = sprintf('%02d:%02d:%02d',vecTime(4:6));
+						ET_updateTextInformation(sprintf('Auto-start with SpikeGLX at [%s]',strTime));
+						ET_startRecording();
+					end
+				end
 			end
 			
 			%pause

@@ -31,6 +31,9 @@ function ET_stopRecording()
 	sET2.intSubSample = sET.intSubSample;
 	sET2.boolInvertImage = sET.boolInvertImage;
 	sET2.boolRotateImage = sET.boolRotateImage;
+	sET2.boolAutoStart = sET.boolAutoStart;
+	sET2.dblGain = sET.dblGain;
+	sET2.dblGamma = sET.dblGamma;
 	sET2.strHostSGL = sET.strHostSGL;
 	
 	%save ini
@@ -69,9 +72,13 @@ function ET_stopRecording()
 	
 	%save sync data as separate file
 	if isfield(sET,'sSyncData')
+		%get data
 		sSyncData=sET.sSyncData;
 		sET = rmfield(sET,{'sSyncData'});
 		
+		%remove nans
+		sSyncData.matSyncData(:,sSyncData.intSyncCounter:end) = [];
+					
 		%build filename
 		strFile = sET.objVidWriter.Filename;
 		cellFile = strsplit(strFile,'.');

@@ -34,7 +34,14 @@ function varargout = runEyeTracker(varargin)
 	%	- to do: manual gain: objProps.Gain = 29.904700000000002;
 	%	- to do: manual gamma: objProps.Gamma = 1;
 	%	- to do: manual roi: objVid.ROIPosition = [0 0 658 494];
-	%	- to do: add NaN removal of sync file 
+	%	- to do: add NaN removal of sync file
+	%	- to do: automatically start recording when spikeglx records
+	%Version 2.3 [2021-02-15] by JM
+	%	Added features: 
+	%	- gain control
+	%	- gamma control
+	%	- NaN removal
+	%	- auto-start
 	
 	%set tags
 	%#ok<*INUSL>
@@ -121,6 +128,9 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	
 	% Update handles structure
 	guidata(hObject, handles);
+	
+	%ask for file output
+	ptrButtonSetVidOutFile_Callback();
 	
 	%run
 	ET_main();
@@ -447,14 +457,8 @@ function ptrToggleRecord_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	if intRecording == 1
 		%check if file has been defined
 		if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Filename') && ~isempty(sET.objVidWriter.Filename)
-			%set recording text
-			set(sEyeFig.ptrTextRecording,'String','Recording','ForegroundColor',[0 0.8 0]);
-			%lock gui
-			ET_lock(handles);
-			set(sEyeFig.ptrToggleConnectSGL,'Enable','off');
-			sET.boolRecording = true;
-			sET.intSyncPulse = 0; %reset sync pulses
-			sET.dblRecStart = str2double(get(sEyeFig.ptrTextVidTime,'String')); %reset recording start
+			%start recording
+			ET_startRecording();
 		else
 			set(hObject,'Value',0);
 		end
@@ -615,7 +619,6 @@ function ptrButtonRotateImage_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	sET.vecRectSync = sET.vecRectSync([2 1 4 3]);
 	sET.vecRectROI = sET.vecRectROI([2 1 4 3]);
 end
-
 function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	% hObject    handle to ptrToggleConnectSGL (see GCBO)
 	% eventdata  reserved - to be defined in a future version of MATLAB
@@ -629,7 +632,7 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	intConnect = get(hObject,'Value');
 	if intConnect == 1
 		%connect
-		set(sEyeFig.ptrTextConnectedSGL,'String','Connecting','ForegroundColor',[0 0 0]);
+		set(sEyeFig.ptrTextConnectedSGL,'String','Connecting','ForegroundColor',[0.3 0.3 0]);
 		drawnow;
 		
 		%get host address
@@ -651,20 +654,20 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 		%set message
 		if boolSuccess
 			%connected
-			set(sEyeFig.ptrTextConnectedSGL,'String','Linked','ForegroundColor',[0 0 0]);
+			set(sEyeFig.ptrTextConnectedSGL,'String','Linked','ForegroundColor',[0 0.8 0]);
 			set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
 			ET_updateTextInformation('Connection to SpikeGLX established');
 		else
 			%connection failed
 			set(hObject,'Value',0);
 			set(sEyeFig.ptrTextRecordingNI,'String','...','ForegroundColor',[0 0 0]);
-			set(sEyeFig.ptrTextConnectedSGL,'String','Available','ForegroundColor',[0 0 0]);
+			set(sEyeFig.ptrTextConnectedSGL,'String','Idle','ForegroundColor',[0 0 0]);
 			ET_updateTextInformation('Connection failed; check host address');
 		end
 	else
 		%disconnect
 		ET_updateTextInformation('Disconnected from SpikeGLX');
-		set(sEyeFig.ptrTextConnectedSGL,'String','Available','ForegroundColor',[0 0 0]);
+		set(sEyeFig.ptrTextConnectedSGL,'String','Idle','ForegroundColor',[0 0 0]);
 	end
 end
 function ptrEditHostAddress_Callback(hObject, eventdata, handles) %#ok<DEFNU>
@@ -672,6 +675,14 @@ function ptrEditHostAddress_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	global sET;
 	sET.strHostSGL = get(hObject,'String');
 end
+function ptrButtonAutoStart_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	%% globals
+	global sET
+	
+	%% set rotation
+	sET.boolAutoStart = hObject.Value;
+end
+
 %% dummies
 function ptrButtonDetectPupilOn_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 function ptrButtonDetectPupilOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
@@ -679,3 +690,43 @@ function ptrButtonRecordVidOn_Callback(hObject, eventdata, handles),end %#ok<DEF
 function ptrButtonRecordVidOff_Callback(hObject, eventdata, handles),end %#ok<DEFNU>
 
 function ptrEditHostAddress_CreateFcn(hObject, eventdata, handles),end %#ok<DEFNU>
+function ptrEditGamma_CreateFcn(hObject, eventdata, handles),end %#ok<DEFNU>
+function ptrEditGain_CreateFcn(hObject, eventdata, handles),end %#ok<DEFNU>
+
+
+
+%% gain
+function ptrEditGain_Callback(hObject, eventdata, handles)
+	%update gain
+	ET_setGain(str2double(get(hObject,'String')));
+end
+function ptrButtonGainPlus_Callback(hObject, eventdata, handles)
+	%globals
+	global sET;
+	%update gain
+	ET_setGain(sET.dblGain+0.5);
+end
+function ptrButtonGainMinus_Callback(hObject, eventdata, handles)
+	%globals
+	global sET;
+	%update gain
+	ET_setGain(sET.dblGain-0.5);
+end
+
+%% gamma
+function ptrEditGamma_Callback(hObject, eventdata, handles)
+	%update gamma
+	ET_setGamma(str2double(get(hObject,'String')));
+end
+function ptrButtonGammaPlus_Callback(hObject, eventdata, handles)
+	%globals
+	global sET;
+	%update gain
+	ET_setGamma(sET.dblGamma+0.05);
+end
+function ptrButtonGammaMinus_Callback(hObject, eventdata, handles)
+	%globals
+	global sET;
+	%update gain
+	ET_setGamma(sET.dblGamma-0.05);
+end

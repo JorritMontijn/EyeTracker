@@ -18,13 +18,9 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	sChooseCam = imaqhwinfo(sDevices.InstalledAdaptors{1},1);
 	objCam = eval(sChooseCam.VideoDeviceConstructor);%imaq.VideoDevice('gentl', 1)
 	objVid = eval(sChooseCam.VideoInputConstructor);%videoinput('gentl', 1)
-	objProps=objCam.DeviceProperties;
 	
-	%set properties
-	objProps.Gain = 29.904700000000002;
-	objProps.Gamma = 0.4;
-	%objProps.BlackLevel = 6.1094; %what does this do?
-	objVid.ROIPosition = [0 0 658 494];
+	%sET.objCam.DeviceProperties.BlackLevel = 6.1094; %what does this do?
+	%objVid.ROIPosition = [0 0 658 494];
 
 	%get cam properties
 	if isprop(objCam.DeviceProperties,'ResultingFrameRate')
@@ -123,8 +119,16 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	set(sEyeFig.ptrButtonInvertPupilThreshold,'Value',sET.boolInvertImage);
 	set(sEyeFig.ptrButtonRotateImage,'Value',sET.boolRotateImage);
 	
-	%SGL host address
+	set(sEyeFig.ptrEditGain,'String',sprintf('%.1f',sET.dblGain));
+	set(sEyeFig.ptrEditGamma,'String',sprintf('%.1f',sET.dblGamma));
+	
+	%SGL host address & auto-start
 	set(sEyeFig.ptrEditHostAddress,'String',sET.strHostSGL);
+	set(sEyeFig.ptrButtonAutoStart,'Value',sET.boolAutoStart);
+	
+	%set camera gain & gamma
+	ET_setGain(sET.dblGain);
+	ET_setGamma(sET.dblGamma);
 	
 	%% finalize and set msg
 	cellText = {'Eye Tracker initialized!',strGPU};
