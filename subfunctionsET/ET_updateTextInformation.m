@@ -23,7 +23,7 @@ function ET_updateTextInformation(varargin)
 		cellText = {cellText};
 	end
 	cellNewText = [cellOldText(:); cellText(:)];
-	intLineNum = 6;
+	intLineNum = 5;
 	if numel(cellNewText) > intLineNum,cellNewText(1:(end-intLineNum)) = [];end
 	set(sEyeFig.ptrTextInformation, 'string', cellNewText );
 	drawnow;

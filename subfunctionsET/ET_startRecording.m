@@ -8,7 +8,7 @@ function ET_startRecording()
 	%set recording text
 	set(sEyeFig.ptrTextRecording,'String','Recording','ForegroundColor',[0 0.8 0]);
 	%lock gui
-	ET_lock(handles);
+	ET_lock(sEyeFig);
 	set(sEyeFig.ptrToggleConnectSGL,'Enable','off');
 	sET.boolRecording = true;
 	sET.intSyncPulse = 0; %reset sync pulses
