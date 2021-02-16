@@ -132,6 +132,10 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	%ask for file output
 	ptrButtonSetVidOutFile_Callback();
 	
+	%connect
+	set(sEyeFig.ptrToggleConnectSGL,'Value',1);
+	ptrToggleConnectSGL_Callback();
+	
 	%run
 	ET_main();
 end
@@ -629,7 +633,7 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	global sET;
 	
 	%% set string
-	intConnect = get(hObject,'Value');
+	intConnect = get(sEyeFig.ptrToggleConnectSGL,'Value');
 	if intConnect == 1
 		%connect
 		set(sEyeFig.ptrTextConnectedSGL,'String','Connecting','ForegroundColor',[0.3 0.3 0]);
@@ -659,7 +663,7 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 			ET_updateTextInformation('Connection to SpikeGLX established');
 		else
 			%connection failed
-			set(hObject,'Value',0);
+			set(sEyeFig.ptrToggleConnectSGL,'Value',0);
 			set(sEyeFig.ptrTextRecordingNI,'String','...','ForegroundColor',[0 0 0]);
 			set(sEyeFig.ptrTextConnectedSGL,'String','Idle','ForegroundColor',[0 0 0]);
 			ET_updateTextInformation('Connection failed; check host address');
