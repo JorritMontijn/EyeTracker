@@ -307,6 +307,8 @@ function ET_main(varargin)
 					if ~strcmp(strOldName,strNewName)
 						sET.strRecordingNI = GetRunName(sET.hSGL);
 						set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
+						set(sEyeFig.ptrToggleRecord,'Value',1);
+						sET.boolAutoStart = false;
 					end
 					
 					%check if recording has started
