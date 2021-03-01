@@ -314,72 +314,9 @@ function ptrSliderPupilROIStopLocY_Callback(hObject, eventdata, handles) %#ok<DE
 	sET.vecRectROI(intDim+2) = intNewStop;
 end
 %% list/edit callbacks
-function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles, strRecFile) %#ok<DEFNU>
-	%% globals
-	global sET;
-	global sEyeFig;
-	
-	%% set video writer
-	%create videowriter object to save video using MPEG-4
-	cellVidFormats = {'Motion JPEG AVI','Motion JPEG 2000','MPEG-4'};
-	cellVidExtensions = {'.avi','.mj2','.mp4'};
-	intUseFormat = 3;
-	
-	% get file location
-	%switch path
-	try
-		if ~exist(sET.strDirDataOut,'dir')
-			mkdir(sET.strDirDataOut);
-		end
-		oldPath = cd(sET.strDirDataOut);
-	catch
-		oldPath = cd();
-	end
-	
-	%get file
-	if exist('strRecFile','var')
-		strRecPath = sET.strDirDataOut;
-		strRecFile = strcat('EyeTrackingRaw',strRecFile);
-		%add extension
-		if ~contains(strRecFile((end-3):end),cellVidExtensions)
-			strRecFile = strcat(strRecFile,cellVidExtensions{intUseFormat});
-		end
-	else
-		[strRecFile, strRecPath] = uiputfile(cellVidExtensions{intUseFormat}, sprintf('Save Video As (*.%s)',cellVidExtensions{intUseFormat}),strcat('EyeTrackingRaw',getDate,'_R'));
-	end
-	
-	%back to old path
-	cd(oldPath);
-	
-	%check if output is okay
-	if isempty(strRecFile) || ~ischar(strRecFile)
-		return;
-	end
-	
-	%check if previous video file exists and close it
-	if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Filename') && ~isempty(sET.objVidWriter.Filename)
-		close(sET.objVidWriter);
-	end
-	
-	%save video writer data
-	objVidWriter = VideoWriter(strcat(strRecPath,strRecFile), cellVidFormats{intUseFormat});
-	objVidWriter.FrameRate = sET.dblRealFrameRate;
-	sET.strRecPath = strRecPath;
-	sET.strRecFile = strRecFile;
-	
-	%switch raw video recording to on
-	ptrPanelSwitchRecordVideo_SelectionChangedFcn('On');
-	ptrPanelSwitchOnlineDetection_SelectionChangedFcn('On');
-	
-	%enable recording button
-	set(sEyeFig.ptrToggleRecord,'Enable','on');
-	
-	%check to enable auto-start
-	ptrButtonAutoStart_Callback;
-	
-	%% update text
-	set(sEyeFig.ptrTextVidOutFile,'String',objVidWriter.Filename);
-	set(sEyeFig.ptrTextVidOutPath,'String',objVidWriter.Path);
+function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	%% use external function
+	ET_setVidOut();
 end
 function ptrEditTempAvg_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% get globals
@@ -543,77 +480,26 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles) %#ok<DEFNU>
 	end
 end
 function ptrPanelSwitchRecordVideo_SelectionChangedFcn(hObject, eventdata, handles)
-	%% globals
-	global sET
-	global sEyeFig
-	
-	%get selected button
+	%% get selected button
 	if ischar(hObject)
 		strSelected = hObject;
 	else
 		strSelected = get(hObject,'String');
 	end
 	
-	%% update switch
-	if strcmpi(strSelected,'On')
-		if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Filename') && ~isempty(sET.objVidWriter.Filename)
-			sET.boolSaveToDisk = true;
-			open(sET.objVidWriter);
-			set(sEyeFig.ptrButtonRecordVidOn,'Value',1);
-		else
-			set(sEyeFig.ptrButtonRecordVidOff,'Value',1);
-		end
-	elseif strcmpi(strSelected,'Off')
-		sET.boolSaveToDisk = false;
-		set(sEyeFig.ptrButtonRecordVidOff,'Value',1);
-		close(sET.objVidWriter);
-	end
+	%% run external function
+	ET_SwitchRecordVideo(strSelected);
 end
 function ptrPanelSwitchOnlineDetection_SelectionChangedFcn(hObject, eventdata, handles)
-	%% globals
-	global sET;
-	global sEyeFig;
-	
-	%get selected button
+	%% get selected button
 	if ischar(hObject)
 		strSelected = hObject;
 	else
 		strSelected = get(hObject,'String');
 	end
 	
-	%% update switch
-	if strcmpi(strSelected,'On')
-		set(sEyeFig.ptrButtonDetectPupilOn,'Value',1);
-		sET.boolDetectPupil = true;
-		%check if an output file has been defined
-		if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Filename') && ~isempty(sET.objVidWriter.Filename)
-			%build filename
-			strFile = sET.objVidWriter.Filename;
-			cellFile = strsplit(strFile,'.');
-			strNoExt = strjoin(cellFile(1:(end-1)),'.');
-			sET.strDataOutFile = strcat(strNoExt,'.csv');
-			sET.strDataOutPath = sET.objVidWriter.Path;
-			
-			%open file
-			if ~isfield(sET,'ptrDataOut')
-				sET.ptrDataOut = fopen(strcat(sET.strDataOutPath,filesep,sET.strDataOutFile),'wt+');
-				%write variable names
-				strData = '"Time","VidFrame","SyncLum","SyncPulse","CenterX","CenterY","MajorAx","MinorAx","Orient","Eccentric","Roundness","FrameNI","SecsNI"';
-				strData = strcat(strData,'\n');
-				fprintf(sET.ptrDataOut,strData);
-			else
-				try,fclose(sET.ptrDataOut);catch,end %try to close, just in case
-				sET.ptrDataOut = fopen(strcat(sET.strDataOutPath,filesep,sET.strDataOutFile),'at+');
-			end
-		end
-	elseif strcmpi(strSelected,'Off')
-		set(sEyeFig.ptrButtonDetectPupilOff,'Value',1);
-		sET.boolDetectPupil = false;
-		%close file
-		if isfield(sET,'ptrDataOut') && ftell(sET.ptrDataOut) >= 0
-			fclose(sET.ptrDataOut);
-		end
-	end
+	%% run external function
+	ET_SwitchOnlineDetection(strSelected);
 end
 function ptrButtonInvertPupilThreshold_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% globals
@@ -667,7 +553,7 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 			sET.hSGL = SpikeGL(strHost);
 			%retrieve name & NI sampling rate
 			sET.intStreamNI = -1;
-			sET.strRecordingNI = GetRunName(sET.hSGL);
+			%sET.strRecordingNI = GetRunName(sET.hSGL);
 			sET.dblSampFreqNI = GetSampleRate(sET.hSGL, sET.intStreamNI);
 			%success
 			boolSuccess = true;
@@ -680,12 +566,12 @@ function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 		if boolSuccess
 			%connected
 			set(sEyeFig.ptrTextConnectedSGL,'String','Linked','ForegroundColor',[0 0.8 0]);
-			set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
+			%set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
 			ET_updateTextInformation('Connection to SpikeGLX established');
 		else
 			%connection failed
 			set(sEyeFig.ptrToggleConnectSGL,'Value',0);
-			set(sEyeFig.ptrTextRecordingNI,'String','...','ForegroundColor',[0 0 0]);
+			%set(sEyeFig.ptrTextRecordingNI,'String','...','ForegroundColor',[0 0 0]);
 			set(sEyeFig.ptrTextConnectedSGL,'String','Idle','ForegroundColor',[0 0 0]);
 			ET_updateTextInformation('Connection failed; check host address');
 		end

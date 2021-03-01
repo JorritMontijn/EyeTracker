@@ -307,7 +307,7 @@ function ET_main(varargin)
 					if ~strcmp(strOldName,strNewName)
 						sET.strRecordingNI = GetRunName(sET.hSGL);
 						set(sEyeFig.ptrTextRecordingNI,'String',sET.strRecordingNI,'ForegroundColor',[0 0 0]);
-						set(sEyeFig.ptrToggleRecord,'Value',1);
+						ET_setVidOut(sET.strRecordingNI);
 					end
 					
 					%check if recording has started
@@ -316,6 +316,7 @@ function ET_main(varargin)
 						vecTime = fix(clock);
 						strTime = sprintf('%02d:%02d:%02d',vecTime(4:6));
 						ET_updateTextInformation(sprintf('Auto-start with SpikeGLX at [%s]',strTime));
+						set(sEyeFig.ptrToggleRecord,'Value',1);
 						ET_startRecording();
 					end
 				end

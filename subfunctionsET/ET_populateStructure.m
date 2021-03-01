@@ -50,7 +50,7 @@ function sET = ET_defaultValues()
 	sET.boolRotateImage = 0;%rotate image by 90 degrees
 	sET.strHostSGL = '192.87.10.238'; %default host address
 	sET.hSGL = []; %SGL object placeholder
-	
+	sET.strRecordingNI = '...';
 	
 	sET.boolAutoStart = 1;
 	sET.dblGain = 29.9;
