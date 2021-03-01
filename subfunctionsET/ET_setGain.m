@@ -32,7 +32,11 @@ function ET_setGain(dblGain,boolRetry)
 	end
 	
 	%update information to match new gain
-	dblNewGain = sET.objCam.DeviceProperties.Gain;
+	try
+		dblNewGain = sET.objCam.DeviceProperties.Gain;
+	catch
+		dblNewGain = nan;
+	end
 	sET.dblGain = dblNewGain;
 	set(sEyeFig.ptrEditGain,'String',sprintf('%.2f',dblNewGain));
 end

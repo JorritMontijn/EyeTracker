@@ -42,6 +42,12 @@ function varargout = runEyeTracker(varargin)
 	%	- gamma control
 	%	- NaN removal
 	%	- auto-start
+	% - to do: add automatic filename when autostart is on; will pick spikeglx name
+	%Version 2.3.1 [2021-02-15] by JM
+	%	Bug fix:
+	%	- auto-start
+	%	Added features: 
+	%	- automatic file naming
 	
 	%set tags
 	%#ok<*INUSL>
@@ -92,6 +98,8 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	%define globals
 	global sEyeFig;
 	global sET;
+	sEyeFig = [];
+	sET = [];
 	
 	%set closing function
 	set(hObject,'DeleteFcn','ET_DeleteFcn')
@@ -306,7 +314,7 @@ function ptrSliderPupilROIStopLocY_Callback(hObject, eventdata, handles) %#ok<DE
 	sET.vecRectROI(intDim+2) = intNewStop;
 end
 %% list/edit callbacks
-function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles, strRecFile) %#ok<DEFNU>
 	%% globals
 	global sET;
 	global sEyeFig;
@@ -329,7 +337,16 @@ function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU
 	end
 	
 	%get file
-	[strRecFile, strRecPath] = uiputfile(cellVidExtensions{intUseFormat}, sprintf('Save Video As (*.%s)',cellVidExtensions{intUseFormat}),strcat('EyeTrackingRaw',getDate,'_R'));
+	if exist('strRecFile','var')
+		strRecPath = sET.strDirDataOut;
+		strRecFile = strcat('EyeTrackingRaw',strRecFile);
+		%add extension
+		if ~contains(strRecFile((end-3):end),cellVidExtensions)
+			strRecFile = strcat(strRecFile,cellVidExtensions{intUseFormat});
+		end
+	else
+		[strRecFile, strRecPath] = uiputfile(cellVidExtensions{intUseFormat}, sprintf('Save Video As (*.%s)',cellVidExtensions{intUseFormat}),strcat('EyeTrackingRaw',getDate,'_R'));
+	end
 	
 	%back to old path
 	cd(oldPath);
@@ -347,7 +364,8 @@ function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU
 	%save video writer data
 	objVidWriter = VideoWriter(strcat(strRecPath,strRecFile), cellVidFormats{intUseFormat});
 	objVidWriter.FrameRate = sET.dblRealFrameRate;
-	sET.objVidWriter = objVidWriter;
+	sET.strRecPath = strRecPath;
+	sET.strRecFile = strRecFile;
 	
 	%switch raw video recording to on
 	ptrPanelSwitchRecordVideo_SelectionChangedFcn('On');
@@ -355,6 +373,9 @@ function ptrButtonSetVidOutFile_Callback(hObject, eventdata, handles) %#ok<DEFNU
 	
 	%enable recording button
 	set(sEyeFig.ptrToggleRecord,'Enable','on');
+	
+	%check to enable auto-start
+	ptrButtonAutoStart_Callback;
 	
 	%% update text
 	set(sEyeFig.ptrTextVidOutFile,'String',objVidWriter.Filename);
@@ -518,7 +539,7 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles) %#ok<DEFNU>
 		objTimer.TimerFcn = @ET_enableForceQuit;
 		start(objTimer);
 	else
-		delete(sEyeFig.ptrMainGUI);
+		delete(hObject);
 	end
 end
 function ptrPanelSwitchRecordVideo_SelectionChangedFcn(hObject, eventdata, handles)
@@ -682,9 +703,10 @@ end
 function ptrButtonAutoStart_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% globals
 	global sET
+	global sEyeFig
 	
-	%% set rotation
-	sET.boolAutoStart = hObject.Value;
+	%% set auto-start
+	sET.boolAutoStart = sEyeFig.ptrButtonAutoStart.Value;
 end
 
 %% dummies
