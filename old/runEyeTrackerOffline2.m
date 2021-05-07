@@ -1,3 +1,7 @@
+%master path
+strMasterPath = '';
+strSearchFormat = '\d{4}[-_]?\d{2}[-_]?\d{2}';
+
 %sites
 cellRec{1}{1} = 'P:\Montijn\DataNeuropixels\Exp2019-11-20\20191120_MP2_RunDriftingGratingsR01_g0';
 cellRec{1}{2} = 'P:\Montijn\DataNeuropixels\Exp2019-11-21\20191121_MP2_RunDriftingGratingsR01_g0';
@@ -12,6 +16,8 @@ cellRec{2}{6} = 'P:\Montijn\DataNeuropixels\Exp2019-12-17\20191217_MP3_RunDrifti
 cellRec{3}{1} = 'P:\Montijn\DataNeuropixels\Exp2020-01-15\20200115_MP4_RunDriftingGratingsR01_g0';%eye-tracking bad at end
 cellRec{3}{2} = 'P:\Montijn\DataNeuropixels\Exp2020-01-16\20200116_MP4_RunDriftingGratingsR01_g0';
 cellRec{3}{3} = 'P:\Montijn\DataNeuropixels\Exp2020-01-16\20200116_MP4_RunDriftingGratingsR02_g0';
+
+cellRec{5}{1} = 'D:\Data\Raw\';
 %{
 matRunPre = [...
 	1 3;...
@@ -28,12 +34,7 @@ matRunPre = [...
 	];
 %}
 matRunPre = [...
-	1 1;...
-	1 2;...
-	2 1;...
-	2 3;...
-	2 4;...
-	2 6;...
+	5 1;...
 	];
 
 for intRunPrePro=1:size(matRunPre,1)
@@ -107,6 +108,16 @@ for intRunPrePro=1:size(matRunPre,1)
 	else
 		error([mfilename ':AmbiguousInput'],'Multiple csv files found, please narrow search parameters');
 	end
+	
+	%% run offline pupil detection
+	sFileLocs = struct;
+	sFileLocs.strPath
+	sFileLocs.strTempDir
+	sFileLocs.strVideoFile
+	sFileLocs.strParamsFile
+	sFileLocs.strCSVFile
+	
+	sPupil = getEyeTrackingOffline(sFileLocs);
 	
 	%% copy file to local temp directory
 	fprintf('Copying "%s" to local path "%s" [%s]\n',strVideoFile,strTempDir,getTime);

@@ -1,35 +1,43 @@
-function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc)
+function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest)
 	
 	%%
 	%im
 	%gMatVid = matOrig;%gather(gMatVidOrig);
 	%gMatVid = (gMatVid - min(gMatVid(:)));
 	%gMatVid = (gMatVid / max(gMatVid(:)))*255;
-	
-	%calculate pupil threshold, binarize and invert so pupil is white (<15)
-	gMatVid = gMatVid < dblPupilT;
-	
-	%morphological closing (dilate+erode) to remove reflection boundary
-	gMatVid = imclose(gMatVid,objSE);
-	
-	%fill small holes
-	gMatVid = imfill(gMatVid,4,'holes');
-	%morphological opening (erode+dilate) to remove small connections
-	gMatVid = imopen(gMatVid,objSE);
-	
-	%get regions of sufficient size
-	imBW = gather(gMatVid);
-	sCC = bwconncomp(imBW, 4);
-	sProps = regionprops(sCC, 'Centroid', 'Area','Perimeter','MajorAxisLength','MinorAxisLength');
-	
-	%check whether nothing is found
+	gMatVidOrig = gMatVid;
+	sProps = [];
+	while isempty(sProps)
+		%calculate pupil threshold, binarize and invert so pupil is white (<15)
+		gMatVid = gMatVidOrig < dblPupilT;
+		
+		%morphological closing (dilate+erode) to remove reflection boundary
+		gMatVid = imclose(gMatVid,objSE);
+		
+		%fill small holes
+		gMatVid = imfill(gMatVid,4,'holes');
+		%morphological opening (erode+dilate) to remove small connections
+		gMatVid = imopen(gMatVid,objSE);
+		
+		%get regions of sufficient size
+		imBW = gather(gMatVid);
+		sCC = bwconncomp(imBW, 4);
+		sProps = regionprops(sCC, 'Centroid', 'Area','Perimeter','MajorAxisLength','MinorAxisLength');
+		
+		%increment threshold if nothing is found
+		if dblPupilT < 200 && boolLowest
+			dblPupilT = dblPupilT + 2;
+		else
+			break;
+		end
+	end
 	if isempty(sProps)
 		dblRoundness = nan;
 		dblArea = 0;
 		vecCentroid = vecPrevLoc;
+		imBW = false(size(gMatVid));
 		return;
 	end
-	
 	%get area properties
 	vecArea = [sProps.Area];
 	vecMajAx = [sProps.MajorAxisLength];

@@ -1,21 +1,20 @@
-function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,dblLambda)
+function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,imBW)
 	
 	%% check if mask is supplied
 	if ~exist('imIgnore','var') || isempty(imIgnore)
 		imIgnore = false(size(matIn));
 	end
-	%% check if lambda is supplied
-	if ~exist('dblLambda','var') || isempty(dblLambda)
-		dblLambda = 1;
-	end
+	global vecP;
 	
 	%% linearize variables
 	[matX,matY] = meshgrid(1:size(matIn,2),1:size(matIn,1));
 	vecX = matX(~imIgnore);
 	vecY = matY(~imIgnore);
-	vecZ = matIn(~imIgnore);
-	vecParams0 = [vecApproxCentroid(:)' dblApproxRadius];
-	
+	vecZ = (matIn(~imIgnore)./max(matIn(~imIgnore)));
+	vecP = ~imBW(~imIgnore).*-1;
+	vecParams0 = [vecApproxCentroid(:)' dblApproxRadius/2];%dblApproxRadius];
+	%figure%,imagesc(imBW.*10);
+	%colorbar
 	%% build function
 	matXY = [vecX vecY];
 	
@@ -24,8 +23,6 @@ function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(mat
 	sConstants.vecY = vecY;
 	sConstants.vecZ = vecZ;
 	sConstants.vecApproxParams = vecParams0;
-	sConstants.dblLambda = dblLambda;
-	fCircFit = @(vecOptimParams)getCircFit(vecOptimParams,sConstants);
 	
 	%% fit
 	sOpt = struct;
@@ -34,13 +31,19 @@ function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(mat
 	%sOpt.TolX = 1e-15;
 	vecLB = [0 0 0.5];
 	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1)];
-	
-	[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@getCircFit,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
+	%[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@fCircFit,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
+	%[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@getCircFit,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
+	[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@getCircFitPenalty,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
+	%dblVal
 	
 	%[vecParamsFit,dblVal,flag,out] = fminsearch(fCircFit,vecParams0,sOpt);
 	%[vecParamsFit,dblVal,flag,out] = fminunc(fCircFit,vecParams0,sOpt);
 	vecCentroid = vecParamsFit(1:2);
 	dblRadius = vecParamsFit(3);
+	
+	%plot values
+	%vecV = getCircFitPenalty(vecParamsFit,matXY);
+	%hold on;scatter(vecX,vecY,[],vecV);hold off;
 	
 	%% calculate edge hardness
 	if nargout > 2

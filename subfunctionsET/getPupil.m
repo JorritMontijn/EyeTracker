@@ -63,6 +63,12 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		gMatVid = -(gMatVid - max(flat(gMatVid(~imReflection))));
 		gMatVid(gMatVid<0) = 255;
 	end
+	
+	%rescale after reflection removal
+	gMatVid(imReflection) = max(flat(gMatVid(~imReflection)));
+	gMatVid = (gMatVid - min(gMatVid(:)));
+	gMatVid = (gMatVid / max(gMatVid(:)))*255;
+	
 	if nargout > 4
 		imGrey = gather(gMatVid);
 		imGrey(imReflection) = 0;
@@ -78,7 +84,8 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	for intThresholdIdx=1:numel(vecPupilT)
 		%get approximate estimate of pupil regions
 		dblPupilT=vecPupilT(intThresholdIdx);
-		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc);
+		boolLowest = dblPupilT==min(vecPupilT);
+		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest);
 		%assign values
 		vecRoundness(intThresholdIdx) = dblRoundness;
 		vecArea(intThresholdIdx) = dblArea;
@@ -102,21 +109,27 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	vecApproxCentroid = matCentroids(:,intUseIdx);
 	
 	%get target image
-	intUseIm = find(sglPupilT==vecPupilT,1);
+	[dummy,intUseIm] = min(abs(sglPupilT-vecPupilT));
 	imBW = imStack(:,:,intUseIm);
 	
 	%% fit with circle
+	%get potential area
+	
 	%turn BW image into double with slight gradient
 	if isfield(sET,'boolInvertImage') && sET.boolUseGPU
 		matDbl = double(gather(imfilt(gpuArray(double(imBW)),gMatFilt)));
 	else
 		matDbl = double(imfilt(double(imBW),gMatFilt));
+		%matDbl = double(imfilt(double(imBW),gMatFilt));
 	end
 	%matDbl = double(imBW);
-	%for fitting, impose ridge (L2) regularization for x&y location and radius
+	
+	%idea: for fitting, impose ridge (L2) regularization for x&y location and radius
 	%	(all three relative to initial approximate pupil estimate
+	
+	%for fitting, impose small penalty on pupil areas outside imBW
 	try
-		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleRidgeFit(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,0);
+		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,imBW);
 	catch
 		vecCentroid = vecApproxCentroid;
 		dblRadius = dblApproxRadius;
@@ -131,23 +144,6 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	vecPixVals = flat(gMatVid(imPupil));
 	dblMeanPupilLum = gather(mean(vecPixVals));
 	dblSdPupilLum = gather(std(vecPixVals));
-	
-	%plot
-	%{
-	matPlot = imReflection + imBW*2 + imPupil * 4;
-	matC = ...
-			[0 0 0;... %0, nothing
-			1 0 0;... %1, reflection
-			0 1 0;... %2, potential pupil regions
-			1 1 0;... %3, reflection & potential pupil
-			0 1 1;... %4, pupil
-			1 0 1;... %5, reflection & pupil
-			1 1 1;... %6, potential pupil & pupil
-			0 0 1;... %7, potential pupil & pupil & reflection
-			];
-	imagesc(matPlot,[0 7]);
-	colormap(matC)
-	%}
 	
 	%% save data
 	sPupil = struct;
