@@ -20,8 +20,12 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	
 	%default parameters
 	%master path
-	sETO.strRootPath = 'D:\Data\Raw\';
-	sETO.strTempPath = 'E:\_TempData'; %fast & reliable ssd;
+	if ~isfield(sETO,'strRootPath')
+		sETO.strRootPath = 'D:\Data\Raw\';
+	end
+	if ~isfield(sETO,'strTempPath')
+		sETO.strTempPath = 'E:\_TempData'; %fast & reliable ssd;
+	end
 	sETO.strSearchFormat = '\d{4}[-_]?\d{2}[-_]?\d{2}';
 	cellExt = {'mp4','avi'};
 	

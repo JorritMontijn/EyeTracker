@@ -1,5 +1,5 @@
 %master path
-strMasterPath = 'D:\Data\Raw\';
+strRootPath = 'P:\Montijn\DataNeuropixels\';
 strTempPath = 'E:\_TempData'; %fast & reliable ssd;
 strSearchFormat = '\d{4}[-_]?\d{2}[-_]?\d{2}';
 cellExt = {'mp4','avi'};
@@ -29,6 +29,10 @@ end
 %define globals
 global sFigETO;
 global sETO;
+sFigETO = struct;
+sETO = struct;
+sETO.strTempPath = strTempPath;
+sETO.strRootPath = strRootPath;
 
 %check if instance is already running
 if isstruct(sFigETO) && isfield(sFigETO,'IsRunning') && sFigETO.IsRunning == 1
@@ -36,8 +40,6 @@ if isstruct(sFigETO) && isfield(sFigETO,'IsRunning') && sFigETO.IsRunning == 1
 end
 
 %clear data & disable new instance
-sFigETO = struct;
-sETO = struct;
 sFigETO.IsRunning = true;
 
 %generate gui
