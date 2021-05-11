@@ -23,7 +23,7 @@ function sLabels = ETP_GetImLabels(matAllIm)
 		cla(hAxis);
 		
 		%show im
-		ptrCurFrame=imshow(matAllIm(:,:,intIm),'Parent', hAxis,'InitialMagnification','fit');
+		ptrCurFrame=imshow(imnorm(matAllIm(:,:,intIm)),'Parent', hAxis,'InitialMagnification','fit');
 		hold(hAxis,'on');
 		title(hAxis, sprintf('Image %d/%d; Left click=accept; right=reset center',intIm,intF));
 		
