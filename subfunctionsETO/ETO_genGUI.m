@@ -30,9 +30,8 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	vecPosGUI = [0,0,600,500];
 	ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Resize','off');
 	%set main gui properties
-	%set(ptrMainGUI, 'MenuBar', 'none');
-	%set(ptrMainGUI, 'ToolBar', 'none');
 	set(ptrMainGUI,'DeleteFcn','ETO_DeleteFcn')
+	set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
 	
 	%set output
 	sFigETO.output = ptrMainGUI;
@@ -88,9 +87,23 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		'Position',vecLocTempSpace,'BackgroundColor',[1 1 1]);
 	
 	%set tracking parameters
-	vecLocPresetButton = [20 20 120 25];
+	vecLocLabelButton = [20 20 120 25];
+	sFigETO.ptrButtonSetLabels = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
+		'String','Label frames',...
+		'Position',vecLocLabelButton,...
+		'UserData','lock',...
+		'Callback',@ptrButtonSetLabels_Callback);
+	
+	vecLocAutopilotButton = [vecLocLabelButton(1)+vecLocLabelButton(3)+5 vecLocLabelButton(2:4)];
+	sFigETO.ptrButtonAutopilot = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
+		'String','Auto-set & track',...
+		'Position',vecLocAutopilotButton,...
+		'UserData','lock',...
+		'Callback',@ptrButtonAutopilot_Callback);
+	
+	vecLocPresetButton = [vecLocAutopilotButton(1)+vecLocAutopilotButton(3)+5 vecLocAutopilotButton(2:4)];
 	sFigETO.ptrButtonSetParams = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
-		'String','Set parameters',...
+		'String','Set manually',...
 		'Position',vecLocPresetButton,...
 		'UserData','lock',...
 		'Callback',@ptrButtonSetParams_Callback);
@@ -107,11 +120,6 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	
 	
 	%% set properties
-	%set to resize
-	%ptrMainGUI.Units = 'normalized';
-	%sFigETO.ptrTextStimSet.Units = 'normalized';
-	%sFigETO.ptrListSelectStimulusSet.Units = 'normalized';
-	
 	% Assign a name to appear in the window title.
 	ptrMainGUI.Name = 'Offline Eyetracker GUI';
 	
@@ -127,6 +135,107 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	
 	
 	%% callbacks
+	function ptrButtonSetLabels_Callback(hObject, eventdata)
+		%get checked
+		indUseFiles = ETO_CheckSelection(sFigETO);
+		if ~any(indUseFiles),return;end
+		%run
+		SC_lock(sFigETO);
+		drawnow;
+		
+		%go through files
+		vecRunFiles = find(indUseFiles);
+		for intFileIdx=1:numel(vecRunFiles)
+			intFile = vecRunFiles(intFileIdx);
+			%label images
+			[dummy,sLabels] = getEyeTrackingParameters(sETO.sFiles(intFile),sETO.strTempPath,false,true);
+			
+			if ~isempty(sLabels) && isfield(sLabels,'T')
+				%update labels
+				sETO.sFiles(intFile).sLabels = sLabels;
+				sFigETO.sPointers(intFile).Labels.String = 'Y';
+				sFigETO.sPointers(intFile).Labels.ForegroundColor = [0 0.8 0];
+				sFigETO.sPointers(intFile).Labels.Tooltip = 'Image labels are present';
+			end
+		end
+		
+		%unlock
+		SC_unlock(sFigETO);
+	end
+	function ptrButtonAutopilot_Callback(hObject, eventdata)
+		%get checked
+		indUseFiles = ETO_CheckSelection(sFigETO);
+		if ~any(indUseFiles),return;end
+		vecRunFiles = find(indUseFiles);
+		
+		%check if all files have labels
+		indReady = false(size(vecRunFiles));
+		for intFileIdx=1:numel(vecRunFiles)
+			intFile = vecRunFiles(intFileIdx);
+			if isfield(sETO.sFiles(intFile),'sLabels') && isfield(sETO.sFiles(intFile).sLabels,'T')
+				indReady(intFileIdx) = true;
+			end
+		end
+		if ~all(indReady)
+			ptrMsg = dialog('Position',[600 400 250 100],'Name','Not all files ready');
+			ptrText = uicontrol('Parent',ptrMsg,...
+				'Style','text',...
+				'Position',[20 50 210 40],...
+				'FontSize',11,...
+				'String','Some files are missing image labels');
+			ptrButton = uicontrol('Parent',ptrMsg,...
+				'Position',[100 20 50 30],...
+				'String','OK',...
+				'FontSize',10,...
+				'Callback','delete(gcf)');
+			movegui(ptrMsg,'center')
+			drawnow;
+			return
+		else
+			%run
+			SC_lock(sFigETO);
+			drawnow;
+			
+			%auto-set parameters
+			for intFileIdx=1:numel(vecRunFiles)
+				intFile = vecRunFiles(intFileIdx);
+				try
+					%run auto-parameters
+					sTrackParams = getEyeTrackingParameters(sETO.sFiles(intFile),sETO.strTempPath,true)
+					
+					%update parameter list
+					sETO.sFiles(intFile).sTrackParams = sTrackParams;
+					sFigETO.sPointers(intFile).TrackParams.String = 'Y';
+					sFigETO.sPointers(intFile).TrackParams.ForegroundColor = [0 0.8 0];
+					sFigETO.sPointers(intFile).TrackParams.Tooltip = 'Tracking parameters have been set';
+				catch ME
+					dispErr(ME);
+				end
+			end
+			
+			%run tracking
+			for intFileIdx=1:numel(vecRunFiles)
+				try
+					intFile = vecRunFiles(intFileIdx);
+					sFile = sETO.sFiles(intFile);
+					sPupil = getEyeTrackingOffline(sFile,sETO.strTempPath);
+					
+					%update library
+					if ~isempty(sPupil)
+						%update parameter list
+						sETO.sFiles(intFile).sPupil = sPupil;
+						sFigETO.sPointers(intFile).Tracked.String = 'Y';
+						sFigETO.sPointers(intFile).Tracked.ForegroundColor = [0 0.8 0];
+						sFigETO.sPointers(intFile).Tracked.Tooltip = ['Tracked data at: ' sPupil.name];
+						drawnow;
+					end
+				catch ME
+					dispErr(ME);
+				end
+			end
+			SC_unlock(sFigETO);
+		end
+	end
 	function ptrButtonSetRoot_Callback(hObject, eventdata)
 		%retrieve root
 		if ischar(hObject)
@@ -192,80 +301,44 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		%generate slider panel
 		[sFigETO.ptrPanelLibrary,sFigETO.ptrSliderLibrary,sFigETO.ptrTitleLibrary,sFigETO.sPointers] = ETO_genSliderPanel(ptrMainGUI,vecLocation,sETO.sFiles);
 		
-		%unlock
-		%set(sFigETO.ptrButtonCheckStimPresets,...
-		%	'Enable','on',...
-		%	'UserData','unlock');
-		%set(sFigETO.ptrButtonStartExperiment,...
-		%	'Enable','on',...
-		%	'UserData','unlock');
-		
 	end
 	function ptrButtonSetParams_Callback(hObject, eventdata)
-		%get checked 
-		if isfield(sFigETO,'sPointers') && isfield(sFigETO.sPointers,'CheckRun')
-			indUseFiles = cellfun(@(x) x.Value==1,{sFigETO.sPointers.CheckRun});
-		end
-		
-		%check if any
-		if ~any(indUseFiles)
-			ptrMsg = dialog('Position',[600 400 250 100],'Name','No files selected');
-			ptrText = uicontrol('Parent',ptrMsg,...
-				'Style','text',...
-				'Position',[20 50 210 40],...
-				'FontSize',11,...
-				'String','You did not select any files');
-			ptrButton = uicontrol('Parent',ptrMsg,...
-				'Position',[100 20 50 30],...
-				'String','OK',...
-				'FontSize',10,...
-				'Callback','delete(gcf)');
-			
-			movegui(ptrMsg,'center')
-			drawnow;
-			return
-		end
+		%get checked
+		indUseFiles = ETO_CheckSelection(sFigETO);
+		if ~any(indUseFiles),return;end
+		%run
+		SC_lock(sFigETO);
+		drawnow;
 		
 		%go through files
 		vecRunFiles = find(indUseFiles);
 		for intFileIdx=1:numel(vecRunFiles)
 			intFile = vecRunFiles(intFileIdx);
-			sTrackParams = getEyeTrackingParameters(sETO.sFiles(intFile));
-			if isempty(sTrackParams)
-				break;
-			else
+			[sTrackParams,sLabels] = getEyeTrackingParameters(sETO.sFiles(intFile),sETO.strTempPath);
+			if ~isempty(sTrackParams)
 				%update parameter list
 				sETO.sFiles(intFile).sTrackParams = sTrackParams;
 				sFigETO.sPointers(intFile).TrackParams.String = 'Y';
 				sFigETO.sPointers(intFile).TrackParams.ForegroundColor = [0 0.8 0];
 				sFigETO.sPointers(intFile).TrackParams.Tooltip = 'Tracking parameters have been set';
 			end
+			if ~isempty(sLabels) && isfield(sLabels,'T')
+				%update labels
+				sETO.sFiles(intFile).sLabels = sLabels;
+				sFigETO.sPointers(intFile).Labels.String = 'Y';
+				sFigETO.sPointers(intFile).Labels.ForegroundColor = [0 0.8 0];
+				sFigETO.sPointers(intFile).Labels.Tooltip = 'Image labels are present';
+			end
 		end
+		%unlock
+		SC_unlock(sFigETO);
+		drawnow;
+		
 	end
 	function ptrButtonStartTracking_Callback(hObject, eventdata)
-		%get checked 
-		if isfield(sFigETO,'sPointers') && isfield(sFigETO.sPointers,'CheckRun')
-			indUseFiles = cellfun(@(x) x.Value==1,{sFigETO.sPointers.CheckRun});
-		end
-		
-		%check if any
-		if ~any(indUseFiles)
-			ptrMsg = dialog('Position',[600 400 250 100],'Name','No files selected');
-			ptrText = uicontrol('Parent',ptrMsg,...
-				'Style','text',...
-				'Position',[20 50 210 40],...
-				'FontSize',11,...
-				'String','You did not select any files');
-			ptrButton = uicontrol('Parent',ptrMsg,...
-				'Position',[100 20 50 30],...
-				'String','OK',...
-				'FontSize',10,...
-				'Callback','delete(gcf)');
-			
-			movegui(ptrMsg,'center')
-			drawnow;
-			return
-		end
+		%get checked
+		indUseFiles = ETO_CheckSelection(sFigETO);
+		if ~any(indUseFiles),return;end
 		
 		%check if all files have parameter presets
 		vecRunFiles = find(indUseFiles);

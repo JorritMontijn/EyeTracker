@@ -26,7 +26,9 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	sFigETP.intCurFrame = ETP_GetCurrentFrame();
 	
 	%% apply image corrections
-	matIm = imadjust(single(mean(double(sETP.matFrames(:,:,1,sFigETP.intCurFrame,1:sETP.intTempAvg)),5)./255),[],[],sETP.dblGamma).*sETP.dblGain;
+	% apply image corrections
+	matMeanIm = (sum(double(sETP.matFrames(:,:,1,sFigETP.intCurFrame,1:floor(sETP.intTempAvg))),5) + (sETP.intTempAvg-floor(sETP.intTempAvg))*double(sETP.matFrames(:,:,1,sFigETP.intCurFrame,ceil(sETP.intTempAvg))))./sETP.intTempAvg;
+	matIm = imadjust(matMeanIm./255,[],[],sETP.dblGamma).*sETP.dblGain;
 	matIm(matIm(:)>1)=1;
 	sFigETP.matVid = matIm;
 	
@@ -63,7 +65,6 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	%get parameters
 	sglReflT = sETP.dblThreshReflect;
 	sglPupilT = sETP.dblThreshPupil;
-	vecPrevLoc = [sETP.intX/2 sETP.intY/2];
 	%vecPupil = (sglPupilT-40):10:(sglPupilT+20);
 	vecPupil = (sglPupilT-6):2:(sglPupilT+4);
 	vecPupil(vecPupil<0)=[];
@@ -88,6 +89,7 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	else
 		gMatVid = sFigETP.matVid(vecKeepY,vecKeepX);
 	end
+	vecPrevLoc = [size(gMatVid,1)/2 size(gMatVid,2)/2];
 	%detect
 	[sFigETP.sPupil,sFigETP.imPupil,sFigETP.imReflection,sFigETP.imBW,sFigETP.imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupil,sETP);
 	

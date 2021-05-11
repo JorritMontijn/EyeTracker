@@ -360,7 +360,7 @@ for intRunPrePro=1:size(matRunPre,1)
 			hold(ptrAxesSubVid4,'off');
 			title(ptrAxesSubVid4,'R=Pupil Lum, B = Conf');
 			xlabel(ptrAxesSubVid4,'Time (s)');
-			ylabel(ptrAxesSubVid4,'Value (z-score)');
+			ylabel(ptrAxesSubVid4edit matlabrc.m ): ,'Value (z-score)');
 			fixfig(ptrAxesSubVid4,0);
 			
 			%x,y,r

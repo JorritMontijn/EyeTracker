@@ -39,6 +39,7 @@ function ETP_ImportFrames(handles,dummy,boolInit)
 	sETP.intC = intC;
 	sETP.intF = intF;
 	sETP.intS = intS;
+	sETP.vecSampleFrames = vecFrames;
 	
 	%close msg
 	delete(ptrMsg);

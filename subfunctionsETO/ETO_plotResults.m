@@ -60,9 +60,9 @@ function h=ETO_plotResults(sPupil)
 	fixfig
 	
 	subplot(2,3,5)
-	plot(sPupil.vecPupilTime,sPupil.vecPupilCenterX);
+	plot(sPupil.vecPupilTime,zscore(sPupil.vecPupilCenterX));
 	hold on
-	plot(sPupil.vecPupilTime,sPupil.vecPupilFixedCenterX);
+	plot(sPupil.vecPupilTime,zscore(sPupil.vecPupilFixedCenterX));
 	hold off
 	title(sprintf('Pupil pos x, raw + fixed'),'Interpreter','none');
 	xlabel('Time (s)');
@@ -70,9 +70,9 @@ function h=ETO_plotResults(sPupil)
 	fixfig
 	
 	subplot(2,3,6)
-	plot(sPupil.vecPupilTime,sPupil.vecPupilCenterY);
+	plot(sPupil.vecPupilTime,zscore(sPupil.vecPupilCenterY));
 	hold on
-	plot(sPupil.vecPupilTime,sPupil.vecPupilFixedCenterY);
+	plot(sPupil.vecPupilTime,zscore(sPupil.vecPupilFixedCenterY));
 	hold off
 	title(sprintf('Pupil pos y, raw + fixed'),'Interpreter','none');
 	xlabel('Time (s)');

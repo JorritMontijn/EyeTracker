@@ -45,13 +45,13 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 	cellVal = {'dblGain','dblGamma','intTempAvg','dblGaussWidth','dblPupilMinRadius','dblThreshReflect','dblThreshPupil'};
 	%set structure
 	intX = 0;
-	intY = 1;
+	intY = numel(vecY);
 	for intEl=1:numel(cellHandles)
 		%get location
 		intX = intX + 1;
 		if intX > numel(vecX_txt)
 			intX = 1;
-			intY = intY + 1;
+			intY = intY - 1;
 		end
 		dblTextX = vecX_txt(intX);
 		dblTextY = vecY(intY)+2*dblSpacing;
@@ -63,8 +63,8 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 		%vecLocTxt = [0.5 0.5 20 20]
 		ptrText=uitext('Parent',hPanelD,...
 			'Units','normalized',...
+			'Style','text',...
 			'HorizontalAlignment','right',...
-			'VerticalAlignment','middle',...
 			'Position',vecLocTxt,...
 			'FontSize',10,...
 			'String',cellTxt{intEl});
@@ -83,4 +83,27 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 		sHandles.(cellHandles{intEl}) = hEdit;
 	end
 	
+	%% end with auto button
+	%get location
+	intX = intX + 1;
+	if intX > numel(vecX_txt)
+		intX = 1;
+		intY = intY - 1;
+	end
+	dblButX = vecX_Edit(intX)-dblEditW;
+	dblButY = vecY(intY)+2*dblSpacing;
+	vecLocBut = [dblButX dblButY dblEditW*2 dblH];
+	
+	%button
+	hButton = uicontrol('Parent',hPanelD,...
+		'Units','normalized',...
+		'Style','pushbutton',...
+		'Position',vecLocBut,...
+		'FontSize',10,...
+		'String','Auto set',...
+		'Callback',{@ETP_AutoSettings},...;
+		'Tooltip','Automatically detect best settings');
+	
+	%assign handle
+	sHandles.ptrButtonAutoSettings = hButton;
 end

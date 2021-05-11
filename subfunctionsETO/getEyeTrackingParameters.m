@@ -1,17 +1,26 @@
-function sTrackParams = getEyeTrackingParameters(sFile)
+function [sTrackParams,sLabels] = getEyeTrackingParameters(sFile,strTempPath,boolAutoRun,boolOnlyLabels)
 	%getEyeTrackingParameters Run offline pupil detection parameter setter
 	%   sTrackParams = getEyeTrackingParameters(sFile)
 	
 	%% globals
-	clearvars -except sFile;
 	global sFigETP;
 	global sETP;
+	global ETP_sLabels;
 	sFigETP = [];
 	sETP = [];
+	ETP_sLabels = [];
 	
 	%% unpack inputs
 	strPath = sFile.folder;
 	strVideoFile = sFile.name;
+	if ~exist('boolAutoRun','var') || isempty(boolAutoRun)
+		boolAutoRun = false;
+	end
+	sFigETP.boolAutoRun = boolAutoRun;
+	if ~exist('boolOnlyLabels','var') || isempty(boolOnlyLabels)
+		boolOnlyLabels = false;
+	end
+	sFigETP.boolOnlyLabels = boolOnlyLabels;
 	
 	%% load data
 	sETP = ET_populateStructure([]);
@@ -31,8 +40,15 @@ function sTrackParams = getEyeTrackingParameters(sFile)
 	else
 		sSyncData = [];
 	end
+	if isfield(sFile,'sLabels') && isfield(sFile.sLabels,'T')
+		ETP_sLabels = sFile.sLabels;
+	end
 	sETP = catstruct(sETP,sET);
 	sETP.gMatFilt = [];
+	sETP.strTempPath = strTempPath;
+	sETP.strPath = strPath;
+	sETP.strVideoFile = strVideoFile;
+	sETP.boolAccept = false;
 	
 	%% build GUI master parameters
 	dblHeight = 600;
@@ -44,8 +60,8 @@ function sTrackParams = getEyeTrackingParameters(sFile)
 	vecPosGUI = [0,0,dblWidth,dblHeight];
 	ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Color',vecMainColor);
 	set(ptrMainGUI,'DeleteFcn','ETP_DeleteFcn')
-	%set(ptrMainGUI, 'MenuBar', 'none');
-	%set(ptrMainGUI, 'ToolBar', 'none');
+	set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
+	ptrMainGUI.Name = 'Eyetracker Parameter GUI';
 	
 	%set output
 	sFigETP.output = ptrMainGUI;
@@ -64,13 +80,14 @@ function sTrackParams = getEyeTrackingParameters(sFile)
 	end
 	
 	%% access video
-	strVidFile = fullfile(strPath,strVideoFile);
+	strVidFile = ETP_prepareMovie(strPath,strVideoFile,strTempPath);
 	sETP.objVid = VideoReader(strVidFile);
 	
 	%% data import/export
 	vecLocation = [dblPanelStartX 0.01 dblPanelWidth 0.1];
-	hPanelDatimex = ETP_genDataPanel(ptrMainGUI,vecLocation);
-	hPanelDatimex.Units = 'pixels';
+	ptrPanelDatimex = ETP_genDataPanel(ptrMainGUI,vecLocation);
+	ptrPanelDatimex.Units = 'pixels';
+	sFigETP.ptrPanelDatimex = ptrPanelDatimex;
 	
 	%% video
 	%main
@@ -118,70 +135,78 @@ function sTrackParams = getEyeTrackingParameters(sFile)
 	%X: start / stop
 	%Y: start / stop
 	vecLocation = [dblPanelStartX 0.65 dblPanelWidth 0.2];
-	[hPanelP,hSLTP,hSRTP,hSLBP,hSRBP] = ETP_genQuadSliders(ptrMainGUI,vecLocation,'Pupil ROI');
-	hSLTP.Value = sETP.vecRectROI(1);
-	hSLBP.Value = sETP.vecRectROI(2);
-	hSRTP.Value = sETP.vecRectROI(1)+sETP.vecRectROI(3);
-	hSRBP.Value = sETP.vecRectROI(2)+sETP.vecRectROI(4);
-	hPanelP.Units = 'pixels';
+	[ptrPanelP,ptrSliderLTP,ptrSliderRTP,ptrSliderLBP,ptrSliderRBP] = ETP_genQuadSliders(ptrMainGUI,vecLocation,'Pupil ROI');
+	ptrSliderLTP.Value = sETP.vecRectROI(1);
+	ptrSliderLBP.Value = sETP.vecRectROI(2);
+	ptrSliderRTP.Value = sETP.vecRectROI(1)+sETP.vecRectROI(3);
+	ptrSliderRBP.Value = sETP.vecRectROI(2)+sETP.vecRectROI(4);
+	ptrPanelP.Units = 'pixels';
+	sFigETP.ptrPanelP = ptrPanelP;
+	sFigETP.ptrSliderLTP = ptrSliderLTP;
+	sFigETP.ptrSliderLBP = ptrSliderLBP;
+	sFigETP.ptrSliderRTP = ptrSliderRTP;
+	sFigETP.ptrSliderRBP = ptrSliderRBP;
 	
 	%sync ROI
 	%X: start / stop
 	%Y: start / stop
 	vecLocation = [dblPanelStartX 0.44 dblPanelWidth 0.2];
-	[hPanelS,hSLTS,hSRTS,hSLBS,hSRBS] = ETP_genQuadSliders(ptrMainGUI,vecLocation,'Sync ROI');
+	[ptrPanelS,hSLTS,hSRTS,hSLBS,hSRBS] = ETP_genQuadSliders(ptrMainGUI,vecLocation,'Sync ROI');
 	hSLTS.Value = sETP.vecRectSync(1);
 	hSLBS.Value = sETP.vecRectSync(2);
 	hSRTS.Value = sETP.vecRectSync(1)+sETP.vecRectSync(3);
 	hSRBS.Value = sETP.vecRectSync(2)+sETP.vecRectSync(4);
-	hPanelS.Units = 'pixels';
+	ptrPanelS.Units = 'pixels';
+	sFigETP.ptrPanelS = ptrPanelS;
 	
 	%% detection settings
 	%gain / gamma
 	%temp avg / blur width / min radius
 	%reflect lum / pupil lum
 	vecLocation = [dblPanelStartX 0.23 dblPanelWidth 0.2];
-	[hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,'Detection settings',sET);
-	hPanelD.Units = 'pixels';
+	[ptrPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,'Detection settings',sET);
+	ptrPanelD.Units = 'pixels';
 	sFigETP.sHandles = sHandles;
+	sFigETP.ptrPanelD = ptrPanelD;
 	
 	%% movie slider through frames
 	vecLocation = [dblPanelStartX 0.12 dblPanelWidth 0.1];
-	[hPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocation);
-	hPanelM.Units = 'pixels';
+	[ptrPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocation);
+	ptrPanelM.Units = 'pixels';
+	sFigETP.ptrPanelM = ptrPanelM;
 	
 	%% run initial pass
 	ETP_DetectEdit();
 	
+	%% check if only labelling is enabled
+	if boolOnlyLabels
+		%set labels
+		ETP_SetLabels();
+		%quit
+		ETP_DeleteFcn;
+	end
+	
+	%% check if autorun is enabled
+	if boolAutoRun
+		%run auto detection
+		ETP_AutoSettings();
+		
+		%accept parameters
+		ETP_AcceptParameters();
+	end
+	
 	%% wait until user accepts settings
-	sETP.boolAccept = false;
 	while ~sETP.boolAccept && ~sETP.boolForceQuit
 		pause(0.01);
 	end
 	
 	%% save data
-	if sETP.boolAccept
-		%delete video data
-		sETP = rmfield(sETP,{'objVid','matFrames'});
-		
-		%save file
-		sET = sETP;
-		
-		%remove extension & build new name
-		cellFile = strsplit(sFile.name,'.');
-		strFileCore = strjoin(cellFile(1:end-1),'.');
-		strName = [strFileCore 'TrackParams.mat'];
-		strFolder = sFile.folder;
-		save(fullfile(strFolder,strName),'sET');
-		
-		%compile structure
-		sTrackParams = struct;
-		sTrackParams.name = strName;
-		sTrackParams.folder = strFolder;
-		sTrackParams.sET = sET;
-	else
+	if ~sETP.boolAccept
 		sTrackParams = [];
+	else
+		sTrackParams = sETP.sTrackParams;
 	end
+	sLabels = ETP_sLabels;
 	ETP_DeleteFcn;
 %end
 

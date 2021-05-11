@@ -65,7 +65,10 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	end
 	
 	%rescale after reflection removal
-	gMatVid(imReflection) = max(flat(gMatVid(~imReflection)));
+	dblNewMax = max(flat(gMatVid(~imReflection)));
+	if ~isempty(dblNewMax)
+		gMatVid(imReflection) = dblNewMax;
+	end
 	gMatVid = (gMatVid - min(gMatVid(:)));
 	gMatVid = (gMatVid / max(gMatVid(:)))*255;
 	

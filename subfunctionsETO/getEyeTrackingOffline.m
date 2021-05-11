@@ -29,14 +29,23 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	
 	% copy files to local temp directory
 	fprintf('Copying "%s" to local path "%s" [%s]\n',strVidFile,strTempDir,getTime);
-	[status1,msg1,msgID1] = copyfile([strVidPath strVidFile],[strTempDir strVidFile]);
-	if status1 == 0,error(msgID1,sprintf('Error copying "%s": %s',strVidFile,msg1));end
+	ETP_prepareMovie(strVidPath,strVidFile,strTempDir,'Yes');
 	[status2,msg2,msgID2] = copyfile([strParPath strParFile],[strTempDir strParFile]);
 	if status2 == 0,error(msgID2,sprintf('Error copying "%s": %s',strParFile,msg2));end
 	if contains(strVidFile,'Raw')
 		strMiniOut = strrep(strVidFile,'Raw','MiniVid');
+		
+		%create output name
+		strTrackedFile = strrep(strVidFile,'Raw','Processed');
+		strTrackedFile(find(strTrackedFile=='.',1,'last'):end) = [];
+		strTrackedFile = strcat(strTrackedFile,'.mat');
 	else
 		strMiniOut = [strVidFile(1:(end-4)) 'MiniVid.mp4'];
+		
+		%create output name
+		strTrackedFile = strVidFile;
+		strTrackedFile(find(strTrackedFile=='.',1,'last'):end) = [];
+		strTrackedFile = [strTrackedFile 'Processed.mat'];
 	end
 	
 	%% retrieve paths and copy optional files
@@ -61,7 +70,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sTrPar = sFile.sTrackParams.sET;
 	dblGain = sTrPar.dblGain;
 	dblGamma = sTrPar.dblGamma;
-	intTempAvg = sTrPar.intTempAvg;
+	intTempAvg = round(sTrPar.intTempAvg);
 	dblGaussWidth = sTrPar.dblGaussWidth;
 	dblPupilMinRadius = sTrPar.dblPupilMinRadius;
 	sglReflT = sTrPar.dblThreshReflect;
@@ -283,6 +292,16 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	delete(objVid);
 	
 	%% interpolate detection failures
+	%combine all metrics
+	vecEdge = abs(max(zscore(vecPupilEdgeHardness)) - zscore(vecPupilEdgeHardness));
+	vecDist = sqrt(zscore(vecPupilCenterX).^2 + zscore(vecPupilCenterY).^2);
+	vecRound = abs(max(zscore(vecPupilRoundness)) - zscore(vecPupilRoundness));
+	indWrong = (zscore(vecRound+vecDist) > 1) | abs(zscore(vecPupilCenterX))>2;
+	indWrong = conv(indWrong,ones(1,5),'same')>0;
+	vecAllPoints = 1:numel(indWrong);
+	vecGoodPoints = find(~indWrong);
+	
+	%{
 	%initial roundness check
 	indWrongA = sqrt(zscore(vecPupilCenterX).^2 + zscore(vecPupilCenterY).^2) > 4;
 	indWrong1 = conv(indWrongA,ones(1,5),'same')>0;
@@ -298,6 +317,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	indWrong = conv(indWrongA | indWrongB | indWrongC,ones(1,5),'same')>0;
 	vecAllPoints = 1:numel(indWrong);
 	vecGoodPoints = find(~indWrong);
+	%}
 	
 	%fix
 	vecPupilFixedCenterX = interp1(vecGoodPoints,vecPupilCenterX(~indWrong),vecAllPoints,'linear','extrap');
@@ -356,23 +376,19 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sPupil.vecPupilFixedCenterY = vecPupilFixedCenterY;
 	sPupil.vecPupilFixedRadius = vecPupilFixedRadius;
 	
-	%create filename
-	strVideoOut = strrep(strVidFile,'Raw','Processed');
-	strVideoOut(find(strVideoOut=='.',1,'last'):end) = [];
-	strVideoOut = strcat(strVideoOut,'.mat');
-	
 	%extra info
 	sPupil.strVidFile = strVidFile;
 	sPupil.strVidPath = strVidPath;
 	sPupil.sTrackParams = sTrPar;
 	sPupil.strMiniVidPath = strVidPath;
 	sPupil.strMiniVidFile = strMiniOut;
+	sPupil.name = strTrackedFile;
 	
 	
 	%% save file
 	%save
-	save([strVidPath strVideoOut],'sPupil');
-	fprintf('Saved data to %s (source: %s, path: %s) [%s]\n',strVideoOut,strVidFile,strVidPath,getTime);
+	save([strVidPath strTrackedFile],'sPupil');
+	fprintf('Saved data to %s (source: %s, path: %s) [%s]\n',strTrackedFile,strVidFile,strVidPath,getTime);
 	
 	%copy mini vid
 	copyfile([strTempDir strMiniOut],[strVidPath strMiniOut]);
