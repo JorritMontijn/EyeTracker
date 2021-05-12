@@ -4,6 +4,16 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	global sETP;
 	global sFigETP;
 	
+	%% ensure input conforms to format
+	sHandles = sFigETP.sHandles;
+	if exist('strParam','var')
+		dblNewVal = str2double(sFigETP.sHandles.(strParam).String);
+		if isempty(dblNewVal) || ~isnumeric(dblNewVal)
+			dblNewVal = sETP.(sHandles.(strParam).UserData.Val);
+		end
+		sFigETP.sHandles.(strParam).String = sprintf(sHandles.(strParam).UserData.Fmt,dblNewVal);
+	end
+	
 	%% check bounds
 	intTempAvg = str2double(sFigETP.sHandles.TempAvg.String);
 	if ~isnumeric(intTempAvg) || intTempAvg < 1
@@ -13,12 +23,11 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	end
 	
 	%% get values
-	sHandles = sFigETP.sHandles;
 	sETP.dblGain = str2double(sFigETP.sHandles.Gain.String);
 	sETP.dblGamma = str2double(sFigETP.sHandles.Gamma.String);
 	sETP.intTempAvg = str2double(sFigETP.sHandles.TempAvg.String);
 	dblGaussWidth = str2double(sFigETP.sHandles.Blur.String);
-	dblPupilMinRadius = str2double(sFigETP.sHandles.MinRad.String);
+	sETP.dblStrEl = str2double(sFigETP.sHandles.StrEl.String);
 	sETP.dblThreshReflect = str2double(sFigETP.sHandles.ReflLum.String);
 	sETP.dblThreshPupil = str2double(sFigETP.sHandles.PupLum.String);
 	
@@ -34,8 +43,11 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	
 	%% do detection
 	%build structuring element
-	intRadStrEl = 2;
-	objSE = strel('disk',intRadStrEl,4);
+	intRadStrEl = round(sETP.dblStrEl);
+	vecChoose=[4 6 8];
+	[dummy,intChooseIdx]=min(abs(vecChoose-intRadStrEl*2));
+	intN = vecChoose(intChooseIdx);
+	objSE = strel('disk',intRadStrEl,intN);
 	sETP.objSE = objSE;
 	
 	%blur width

@@ -1,20 +1,15 @@
-%master path
-strRootPath = 'P:\Montijn\DataNeuropixels\';
-strTempPath = 'E:\_TempData'; %fast & reliable ssd;
-strSearchFormat = '\d{4}[-_]?\d{2}[-_]?\d{2}';
-cellExt = {'mp4','avi'};
+%runEyeTrackerOffline GUI to perform eye-tracking on pre-recorded videos
+%
+%This GUI interfaces with the outputs of "runEyeTracker" and provides an
+%easy to use interface for managing your library of eye-tracking videos.
+%You can set the algorithm's parameters manually, or set a limited number
+%of labelled frames and let the algorithm optimize by itself.
+%
+%	Created by Jorrit Montijn, 2021-05-12 (YYYY-MM-DD)
 
-%compile list of all video files in subfolders of master path
-%list names & parameters from meta file
-%list whether preprocessed
-%select which to process
-%path = pop up
-
-%click to check parameters
-%> new gui
-
-%once all params are set for all videos, run
-
+%Version history:
+%1.0 - 12 May 2021
+%	Created by Jorrit Montijn
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');
@@ -25,15 +20,20 @@ if isempty(find(contains(cellPaths,strCodePath),1))
 	addpath(strCodePath);
 end
 
-%% parameter gui
-%define globals
+%% check if dependencies are present
+if ~exist('uilock','file')
+	error([mfilename ':MissingDependency'],sprintf('This function requires the "GeneralAnalysis" repository to function. You can get it here: %s','https://github.com/JorritMontijn/GeneralAnalysis'));
+end
+
+%% define globals
 global sFigETO;
 global sETO;
-sFigETO = struct;
-sETO = struct;
-sETO.strTempPath = strTempPath;
-sETO.strRootPath = strRootPath;
 
+%% load defaults
+sETO = ETO_populateStructure();
+sFigETO = struct;
+
+%% run
 %check if instance is already running
 if isstruct(sFigETO) && isfield(sFigETO,'IsRunning') && sFigETO.IsRunning == 1
 	error([mfilename ':SingularGUI'],'EyeTrackerModule instance is already running; only one simultaneous GUI is allowed');

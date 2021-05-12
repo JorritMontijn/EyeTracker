@@ -26,7 +26,6 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	if ~isfield(sETO,'strTempPath')
 		sETO.strTempPath = 'E:\_TempData'; %fast & reliable ssd;
 	end
-	sETO.strSearchFormat = '\d{4}[-_]?\d{2}[-_]?\d{2}';
 	cellExt = {'mp4','avi'};
 	
 	%% generate main GUI
@@ -135,7 +134,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	sFigETO.ptrMainGUI = ptrMainGUI;
 	
 	%unlock
-	SC_unlock(sFigETO);
+	uiunlock(sFigETO);
 	
 	
 	%% callbacks
@@ -144,7 +143,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		indUseFiles = ETO_CheckSelection(sFigETO);
 		if ~any(indUseFiles),return;end
 		%run
-		SC_lock(sFigETO);
+		uilock(sFigETO);
 		drawnow;
 		
 		%go through files
@@ -164,7 +163,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		end
 		
 		%unlock
-		SC_unlock(sFigETO);
+		uiunlock(sFigETO);
 	end
 	function ptrButtonAutopilot_Callback(hObject, eventdata)
 		%get checked
@@ -197,7 +196,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 			return
 		else
 			%run
-			SC_lock(sFigETO);
+			uilock(sFigETO);
 			drawnow;
 			
 			%auto-set parameters
@@ -237,7 +236,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 					dispErr(ME);
 				end
 			end
-			SC_unlock(sFigETO);
+			uiunlock(sFigETO);
 		end
 	end
 	function ptrButtonSetRoot_Callback(hObject, eventdata)
@@ -311,7 +310,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		indUseFiles = ETO_CheckSelection(sFigETO);
 		if ~any(indUseFiles),return;end
 		%run
-		SC_lock(sFigETO);
+		uilock(sFigETO);
 		drawnow;
 		
 		%go through files
@@ -335,7 +334,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 			end
 		end
 		%unlock
-		SC_unlock(sFigETO);
+		uiunlock(sFigETO);
 		drawnow;
 		
 	end
@@ -370,7 +369,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 			return
 		else
 			%run
-			SC_lock(sFigETO);
+			uilock(sFigETO);
 			drawnow;
 			
 			for intFileIdx=1:numel(vecRunFiles)
@@ -392,7 +391,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 					dispErr(ME);
 				end
 			end
-			SC_unlock(sFigETO);
+			uiunlock(sFigETO);
 		end
 	end
 end

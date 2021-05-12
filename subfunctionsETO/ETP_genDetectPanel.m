@@ -13,7 +13,7 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 	dblGamma = sET.dblGamma;%: 0.5000
 	intTempAvg = sET.intTempAvg;%: 10
 	dblGaussWidth = sET.dblGaussWidth;%: 0.2000
-	dblPupilMinRadius = sET.dblPupilMinRadius;%: 0.5000
+	dblStrEl = sET.dblStrEl;%: 0.5000
 	dblThreshPupil = sET.dblThreshPupil;%: 21
 	dblThreshReflect = sET.dblThreshReflect;%: 70
 	
@@ -21,7 +21,7 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 	%min radius / reflect lum / pupil lum
 	%x locations
 	dblSpacing = 0.01;
-	dblTxtW = 0.15;
+	dblTxtW = 0.13;
 	vecX_txt = linspace(dblSpacing,1-dblSpacing,5);
 	vecX_txt = vecX_txt(1:(end-1)) - dblSpacing;
 	vecX_Edit = vecX_txt + dblTxtW + dblSpacing;
@@ -39,14 +39,15 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 	
 	%% build elements
 	%set identifiers
-	cellHandles = {'Gain','Gamma','TempAvg','Blur','MinRad','ReflLum','PupLum'};
-	cellTxt = {'Gain:','Gamma:','Fr. Avg.:','Blur:','Min. Rad.:','Refl. T.:','Pupil T.:'};
-	cellTip = {'Image Gain','Image Gamma','Temporal averaging (# of frames)','Gaussian sd of spatial smoothing','Minimum pupil radius','Pixel brighter than this will be ignored','Pixels darker than this might be the pupil'};
-	cellVal = {'dblGain','dblGamma','intTempAvg','dblGaussWidth','dblPupilMinRadius','dblThreshReflect','dblThreshPupil'};
+	cellPtr = {'Gain','Gamma','TempAvg','Blur','StrEl','ReflLum','PupLum'};
+	cellTxt = {'Gain:','Gamma:','Fr. Avg.:','Blur:','Erode:','Refl. T.:','Pupil T.:'};
+	cellTip = {'Image Gain','Image Gamma','Temporal averaging (# of frames)','Gaussian sd of spatial smoothing','Size of erosion','Pixel brighter than this will be ignored','Pixels darker than this might be the pupil'};
+	cellVal = {'dblGain','dblGamma','intTempAvg','dblGaussWidth','dblStrEl','dblThreshReflect','dblThreshPupil'};
+	cellFmt = {'%.2f','%.2f','%.0f','%.2f','%.0f','%.1f','%.1f'};
 	%set structure
 	intX = 0;
 	intY = numel(vecY);
-	for intEl=1:numel(cellHandles)
+	for intEl=1:numel(cellPtr)
 		%get location
 		intX = intX + 1;
 		if intX > numel(vecX_txt)
@@ -70,17 +71,25 @@ function [hPanelD,sHandles] = ETP_genDetectPanel(ptrMainGUI,vecLocation,strName,
 			'String',cellTxt{intEl});
 		
 		%edit text
+		sData = struct;
+		sData.Ptr = cellPtr{intEl};
+		sData.Txt = cellTxt{intEl};
+		sData.Tip = cellTip{intEl};
+		sData.Val = cellVal{intEl};
+		sData.Fmt = cellFmt{intEl};
+		
 		hEdit = uicontrol('Parent',hPanelD,...
 			'Units','normalized',...
 			'Style','edit',...
 			'Position',[dblEditX dblEditY dblEditW dblH],...
 			'FontSize',10,...
-			'String',sprintf('%.1f',sET.(cellVal{intEl})),...
-			'Callback',{@ETP_DetectEdit,cellVal{intEl}},...;
+			'String',sprintf(sData.Fmt,sET.(cellVal{intEl})),...
+			'Callback',{@ETP_DetectEdit,cellPtr{intEl}},...
+			'UserData',sData,...
 			'Tooltip',cellTip{intEl});
 		
 		%assign handle
-		sHandles.(cellHandles{intEl}) = hEdit;
+		sHandles.(cellPtr{intEl}) = hEdit;
 	end
 	
 	%% end with auto button

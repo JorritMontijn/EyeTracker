@@ -398,7 +398,12 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	ETO_plotResults(sPupil);
 	strResultsFig = strVidFile(1:(end-4));
 	drawnow;
-	export_fig([strVidPath strResultsFig '.tif']);
-	export_fig([strVidPath strResultsFig '.pdf']);
+	try
+		export_fig([strVidPath strResultsFig '.tif']);
+		export_fig([strVidPath strResultsFig '.pdf']);
+	catch
+		print([strVidPath strResultsFig],'-dtiff');
+		print([strVidPath strResultsFig],'-dpdf');
+	end
 %end
 

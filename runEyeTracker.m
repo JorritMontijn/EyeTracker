@@ -1,8 +1,14 @@
-%% starting function
 function varargout = runEyeTracker(varargin)
-	% runEyeTracker Acquire eye-tracking video while performing online
-	% pupil detection with GUI
+	%runEyeTracker Acquire eye-tracking video while performing detection
 	%
+	%This GUI interfaces with SpikeGLX to enable automatic cross-platform
+	%synchronization. It can run online pupil tracking and allows you to
+	%set a reasonable estimate for the parameters requires for accurate
+	%offline pupil tracking. It outputs files that can be used by
+	%"runEyeTrackerOffline" to provide higher-quality offline tracking.
+	%
+	%	Created by Jorrit Montijn, 2019-09-16 (YYYY-MM-DD)
+
 	%Version 1.0 [2019-09-16]
 	%	Created by Jorrit Montijn
 	%Version 1.1 [2019-11-11] by JM
@@ -33,7 +39,6 @@ function varargout = runEyeTracker(varargin)
 	%	Several bug fixes
 	%	- to do: manual gain: objProps.Gain = 29.904700000000002;
 	%	- to do: manual gamma: objProps.Gamma = 1;
-	%	- to do: manual roi: objVid.ROIPosition = [0 0 658 494];
 	%	- to do: add NaN removal of sync file
 	%	- to do: automatically start recording when spikeglx records
 	%Version 2.3 [2021-02-15] by JM
@@ -48,6 +53,8 @@ function varargout = runEyeTracker(varargin)
 	%	- auto-start
 	%	Added features: 
 	%	- automatic file naming
+	%	To do:
+	%	- multi-camera support
 	
 	%set tags
 	%#ok<*INUSL>
@@ -124,15 +131,6 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	
 	%initialize figure
 	[sEyeFig,sET] = ET_initialize(sEyeFig,sET);
-	
-	% set timer to query whether there is a data update every second
-	%objTimer = timer();
-	%objTimer.Period = 1;
-	%objTimer.StartDelay = 1;
-	%objTimer.ExecutionMode = 'fixedSpacing';
-	%objTimer.TimerFcn = @ET_timer;
-	%sEyeFig.objTimer = objTimer;
-	%start(objTimer);
 	
 	% Update handles structure
 	guidata(hObject, handles);

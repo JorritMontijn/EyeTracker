@@ -39,12 +39,14 @@ function dblError = ETP_FitWrapper(vecX,boolRescale)
 	
 	%% update
 	vecV = [dblGain dblGamma intTempAvg dblGaussWidth sglReflT sglPupilT];
-	sFigETP.sHandles.Gain.String = sprintf('%.2f',vecV(1));
-	sFigETP.sHandles.Gamma.String = sprintf('%.2f',vecV(2));
-	sFigETP.sHandles.TempAvg.String = sprintf('%.2f',vecV(3));
-	sFigETP.sHandles.Blur.String = sprintf('%.2f',vecV(4));
-	sFigETP.sHandles.ReflLum.String = sprintf('%.1f',vecV(5));
-	sFigETP.sHandles.PupLum.String = sprintf('%.1f',vecV(6));
+	sFigETP.sHandles.Gain.String = sprintf(sFigETP.sHandles.Gain.UserData.Fmt,vecV(1));
+	sFigETP.sHandles.Gamma.String = sprintf(sFigETP.sHandles.Gamma.UserData.Fmt,vecV(2));
+	sFigETP.sHandles.TempAvg.String = sprintf(sFigETP.sHandles.TempAvg.UserData.Fmt,vecV(3));
+	sFigETP.sHandles.Blur.String = sprintf(sFigETP.sHandles.Blur.UserData.Fmt,vecV(4));
+	%sFigETP.sHandles.StrEl.String = sprintf(sFigETP.sHandles.StrEl.UserData.Fmt,vecV(7));
+	sFigETP.sHandles.ReflLum.String = sprintf(sFigETP.sHandles.ReflLum.UserData.Fmt,vecV(5));
+	sFigETP.sHandles.PupLum.String = sprintf(sFigETP.sHandles.PupLum.UserData.Fmt,vecV(6));
+	
 	
 	%% check image change
 	if intTempAvg > (intF-1)
@@ -68,9 +70,8 @@ function dblError = ETP_FitWrapper(vecX,boolRescale)
 	end
 	
 	%% do detection
-	%build structuring element
-	intRadStrEl = 2;
-	objSE = strel('disk',intRadStrEl,4);
+	%get structuring element
+	objSE = sETP.objSE;
 	
 	%blur width
 	if dblGaussWidth ~= dblPrevGaussWidth || ~(isfield(sETP,'gMatFilt') && ~isempty(sETP.gMatFilt))

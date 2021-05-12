@@ -44,6 +44,7 @@ function sET = ET_defaultValues()
 	sET.dblThreshReflect = 255;%threshold for reflection (invert brightness if above)
 	sET.dblThreshPupil = 8;%threshold for pupil (potential pupil if below)
 	sET.dblPupilMinRadius = 2; %minimum radius of pupil (remove area if below)
+	sET.dblStrEl = 2; %structuring element size for erosion
 	sET.dblThreshSync = 18;%threshold for sync pulse
 	sET.intSubSample = 1;%subsample factor
 	sET.boolInvertImage = 0;%invert image for albinos
