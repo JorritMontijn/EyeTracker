@@ -295,7 +295,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	%combine all metrics
 	vecEdge = abs(max(zscore(vecPupilEdgeHardness)) - zscore(vecPupilEdgeHardness));
 	vecDist = sqrt(zscore(vecPupilCenterX).^2 + zscore(vecPupilCenterY).^2);
-	vecRound = abs(max(zscore(vecPupilRoundness)) - zscore(vecPupilRoundness));
+	vecRound = abs(max(zscore(vecPupilApproxRoundness)) - zscore(vecPupilApproxRoundness));
 	indWrong = (zscore(vecRound+vecDist) > 1) | abs(zscore(vecPupilCenterX))>2;
 	indWrong = conv(indWrong,ones(1,5),'same')>0;
 	vecAllPoints = 1:numel(indWrong);
@@ -392,7 +392,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	
 	%copy mini vid
 	copyfile([strTempDir strMiniOut],[strVidPath strMiniOut]);
-	fprintf('Saved minivid to %s (source: %s, path: %s) [%s]\n',strMiniOut,strTempDir,strVidPath,getTime);
+	fprintf('Saved minivid to %s (source: %s, target: %s) [%s]\n',strMiniOut,strTempDir,strVidPath,getTime);
 	
 	%% plot output
 	ETO_plotResults(sPupil);
