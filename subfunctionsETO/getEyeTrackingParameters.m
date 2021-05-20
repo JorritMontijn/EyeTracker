@@ -188,9 +188,12 @@ function [sTrackParams,sLabels] = getEyeTrackingParameters(sFile,strTempPath,boo
 		
 		%% movie slider through frames
 		vecLocation = [dblPanelStartX 0.12 dblPanelWidth 0.1];
-		[ptrPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocation);
+		fCallback = @ETP_GetCurrentFrame;
+		[ptrPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocation,sETP,sFigETP,fCallback);
 		ptrPanelM.Units = 'pixels';
 		sFigETP.ptrPanelM = ptrPanelM;
+		sFigETP.ptrSliderFrame = ptrSliderFrame;
+		sFigETP.ptrEditFrame = ptrEditFrame;
 		
 		%% run initial pass
 		ETP_DetectEdit();

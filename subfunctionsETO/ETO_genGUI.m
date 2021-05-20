@@ -52,7 +52,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	sFigETO.ptrButtonSetRoot = uicontrol(sFigETO.ptrPanelPaths,'Style','pushbutton','FontSize',11,...
 		'String','Set root:',...
 		'Position',vecLocSetRoot,...
-		'UserData','lock',...
+		'Tooltip','Set path to root directory that contains videos in subfolders',...
 		'Callback',@ptrButtonSetRoot_Callback);
 	
 	vecLocText = [vecLocSetRoot(1)+vecLocSetRoot(3)+10 vecLocSetRoot(2)+2 450 20];
@@ -64,7 +64,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	sFigETO.ptrButtonSetTemp = uicontrol(sFigETO.ptrPanelPaths,'Style','pushbutton','FontSize',11,...
 		'String','Set temp:',...
 		'Position',vecLocSetTemp,...
-		'UserData','lock',...
+		'Tooltip','Set path to directory on fast SSD',...
 		'Callback',@ptrButtonSetTemp_Callback);
 	
 	vecLocText = [vecLocSetTemp(1)+vecLocSetTemp(3)+10 vecLocSetTemp(2)+2 450 20];
@@ -76,7 +76,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	sFigETO.ptrButtonCompileLibrary = uicontrol(sFigETO.ptrPanelPaths,'Style','pushbutton','FontSize',11,...
 		'String','Compile video library',...
 		'Position',vecLocCompileButton,...
-		'UserData','lock',...
+		'Tooltip','Search root path for videos',...
 		'Callback',@ptrButtonCompileLibrary_Callback);
 	
 	%free temp space
@@ -90,37 +90,44 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		'Position',vecLocTempSpace,'BackgroundColor',[1 1 1]);
 	
 	%set tracking parameters
-	vecLocLabelButton = [20 20 120 25];
+	vecLocPresetButton = [20 20 110 25];
+	sFigETO.ptrButtonSetParams = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
+		'String','Set manually',...
+		'Position',vecLocPresetButton,...
+		'Tooltip','Change eye-tracking parameters manually',...
+		'Callback',@ptrButtonSetParams_Callback);
+	
+	vecLocLabelButton = [vecLocPresetButton(1)+vecLocPresetButton(3)+5 vecLocPresetButton(2:4)];
 	sFigETO.ptrButtonSetLabels = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
 		'String','Label frames',...
 		'Position',vecLocLabelButton,...
-		'UserData','lock',...
+		'Tooltip','Label frames for training the algorithm''s parameter',...
 		'Callback',@ptrButtonSetLabels_Callback);
 	
 	vecLocAutopilotButton = [vecLocLabelButton(1)+vecLocLabelButton(3)+5 vecLocLabelButton(2:4)];
 	sFigETO.ptrButtonAutopilot = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
-		'String','Auto-set & track',...
+		'String','Train & track',...
 		'Position',vecLocAutopilotButton,...
-		'UserData','lock',...
+		'Tooltip','Optimize parameters using labelled frames & start tracking after training',...
 		'Callback',@ptrButtonAutopilot_Callback);
 	
-	vecLocPresetButton = [vecLocAutopilotButton(1)+vecLocAutopilotButton(3)+5 vecLocAutopilotButton(2:4)];
-	sFigETO.ptrButtonSetParams = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
-		'String','Set manually',...
-		'Position',vecLocPresetButton,...
-		'UserData','lock',...
-		'Callback',@ptrButtonSetParams_Callback);
-	vecLocTrackingButton = [vecLocPresetButton(1)+vecLocPresetButton(3)+5 vecLocPresetButton(2:4)];
+	vecLocTrackingButton = [vecLocAutopilotButton(1)+vecLocAutopilotButton(3)+5 vecLocAutopilotButton(2:4)];
 	sFigETO.ptrButtonStartTracking = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
 		'String','Start tracking',...
 		'Position',vecLocTrackingButton,...
-		'UserData','lock',...
+		'Tooltip','Start tracking using pre-defined parameters',...
 		'Callback',@ptrButtonStartTracking_Callback);
+	
+	vecLocCheckTrackButton = [vecLocTrackingButton(1)+vecLocTrackingButton(3)+5 vecLocTrackingButton(2:4)];
+	sFigETO.ptrButtonCheckTracking = uicontrol(ptrMainGUI,'Style','pushbutton','FontSize',11,...
+		'String','Check results',...
+		'Position',vecLocCheckTrackButton,...
+		'Tooltip','Check tracking results using mini-vid',...
+		'Callback',@ptrButtonCheckTracking_Callback);
 	
 	%% run initial callbacks
 	ptrButtonSetRoot_Callback(sETO.strRootPath);
 	ptrButtonSetTemp_Callback(sETO.strTempPath);
-	
 	
 	%% set properties
 	% Assign a name to appear in the window title.
@@ -138,6 +145,70 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	
 	
 	%% callbacks
+	function ptrButtonCheckTracking_Callback(hObject, eventdata)
+		%get checked
+		indUseFiles = ETO_CheckSelection(sFigETO);
+		if ~any(indUseFiles),return;end
+		
+		%go through files
+		vecRunFiles = find(indUseFiles);
+		
+		%check if all files have minivids and tracking data
+		indReady = false(size(vecRunFiles));
+		for intFileIdx=1:numel(vecRunFiles)
+			intFile = vecRunFiles(intFileIdx);
+			try 
+				strMiniVid = sETO.sFiles(intFile).sPupil.sPupil.strMiniVidFile;
+				strMiniVidPath = sETO.sFiles(intFile).sPupil.sPupil.strMiniVidPath;
+				if exist([strMiniVidPath strMiniVid],'file')
+					indReady(intFileIdx) = true;
+				elseif exist(fullfile(sETO.sFiles(intFile).folder,strMiniVid),'file')
+					indReady(intFileIdx) = true;
+				elseif exist(fullfile(sETO.strTempPath,strMiniVid),'file')
+					indReady(intFileIdx) = true;
+				else
+					indReady(intFileIdx) = false;
+				end
+			catch
+				indReady(intFileIdx) = false;
+			end
+		end
+		if ~all(indReady)
+			ptrMsg = dialog('Position',[600 400 250 100],'Name','Not all files ready');
+			ptrText = uicontrol('Parent',ptrMsg,...
+				'Style','text',...
+				'Position',[20 50 210 40],...
+				'FontSize',11,...
+				'String','Some files are missing tracking data and/or mini vids');
+			ptrButton = uicontrol('Parent',ptrMsg,...
+				'Position',[100 20 50 30],...
+				'String','OK',...
+				'FontSize',10,...
+				'Callback','delete(gcf)');
+			movegui(ptrMsg,'center')
+			drawnow;
+			return
+		else
+			%run
+			uilock(sFigETO);
+			drawnow;
+			
+			%auto-set parameters
+			for intFileIdx=1:numel(vecRunFiles)
+				intFile = vecRunFiles(intFileIdx);
+				try
+					%run auto-parameters
+					getEyeTrackerChecker(sETO.sFiles(intFile),sETO.strTempPath);
+				catch ME
+					dispErr(ME);
+				end
+			end
+			
+			%enable
+			uiunlock(sFigETO);
+			drawnow;
+		end
+	end
 	function ptrButtonSetLabels_Callback(hObject, eventdata)
 		%get checked
 		indUseFiles = ETO_CheckSelection(sFigETO);
@@ -204,7 +275,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 				intFile = vecRunFiles(intFileIdx);
 				try
 					%run auto-parameters
-					sTrackParams = getEyeTrackingParameters(sETO.sFiles(intFile),sETO.strTempPath,true)
+					sTrackParams = getEyeTrackingParameters(sETO.sFiles(intFile),sETO.strTempPath,true);
 					
 					%update parameter list
 					sETO.sFiles(intFile).sTrackParams = sTrackParams;
@@ -244,28 +315,39 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		if ischar(hObject)
 			strRoot = hObject;
 		else
-			strRoot = uigetdir(sETO.strRootPath,'Select root path:');
+			try
+				strRoot = uigetdir(sETO.strRootPath,'Select root path:');
+			catch
+				strRoot = uigetdir('','Select root path:');
+			end
 		end
-		
-		%update
-		sFigETO.ptrTextRoot.String = strRoot;
-		sETO.strRootPath = strRoot;
+		if ischar(strRoot)
+			%update
+			sFigETO.ptrTextRoot.String = strRoot;
+			sETO.strRootPath = strRoot;
+		end
 	end
 	function ptrButtonSetTemp_Callback(hObject, eventdata)
 		%retrieve root
 		if ischar(hObject)
 			strTemp = hObject;
 		else
-			strTemp = uigetdir(sETO.strTempPath,'Select temp path:');
+			try
+				strTemp = uigetdir(sETO.strTempPath,'Select temp path:');
+			catch
+				strTemp = uigetdir('','Select temp path:');
+			end
 		end
 		
-		%update
-		sFigETO.ptrTextTemp.String = strTemp;
-		sETO.strTempPath = strTemp;
-		%add free space
-		objFile      = java.io.File(strTemp(1:2));
-		dblFreeGB   = objFile.getFreeSpace/(1024.^3);
-		sFigETO.ptrTextTempSpace.String = sprintf('%.1f GB',dblFreeGB);
+		if ischar(strTemp)
+			%update
+			sFigETO.ptrTextTemp.String = strTemp;
+			sETO.strTempPath = strTemp;
+			%add free space
+			objFile      = java.io.File(strTemp(1:2));
+			dblFreeGB   = objFile.getFreeSpace/(1024.^3);
+			sFigETO.ptrTextTempSpace.String = sprintf('%.1f GB',dblFreeGB);
+		end
 	end
 	function ptrButtonCompileLibrary_Callback(hObject, eventdata)
 		%message
