@@ -2,6 +2,8 @@ function indUseFiles = ETO_CheckSelection(sFigETO)
 	%get checked
 	if isfield(sFigETO,'sPointers') && isfield(sFigETO.sPointers,'CheckRun')
 		indUseFiles = cellfun(@(x) x.Value==1,{sFigETO.sPointers.CheckRun});
+	else
+		indUseFiles = [];
 	end
 	
 	%check if any

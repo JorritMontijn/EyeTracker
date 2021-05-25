@@ -39,7 +39,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	%set output
 	sFigETO.output = ptrMainGUI;
 	
-	%% build GUI master paramters
+	%% build GUI master parameters
 	vecMainColor = [0.97 0.97 0.97];
 	sFigETO.ptrPanelPaths = uipanel('Parent',ptrMainGUI,'BackgroundColor',vecMainColor,...
 		'Units','pixels','Title','Master paths','FontSize',10);

@@ -7,7 +7,9 @@ function sFiles = ETO_CompileVideoLibrary(strMasterPath,cellExt)
 		sFiles = [sFiles,filelist];
 	end
 	%remove mini vids
-	sFiles(contains({sFiles.name},'MiniVid')) = [];
+	if ~all(contains({sFiles.name},'MiniVid'))
+		sFiles(contains({sFiles.name},'MiniVid')) = [];
+	end
 	
 	%% populate parameters
 	for intFile=1:numel(sFiles)

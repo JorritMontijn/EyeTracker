@@ -26,7 +26,7 @@ function getEyeTrackerChecker(sFile,strTempPath)
 	sFigETC.sPupil = sFile.sPupil.sPupil;
 	
 	try
-				%% build GUI master parameters
+		%% build GUI master parameters
 		dblHeight = 600;
 		dblWidth = 1000;
 		vecMainColor = [0.97 0.97 0.97];
@@ -57,10 +57,11 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		drawnow;
 		
 		%% access video
-		ptrText.String = 'Accessing mini vid...';
+		ptrText.String = 'Accessing mini vid...';drawnow;
 		strVidFile = ETP_prepareMovie(strMiniVidPath,strMiniVidFile,strTempPath);
 		sETC.objVid = VideoReader(strVidFile);
 		sFigETC.intCurFrame = 1;
+		sFigETC.boolNormIm = true;
 		
 		%get data
 		intTotFrames = sETC.objVid.NumberOfFrames;
@@ -74,7 +75,7 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		sETC.intF = intTotFrames;
 		
 		%% video
-		ptrText.String = 'Testing GPU...';
+		ptrText.String = 'Testing GPU...';drawnow;
 		%main
 		dblVidStartX = dblPanelStartX*2+dblPanelWidth;
 		dblVidWidth = 1-dblVidStartX;
@@ -106,8 +107,8 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		sFigETC.ptrTextRoot.Units = 'normalized';
 		
 		%recording
-		if isfield(sETC,'strRecordingNI')
-			strRec = sETC.strRecordingNI;%: 'RecMA7_2021-02-11R01'
+		if isfield(sFigETC.sPupil.sTrackParams,'strRecordingNI') && ~isempty(sFigETC.sPupil.sTrackParams.strRecordingNI)
+			strRec = sFigETC.sPupil.sTrackParams.strRecordingNI;%: 'RecMA7_2021-02-11R01'
 		else
 			strRec = 'N/A';
 		end
@@ -118,13 +119,43 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		
 		
 		%% movie slider through frames
-		ptrText.String = 'Generating GUI...';
-		vecLocation = [dblPanelStartX 0.05 dblPanelWidth 0.1];
+		ptrText.String = 'Generating GUI...';drawnow;
+		vecLocationSlider = [dblPanelStartX 0 dblPanelWidth 0.1];
 		fCallback = @ETC_GetCurrentFrame;
-		[ptrPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocation,sETC,sFigETC,fCallback);
+		[ptrPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocationSlider,sETC,sFigETC,fCallback);
 		sFigETC.ptrPanelM = ptrPanelM;
 		sFigETC.ptrSliderFrame = ptrSliderFrame;
 		sFigETC.ptrEditFrame = ptrEditFrame;
+		
+		%% time and norm
+		%norm
+		vecLocationNormCheckTxt = [dblPanelStartX vecLocationSlider(2)+vecLocationSlider(4)+0.01 0.11 0.05];
+		uitext('Parent',ptrMainGUI,...
+			'Units','normalized','Position',vecLocationNormCheckTxt,...
+			'HorizontalAlignment','Left','String','Normalize image:');
+		vecLocationNormCheck = [vecLocationNormCheckTxt(1)+vecLocationNormCheckTxt(3) vecLocationNormCheckTxt(2)-0.005 0.03 0.05];
+		sFigETC.ptrImNorm = uicontrol('Parent',ptrMainGUI,...
+			'Style','checkbox','Units','normalized','Position',vecLocationNormCheck,...
+			'Value',1,'BackgroundColor',vecMainColor,'Callback',@ETC_redraw,'UserData','open');
+		
+		%load
+		vecLocPreload = [vecLocationNormCheck(1)+vecLocationNormCheck(3)+0.01 vecLocationNormCheck(2) 0.1 0.05];
+		sFigETC.ptrButtonPreload = uicontrol('Parent',ptrMainGUI,...
+			'Style','togglebutton','Units','normalized','Position',vecLocPreload,...
+			'FontSize',10,'String','Preload movie','BackgroundColor',vecMainColor,'Callback',@ETC_preload,'UserData','open');
+		
+		%time
+		dblTimeW = 0.07;
+		dblTimeTxtW = 0.05;
+		vecLocTime = [(dblPanelStartX+dblPanelWidth)-dblTimeW vecLocationNormCheckTxt(2) dblTimeW vecLocationNormCheckTxt(4)];
+		vecLocTimeTxt = [vecLocTime(1)-dblTimeTxtW-0.01 vecLocationNormCheckTxt(2) dblTimeTxtW vecLocTime(4)];
+		uitext('Parent',ptrMainGUI,...
+			'Units','normalized','Position',vecLocTimeTxt,...
+			'HorizontalAlignment','Left','String','Time (s):');
+		sH = uitext('Parent',ptrMainGUI,...
+			'Units','normalized','Position',vecLocTime,...
+			'String',sprintf('%.3f',0));
+		sFigETC.ptrTextTime = sH.txt;
 		
 		%% sync lum bottom right
 		%filter sync lum & blink
@@ -166,7 +197,7 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		
 		%% x,y,r
 		dblAxH = 0.17;
-		vecLocationR = [dblPanelStartX+dblLeftGap vecLocation(2)+vecLocation(4)+0.1 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		vecLocationR = [dblPanelStartX+dblLeftGap vecLocationNormCheckTxt(2)+vecLocationNormCheckTxt(4)+0.1 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
 		sFigETC.ptrAxesR = axes(ptrMainGUI,'Position',vecLocationR,'Units','normalized');
 		plot(sFigETC.ptrAxesR,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilRadius);
 		hold(sFigETC.ptrAxesR,'on');
