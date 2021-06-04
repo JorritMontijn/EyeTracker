@@ -31,7 +31,6 @@ function ET_stopRecording()
 	sET2.intSubSample = sET.intSubSample;
 	sET2.boolInvertImage = sET.boolInvertImage;
 	sET2.boolRotateImage = sET.boolRotateImage;
-	sET2.boolAutoStart = sET.boolAutoStart;
 	sET2.dblGain = sET.dblGain;
 	sET2.dblGamma = sET.dblGamma;
 	sET2.strHostSGL = sET.strHostSGL;
