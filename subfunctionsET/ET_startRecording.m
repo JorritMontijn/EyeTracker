@@ -13,4 +13,9 @@ function ET_startRecording()
 	sET.boolRecording = true;
 	sET.intSyncPulse = 0; %reset sync pulses
 	sET.dblRecStart = str2double(get(sEyeFig.ptrTextVidTime,'String')); %reset recording start
+	
+	%get SGL parameters
+	if isfield(sET,'hSGL') && ~isempty(sET.hSGL)
+		sET.sParamsSGL = GetParams(sET.hSGL);
+	end
 end

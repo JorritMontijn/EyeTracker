@@ -10,7 +10,7 @@ function [ptrPanelParent,ptrSlider,ptrPanelTitle,sPointers] = ETO_genSliderPanel
 	dblPanelY = vecLocation(2);
 	dblPanelWidth = vecLocation(3);
 	dblPanelHeight = vecLocation(4)-dblTitleHeight;
-	dblStartVal = 1;
+	dblStartVal = 0;
 	
 	%size contants
 	intHorzYN = 12;

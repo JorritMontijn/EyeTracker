@@ -50,7 +50,7 @@ function ET_stopRecording()
 		strMatFile = strcat(strNoExt,'.mat');
 		strDataOutPath = sET.objVidWriter.Path;
 		sET3 = sET;
-		sET = rmfield(sET3,{'sDevices','objCam','objVid','objVidWriter'}); %#ok<NASGU>
+		sET = rmfield(sET3,{'sDevices','objCam','objVid','objVidWriter','hSGL'}); %#ok<NASGU>
 		save(strcat(strDataOutPath,filesep,strMatFile),'sET');
 		sET = sET3;
 	end
