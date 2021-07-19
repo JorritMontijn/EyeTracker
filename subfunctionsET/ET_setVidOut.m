@@ -8,8 +8,8 @@ function ET_setVidOut(strRecFile)
 	
 	%% set video writer
 	%create videowriter object to save video using MPEG-4
-	cellVidFormats = {'Motion JPEG AVI','Motion JPEG 2000','MPEG-4'};
-	cellVidExtensions = {'.avi','.mj2','.mp4'};
+	cellVidFormats = {'Motion JPEG AVI','Motion JPEG 2000','MPEG-4','Archival'};
+	cellVidExtensions = {'.avi','.mj2','.mp4','.mj2'};
 	intUseFormat = 3;
 	
 	% get file location
@@ -53,6 +53,10 @@ function ET_setVidOut(strRecFile)
 	if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Filename') && ~isempty(sET.objVidWriter.Filename)
 		close(sET.objVidWriter);
 	end
+	if isfield(sET,'objVidWriterROI') && isprop(sET.objVidWriterROI,'Filename') && ~isempty(sET.objVidWriterROI.Filename)
+		close(sET.objVidWriterROI);
+		fclose(sET.ptrFileLuminance);
+	end
 	
 	%save video writer data
 	objVidWriter = VideoWriter(strcat(strRecPath,strRecFile), cellVidFormats{intUseFormat});
@@ -60,6 +64,22 @@ function ET_setVidOut(strRecFile)
 	sET.objVidWriter = objVidWriter;
 	sET.strRecPath = strRecPath;
 	sET.strRecFile = strRecFile;
+	
+	%save ROI video writer data
+	if sET.boolSaveVidROI
+		%ROI vid
+		[dummy,strRecFileName,strExt] = fileparts(strRecFile);
+		strRecFileROI = strcat(strRecFileName,'_ROI.mj2');
+		objVidWriterROI = VideoWriter(strcat(strRecPath,strRecFileROI), 'Archival');
+		objVidWriterROI.FrameRate = sET.dblRealFrameRate;
+		sET.objVidWriterROI = objVidWriterROI;
+		sET.strRecPathROI = strRecPath;
+		sET.strRecFileROI = strRecFileROI;
+		
+		%luminance data stream
+		strLumFile = strcat(strRecPath,strRecFileName,'.bin');
+		sET.ptrFileLuminance = fopen(strLumFile,'w+');
+	end
 	
 	%switch raw video recording to on
 	ET_SwitchRecordVideo('On');

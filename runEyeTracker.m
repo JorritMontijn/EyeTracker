@@ -55,6 +55,11 @@ function varargout = runEyeTracker(varargin)
 	%	- automatic file naming
 	%	To do:
 	%	- multi-camera support
+	%Version 2.4 [2021-07-19] by JM
+	%	Added features: 
+	%	- separate lossless pupil ROI video file (.mj2)
+	%	- binary file containing synchronization ROI luminance (uint16)
+	%	- button to flip image up/down
 	
 	%set tags
 	%#ok<*INUSL>
@@ -527,6 +532,13 @@ function ptrButtonRotateImage_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	%% swap boxes
 	sET.vecRectSync = sET.vecRectSync([2 1 4 3]);
 	sET.vecRectROI = sET.vecRectROI([2 1 4 3]);
+end
+function ptrButtonFlipImage_Callback(hObject, eventdata, handles) %#ok<DEFNU>
+	%% globals
+	global sET
+	
+	%% set rotation
+	sET.boolFlipImageUpDown = hObject.Value;
 end
 function ptrToggleConnectSGL_Callback(hObject, eventdata, handles) %#ok<DEFNU>
 	% hObject    handle to ptrToggleConnectSGL (see GCBO)

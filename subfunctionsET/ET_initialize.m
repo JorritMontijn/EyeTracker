@@ -118,6 +118,7 @@ function [sEyeFig,sET] = ET_initialize(sEyeFig,sET)
 	set(sEyeFig.ptrEditSyncLum,'String',num2str(sET.dblThreshSync));
 	set(sEyeFig.ptrButtonInvertPupilThreshold,'Value',sET.boolInvertImage);
 	set(sEyeFig.ptrButtonRotateImage,'Value',sET.boolRotateImage);
+	set(sEyeFig.ptrButtonFlipImage,'Value',sET.boolFlipImageUpDown);
 	
 	set(sEyeFig.ptrEditGain,'String',sprintf('%.1f',sET.dblGain));
 	set(sEyeFig.ptrEditGamma,'String',sprintf('%.1f',sET.dblGamma));

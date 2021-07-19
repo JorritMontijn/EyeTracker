@@ -155,6 +155,9 @@ function ET_main(varargin)
 				if sET.boolRotateImage
 					matVidRaw = permute(matVidRaw,[2 1 3:ndims(matVidRaw)]);
 				end
+				if sET.boolFlipImageUpDown
+					matVidRaw = flipud(matVidRaw);
+				end
 				
 				%% get spikeGLX timestamp
 				if boolRecording && boolSaveToDisk && ~isempty(sET.hSGL)
@@ -189,6 +192,15 @@ function ET_main(varargin)
 					warning('on','MATLAB:audiovideo:VideoWriter:mp4FramePadded');
 					set(sEyeFig.ptrTextVidOutDuration,'String',sprintf('%.1f',sET.objVidWriter.Duration));
 					set(sEyeFig.ptrTextVidOutFrameCount,'String',sprintf('%.0f',sET.objVidWriter.FrameCount));
+					
+					%check if saving ROI
+					if isfield(sET,'objVidWriterROI') && isprop(sET.objVidWriterROI,'Filename') && ~isempty(sET.objVidWriterROI.Filename)
+						matVidROI = matVidRaw(vecKeepY,vecKeepX,1,:);
+						writeVideo(sET.objVidWriterROI,matVidROI);
+						%add luminance values
+						vecLumU16 = uint16(squeeze(mean(mean(matVidRaw(vecSyncY,vecSyncX,1,:),1),2))*(256));
+						fwrite(sET.ptrFileLuminance,vecLumU16,'uint16');
+					end
 				end
 				%get file size
 				if isfield(sET,'objVidWriter') && isprop(sET.objVidWriter,'Path')
@@ -338,6 +350,8 @@ function ET_main(varargin)
 		%clean up
 		delete(objVid);
 		if isfield(sET,'objVidWriter'),close(sET.objVidWriter);end
+		if isfield(sET,'objVidWriterROI'),close(sET.objVidWriterROI);end
+		try,fclose(sET.ptrFileLuminance);catch,end
 		try,fclose(sET.ptrDataOut);catch,end
 		rethrow(ME);
 		delete(sEyeFig.ptrMainGUI);

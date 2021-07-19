@@ -49,10 +49,12 @@ function sET = ET_defaultValues()
 	sET.intSubSample = 1;%subsample factor
 	sET.boolInvertImage = 0;%invert image for albinos
 	sET.boolRotateImage = 0;%rotate image by 90 degrees
+	sET.boolFlipImageUpDown = 0; %flip image up/down
 	sET.strHostSGL = '192.87.10.238'; %default host address
 	sET.hSGL = []; %SGL object placeholder
 	sET.strRecordingNI = '...';
 	
+	sET.boolSaveVidROI = 1;
 	sET.boolAutoStart = 1;
 	sET.dblGain = 29.9;
 	sET.dblGamma = 0.4;

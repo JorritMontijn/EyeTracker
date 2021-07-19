@@ -7,6 +7,11 @@ function ET_stopRecording()
 	
 	%close video writer
 	if isfield(sET,'objVidWriter'),close(sET.objVidWriter);end
+	if isfield(sET,'objVidWriterROI')
+		close(sET.objVidWriterROI);
+		try,fclose(sET.ptrFileLuminance);catch,end
+	end
+	
 	%close csv file
 	try,fclose(sET.ptrDataOut);catch,end
     %set switch to off
@@ -31,6 +36,8 @@ function ET_stopRecording()
 	sET2.intSubSample = sET.intSubSample;
 	sET2.boolInvertImage = sET.boolInvertImage;
 	sET2.boolRotateImage = sET.boolRotateImage;
+	sET2.boolFlipImageUpDown = sET.boolFlipImageUpDown;
+	sET2.boolSaveVidROI = sET.boolSaveVidROI;
 	sET2.dblGain = sET.dblGain;
 	sET2.dblGamma = sET.dblGamma;
 	sET2.strHostSGL = sET.strHostSGL;
@@ -50,7 +57,7 @@ function ET_stopRecording()
 		strMatFile = strcat(strNoExt,'.mat');
 		strDataOutPath = sET.objVidWriter.Path;
 		sET3 = sET;
-		sET = rmfield(sET3,{'sDevices','objCam','objVid','objVidWriter','hSGL'}); %#ok<NASGU>
+		sET = rmfield(sET3,{'sDevices','objCam','objVid','objVidWriter','objVidWriterROI','hSGL'}); %#ok<NASGU>
 		save(strcat(strDataOutPath,filesep,strMatFile),'sET');
 		sET = sET3;
 	end
@@ -58,9 +65,6 @@ function ET_stopRecording()
 	%switch raw video recording to off
 	sET.boolSaveToDisk = false;
 	set(sEyeFig.ptrButtonRecordVidOff,'Value',1);
-    if isfield(sET,'objVidWriter')
-        close(sET.objVidWriter);
-    end
     
 	%disable recording button
 	set(sEyeFig.ptrToggleRecord,'Enable','off');
