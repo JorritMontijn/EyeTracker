@@ -43,7 +43,7 @@ function sFiles = ETO_CompileVideoLibrary(strMasterPath,cellExt)
 		%fcheck if file matches
 		if isempty(sLabelLoad)
 			sLabels = [];
-		elseif sLabelLoad.sLabels.ParentVid ~= strOrigFile
+		elseif ~strcmpi(sLabelLoad.sLabels.ParentVid,strOrigFile)
 			warning([mfilename ':NameMismatch'],sprintf('Video parent of "%s" [%s] does not match "%s"',strLabelFile,sLabelLoad.sLabels.ParentVid,strOrigFile));
 			errordlg(sprintf('Label file %s has mismatching video parent: move or delete file',strLabelFile),'Video name mismatch');
 			sLabels = [];

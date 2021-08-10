@@ -36,6 +36,9 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	set(ptrMainGUI,'DeleteFcn','ETO_DeleteFcn')
 	set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
 	
+	% set mouse & scroll wheel callback
+	set(ptrMainGUI,'windowscrollWheelFcn',@ETO_Scrollwheel);
+	
 	%set output
 	sFigETO.output = ptrMainGUI;
 	
