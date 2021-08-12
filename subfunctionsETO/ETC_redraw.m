@@ -105,6 +105,7 @@ function ETC_redraw(varargin)
 	vecPlotS = sFigETC.sPupil.vecPupilFiltSyncLum(vecFrames);
 	
 	%clear plots and redraw
+	fCallback = @ETC_GetCurrentFrame;
 	dblMeanX = mean(vecX);
 	dblMeanY = mean(vecY);
 	vecPlotX = vecPlotX-dblMeanX;
@@ -112,13 +113,17 @@ function ETC_redraw(varargin)
 	cla(sFigETC.ptrZoomPlot1);
 	cla(sFigETC.ptrZoomPlot2);
 	cla(sFigETC.ptrZoomPlot3);
-	plot(sFigETC.ptrZoomPlot1,vecPlotT,vecPlotS);
+	hLine = plot(sFigETC.ptrZoomPlot1,vecPlotT,vecPlotS);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	plot(sFigETC.ptrZoomPlot1,[dblT dblT],[min(vecPlotS) max(vecPlotS)],'--','Color',[0.5 0.5 0.5]);
-	plot(sFigETC.ptrZoomPlot2,vecPlotT,vecPlotR);
+	hLine = plot(sFigETC.ptrZoomPlot2,vecPlotT,vecPlotR);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	plot(sFigETC.ptrZoomPlot2,[dblT dblT],[min(vecPlotR) max(vecPlotR)],'--','Color',[0.5 0.5 0.5]);
-	plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotX,'color',[0.8 0 0]);
-	plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotY,'color',[0 0 0.8]);
+	hLine = plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotX,'color',[0.8 0 0]);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+	hLine = plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotY,'color',[0 0 0.8]);
 	plot(sFigETC.ptrZoomPlot3,[dblT dblT],[min(cat(1,vecPlotX(:),vecPlotY(:))) max(cat(1,vecPlotX(:),vecPlotY(:)))],'--','Color',[0.5 0.5 0.5]);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	xlim(sFigETC.ptrZoomPlot1,vecLimT);
 	xlim(sFigETC.ptrZoomPlot2,vecLimT);
 	xlim(sFigETC.ptrZoomPlot3,vecLimT);
@@ -142,9 +147,12 @@ function ETC_redraw(varargin)
 			vecE_R = sEpoch.Radius;
 			
 			%plot
-			plot(sFigETC.ptrZoomPlot2,vecE_T,vecE_R,'color',lines(1),'linewidth',2);
-			plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_X,'color',[1 0 0],'linewidth',2);
-			plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_Y,'color',[0 0 1],'linewidth',2);
+			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,vecE_R,'color',lines(1),'linewidth',2);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_X,'color',[1 0 0],'linewidth',2);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_Y,'color',[0 0 1],'linewidth',2);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		end
 	end
 	drawnow;

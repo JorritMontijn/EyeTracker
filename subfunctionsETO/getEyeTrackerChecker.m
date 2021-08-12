@@ -296,7 +296,9 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		sFigETC.ptrZoomPlot1 = ptrZoomPlot1; %sync lum
 		sFigETC.ptrZoomPlot2 = ptrZoomPlot2; %radius
 		sFigETC.ptrZoomPlot3 = ptrZoomPlot3; %x/y
-		
+		set(sFigETC.ptrZoomPlot1,'ButtonDownFcn',{fCallback,'Click'});
+		set(sFigETC.ptrZoomPlot2,'ButtonDownFcn',{fCallback,'Click'});
+		set(sFigETC.ptrZoomPlot3,'ButtonDownFcn',{fCallback,'Click'});
 		
 		%% normalize
 		ptrMainGUI.Units = 'normalized';
