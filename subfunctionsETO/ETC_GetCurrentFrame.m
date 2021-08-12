@@ -1,4 +1,4 @@
-function intNewFrame = ETC_GetCurrentFrame(handle,dummy,strType)
+function intNewFrame = ETC_GetCurrentFrame(handle,eventdata,strType)
 	
 	%get globals
 	global sETC;
@@ -17,6 +17,19 @@ function intNewFrame = ETC_GetCurrentFrame(handle,dummy,strType)
 		intNewFrame = round(str2double(sFigETC.ptrEditFrame.String));
 	elseif strcmpi(strType,'Slider')
 		intNewFrame = round(sFigETC.ptrSliderFrame.Value);
+	elseif strcmpi(strType,'Scroll')
+		intNewFrame = round(intOldFrame + (eventdata.VerticalScrollCount*eventdata.VerticalScrollAmount));
+		if intNewFrame < 1
+			intNewFrame = 1;
+		elseif intNewFrame > sETC.intF
+			intNewFrame = sETC.intF;
+		end
+	elseif strcmpi(strType,'Click')
+		dblT = eventdata.IntersectionPoint(1);
+		intNewFrame = find(sFigETC.sPupil.vecPupilTime>dblT,1);
+		if isempty(intNewFrame),intNewFrame=sETC.intF;end
+	elseif isnumeric(strType)
+		intNewFrame = strType;
 	end
 	
 	%check if valid

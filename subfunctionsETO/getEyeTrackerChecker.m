@@ -1,6 +1,6 @@
-function getEyeTrackerChecker(sFile,strTempPath)
+function sFile = getEyeTrackerChecker(sFile,strTempPath)
 	%getEyeTrackerChecker Check eye-tracking quality
-	%   getEyeTrackerChecker(sFile,strTempPath)
+	%   sFile = getEyeTrackerChecker(sFile,strTempPath)
 	
 	%% globals
 	global sFigETC;
@@ -24,18 +24,24 @@ function getEyeTrackerChecker(sFile,strTempPath)
 	
 	%% load tracking data
 	sFigETC.sPupil = sFile.sPupil.sPupil;
-	
+	sFigETC.sPupil.strProcFile = sFile.sPupil.name;
+	sFigETC.sPupil.strProcPath = sFile.sPupil.folder;
+	if isfield(sFigETC.sPupil,'sEpochs') && isstruct(sFigETC.sPupil.sEpochs)
+		sFigETC.sOldEpochs = sFigETC.sPupil.sEpochs;
+	else
+		sFigETC.sOldEpochs = ETC_GenEmptyEpochs();
+	end
 	try
 		%% build GUI master parameters
-		dblHeight = 600;
-		dblWidth = 1000;
+		dblHeight = 720;
+		dblWidth = 1280;
 		vecMainColor = [0.97 0.97 0.97];
 		%vecLocText = [0.02 0.96 0.4 0.1];
 		dblPanelStartX = 0.01;
 		dblPanelWidth = 0.44;
 		vecPosGUI = [0,0,dblWidth,dblHeight];
 		ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Color',vecMainColor);
-		set(ptrMainGUI,'DeleteFcn','ETC_DeleteFcn')
+		set(ptrMainGUI,'CloseRequestFcn','ETC_DeleteFcn')
 		set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
 		ptrMainGUI.Name = 'Tracker Checker';
 		
@@ -47,7 +53,7 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		movegui(ptrMainGUI,'center');
 		
 		%% message
-		ptrMsg = dialog('Position',[600 400 250 50],'Name','Copying file');
+		ptrMsg = dialog('Position',[600 400 250 50],'Name','Starting GUI');
 		ptrText = uicontrol('Parent',ptrMsg,...
 			'Style','text',...
 			'Position',[20 00 210 40],...
@@ -79,7 +85,7 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		%main
 		dblVidStartX = dblPanelStartX*2+dblPanelWidth;
 		dblVidWidth = 1-dblVidStartX;
-		vecLocVid = [dblVidStartX 0.4 dblVidWidth 0.6];
+		vecLocVid = [dblVidStartX 0.4 dblVidWidth 0.7];
 		sFigETC.ptrAxesMainVid = axes(ptrMainGUI,'Position',vecLocVid,'Units','normalized');
 		axis(sFigETC.ptrAxesMainVid,'off');
 		
@@ -120,26 +126,29 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		
 		%% movie slider through frames
 		ptrText.String = 'Generating GUI...';drawnow;
-		vecLocationSlider = [dblPanelStartX 0 dblPanelWidth 0.1];
+		vecLocationSlider = [dblPanelStartX 0 dblPanelWidth 0.06];
 		fCallback = @ETC_GetCurrentFrame;
 		[ptrPanelM,ptrSliderFrame,ptrEditFrame] = ETP_genMovieSlider(ptrMainGUI,vecLocationSlider,sETC,sFigETC,fCallback);
 		sFigETC.ptrPanelM = ptrPanelM;
 		sFigETC.ptrSliderFrame = ptrSliderFrame;
 		sFigETC.ptrEditFrame = ptrEditFrame;
+		%add click/scroll callbacks
+		set(ptrMainGUI,'windowscrollWheelFcn',{fCallback,'Scroll'});
 		
 		%% time and norm
 		%norm
-		vecLocationNormCheckTxt = [dblPanelStartX vecLocationSlider(2)+vecLocationSlider(4)+0.01 0.11 0.05];
+		dblBarH = 0.03;
+		vecLocationNormCheckTxt = [dblPanelStartX vecLocationSlider(2)+vecLocationSlider(4)+0.01 0.11 dblBarH];
 		uitext('Parent',ptrMainGUI,...
 			'Units','normalized','Position',vecLocationNormCheckTxt,...
 			'HorizontalAlignment','Left','String','Normalize image:');
-		vecLocationNormCheck = [vecLocationNormCheckTxt(1)+vecLocationNormCheckTxt(3) vecLocationNormCheckTxt(2)-0.005 0.03 0.05];
+		vecLocationNormCheck = [vecLocationNormCheckTxt(1)+vecLocationNormCheckTxt(3) vecLocationNormCheckTxt(2)-0.005 0.03 dblBarH];
 		sFigETC.ptrImNorm = uicontrol('Parent',ptrMainGUI,...
 			'Style','checkbox','Units','normalized','Position',vecLocationNormCheck,...
 			'Value',1,'BackgroundColor',vecMainColor,'Callback',@ETC_redraw,'UserData','open');
 		
 		%load
-		vecLocPreload = [vecLocationNormCheck(1)+vecLocationNormCheck(3)+0.01 vecLocationNormCheck(2) 0.1 0.05];
+		vecLocPreload = [vecLocationNormCheck(1)+vecLocationNormCheck(3)+0.01 vecLocationNormCheck(2)-0.01 0.1 dblBarH+0.01];
 		sFigETC.ptrButtonPreload = uicontrol('Parent',ptrMainGUI,...
 			'Style','togglebutton','Units','normalized','Position',vecLocPreload,...
 			'FontSize',10,'String','Preload movie','BackgroundColor',vecMainColor,'Callback',@ETC_preload,'UserData','open');
@@ -157,7 +166,7 @@ function getEyeTrackerChecker(sFile,strTempPath)
 			'String',sprintf('%.3f',0));
 		sFigETC.ptrTextTime = sH.txt;
 		
-		%% sync lum bottom right
+		%% sync lum bottom left
 		%filter sync lum & blink
 		dblLowPass = 0.01/(1/median(diff(sFigETC.sPupil.vecPupilTime)));
 		[fb,fa] = butter(2,dblLowPass,'high');
@@ -168,71 +177,126 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		dblLeftGap = 0.03;
 		vecAxLimT = [min(sFigETC.sPupil.vecPupilTime) max(sFigETC.sPupil.vecPupilTime)];
 		dblAxSH = 0.13;
-		vecLocationS = [dblVidStartX+dblLeftGap+0.01 vecLocVid(2)-dblAxSH-0.03 dblVidWidth-dblLeftGap*2 dblAxSH];
+		dblStartY = vecLocationNormCheckTxt(2)+vecLocationNormCheckTxt(4)+dblLeftGap*2;
+		%vecLocationS = [dblVidStartX+dblLeftGap+0.01 vecLocVid(2)-dblAxSH-0.03 dblVidWidth-dblLeftGap*2 dblAxSH];
+		vecLocationS = [dblPanelStartX+dblLeftGap dblStartY dblPanelWidth-dblLeftGap dblAxSH];
 		
 		sFigETC.ptrAxesS = axes(ptrMainGUI,'Position',vecLocationS,'Units','normalized');
-		plot(sFigETC.ptrAxesS,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFiltSyncLum);
+		hLine=plot(sFigETC.ptrAxesS,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFiltSyncLum);
 		hold(sFigETC.ptrAxesS,'on');
 		ylabel(sFigETC.ptrAxesS,'Sync lum','FontSize',12);
+		xlabel(sFigETC.ptrAxesS,'Time (s)','FontSize',12);
 		grid(sFigETC.ptrAxesS,'on');
 		xlim(sFigETC.ptrAxesS,vecAxLimT);
+		set(sFigETC.ptrAxesS,'ButtonDownFcn',{fCallback,'Click'});
+		set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		
-		vecLocationVL = [dblVidStartX+dblLeftGap+0.01 vecLocationS(2)-dblAxSH-0.03 dblVidWidth-dblLeftGap*2 dblAxSH];
+		%vecLocationVL = [dblVidStartX+dblLeftGap+0.01 vecLocationS(2)-dblAxSH-0.03 dblVidWidth-dblLeftGap*2 dblAxSH];
+		vecLocationVL = vecLocationS + [0 vecLocationS(4)+0.01 0 0];
 		sFigETC.ptrAxesVL = axes(ptrMainGUI,'Position',vecLocationVL,'Units','normalized');
-		plot(sFigETC.ptrAxesVL,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFiltAbsVidLum);
+		hLine=plot(sFigETC.ptrAxesVL,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFiltAbsVidLum);
 		hold(sFigETC.ptrAxesVL,'on');
-		ylabel(sFigETC.ptrAxesVL,'Blink','FontSize',12);
+		ylabel(sFigETC.ptrAxesVL,'Vid lum.','FontSize',12);
 		grid(sFigETC.ptrAxesVL,'on');
-		xlabel(sFigETC.ptrAxesVL,'Time (s)','FontSize',12);
+		set(sFigETC.ptrAxesVL,'xticklabel','');
 		xlim(sFigETC.ptrAxesVL,vecAxLimT);
+		set(sFigETC.ptrAxesVL,'ButtonDownFcn',{fCallback,'Click'});
+		set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		
 		%scatters + txt
 		dblT = sFigETC.sPupil.vecPupilTime(sFigETC.intCurFrame);
 		dblS = sFigETC.sPupil.vecPupilFiltSyncLum(sFigETC.intCurFrame);
 		dblVL = sFigETC.sPupil.vecPupilFiltAbsVidLum(sFigETC.intCurFrame);
-		sFigETC.ptrScatterL = scatter(sFigETC.ptrAxesS,dblT,dblS,48,'bx','LineWidth',2);
+		sFigETC.ptrScatterL = scatter(sFigETC.ptrAxesS,dblT,dblS,48,'b.','LineWidth',2);
 		sFigETC.ptrScatterTxtL = text(sFigETC.ptrAxesS,dblT,dblS+range(sFigETC.ptrAxesS.YLim)/7,sprintf('L=%.3f',dblS));
-		sFigETC.ptrScatterVL = scatter(sFigETC.ptrAxesVL,dblT,dblVL,48,'kx','LineWidth',2);
+		sFigETC.ptrScatterVL = scatter(sFigETC.ptrAxesVL,dblT,dblVL,48,'k.','LineWidth',2);
 		sFigETC.ptrScatterTxtVL = text(sFigETC.ptrAxesVL,dblT,dblVL+range(sFigETC.ptrAxesVL.YLim)/7,sprintf('B=%.3f',dblVL));
 		
 		%% x,y,r
-		dblAxH = 0.17;
-		vecLocationR = [dblPanelStartX+dblLeftGap vecLocationNormCheckTxt(2)+vecLocationNormCheckTxt(4)+0.1 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		%dblAxH = 0.17;
+		%vecLocationR = [dblPanelStartX+dblLeftGap vecLocationNormCheckTxt(2)+vecLocationNormCheckTxt(4)+0.1 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		vecLocationR = vecLocationVL + [0 vecLocationVL(4)+0.01 0 0];
 		sFigETC.ptrAxesR = axes(ptrMainGUI,'Position',vecLocationR,'Units','normalized');
-		plot(sFigETC.ptrAxesR,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilRadius);
+		hLine=plot(sFigETC.ptrAxesR,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFixedRadius);
 		hold(sFigETC.ptrAxesR,'on');
 		ylabel(sFigETC.ptrAxesR,'Radius (pixels)','FontSize',12);
 		grid(sFigETC.ptrAxesR,'on');
-		xlabel(sFigETC.ptrAxesR,'Time (s)','FontSize',12);
 		xlim(sFigETC.ptrAxesR,vecAxLimT);
+		set(sFigETC.ptrAxesR,'xticklabel','');
+		set(sFigETC.ptrAxesR,'ButtonDownFcn',{fCallback,'Click'});
+		set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		
-		vecLocationY = [dblPanelStartX+dblLeftGap vecLocationR(2)+vecLocationR(4)+0.04 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		%vecLocationY = [dblPanelStartX+dblLeftGap vecLocationR(2)+vecLocationR(4)+0.04 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		vecLocationY = vecLocationR + [0 vecLocationR(4)+0.01 0 0];
 		sFigETC.ptrAxesY = axes(ptrMainGUI,'Position',vecLocationY,'Units','normalized');
-		plot(sFigETC.ptrAxesY,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilCenterY);
+		hLine=plot(sFigETC.ptrAxesY,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFixedCenterY);
 		hold(sFigETC.ptrAxesY,'on');
 		ylabel(sFigETC.ptrAxesY,'Y (pixels)','FontSize',12);
 		grid(sFigETC.ptrAxesY,'on');
 		xlim(sFigETC.ptrAxesY,vecAxLimT);
+		set(sFigETC.ptrAxesY,'xticklabel','');
+		set(sFigETC.ptrAxesY,'ButtonDownFcn',{fCallback,'Click'});
+		set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		
-		vecLocationX = [dblPanelStartX+dblLeftGap vecLocationY(2)+vecLocationY(4)+0.04 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		%vecLocationX = [dblPanelStartX+dblLeftGap vecLocationY(2)+vecLocationY(4)+0.04 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
+		vecLocationX = vecLocationY + [0 vecLocationY(4)+0.01 0 0];
 		sFigETC.ptrAxesX = axes(ptrMainGUI,'Position',vecLocationX,'Units','normalized');
-		plot(sFigETC.ptrAxesX,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilCenterX);
+		hLine=plot(sFigETC.ptrAxesX,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil.vecPupilFixedCenterX);
 		hold(sFigETC.ptrAxesX,'on');
 		grid(sFigETC.ptrAxesX,'on');
 		ylabel(sFigETC.ptrAxesX,'X (pixels)','FontSize',12);
 		xlim(sFigETC.ptrAxesX,vecAxLimT);
+		set(sFigETC.ptrAxesX,'XAxisLocation', 'top');
+		set(sFigETC.ptrAxesX,'ButtonDownFcn',{fCallback,'Click'});
+		set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		
 		%scatters + txt
 		dblT = sFigETC.sPupil.vecPupilTime(sFigETC.intCurFrame);
 		dblR = sFigETC.sPupil.vecPupilFixedRadius(sFigETC.intCurFrame);
 		dblY = sFigETC.sPupil.vecPupilFixedCenterY(sFigETC.intCurFrame);
 		dblX = sFigETC.sPupil.vecPupilFixedCenterX(sFigETC.intCurFrame);
-		sFigETC.ptrScatterR = scatter(sFigETC.ptrAxesR,dblT,dblR,48,'kx','LineWidth',2);
+		sFigETC.ptrScatterR = scatter(sFigETC.ptrAxesR,dblT,dblR,48,'k.','LineWidth',2);
 		sFigETC.ptrScatterTxtR = text(sFigETC.ptrAxesR,dblT,dblR+range(sFigETC.ptrAxesR.YLim)/7,sprintf('R=%.3f',dblR));
-		sFigETC.ptrScatterY = scatter(sFigETC.ptrAxesY,dblT,dblY,48,'bx','LineWidth',2);
+		sFigETC.ptrScatterY = scatter(sFigETC.ptrAxesY,dblT,dblY,48,'b.','LineWidth',2);
 		sFigETC.ptrScatterTxtY = text(sFigETC.ptrAxesY,dblT,dblY+range(sFigETC.ptrAxesY.YLim)/7,sprintf('Y=%.3f',dblY));
-		sFigETC.ptrScatterX = scatter(sFigETC.ptrAxesX,dblT,dblX,48,'rx','LineWidth',2);
+		sFigETC.ptrScatterX = scatter(sFigETC.ptrAxesX,dblT,dblX,48,'r.','LineWidth',2);
 		sFigETC.ptrScatterTxtX = text(sFigETC.ptrAxesX,dblT,dblX+range(sFigETC.ptrAxesX.YLim)/7,sprintf('X=%.3f',dblX));
+		
+		%% epoch annotation
+		vecLocationEpochAnnotation = [vecLocVid(1) 0 vecLocVid(3)/4 1-vecLocVid(4)];
+		ETC_genEpochPanel(ptrMainGUI,vecLocationEpochAnnotation,fCallback);
+		
+		%% zoomed-in plot
+		dblZoomPlotH = (vecLocationEpochAnnotation(4)-0.06)/3;
+		vecLocationZoomPlot1 = [vecLocationEpochAnnotation(1)+vecLocationEpochAnnotation(3)+0.02 0.045 vecLocVid(3)*(3/4)-0.04 dblZoomPlotH];
+		ptrZoomPlot1 = axes(ptrMainGUI,'Position',vecLocationZoomPlot1);
+		ylabel(ptrZoomPlot1,'Sync Lum','FontSize',10);
+		xlabel(ptrZoomPlot1,'Time (s)','FontSize',10);
+		set(ptrZoomPlot1,'ytick',[]);
+		hold(ptrZoomPlot1,'on');
+		grid(ptrZoomPlot1,'on');
+		
+		vecLocationZoomPlot2 = vecLocationZoomPlot1 + [0 vecLocationZoomPlot1(4)+0.005 0 0];
+		ptrZoomPlot2 = axes(ptrMainGUI,'Position',vecLocationZoomPlot2);
+		ylabel(ptrZoomPlot2,'Radius','FontSize',10);
+		ptrZoomPlot2.XAxis.Visible = 'off';
+		set(ptrZoomPlot2,'ytick',[]);
+		hold(ptrZoomPlot2,'on');
+		grid(ptrZoomPlot2,'on');
+		
+		vecLocationZoomPlot3 = vecLocationZoomPlot2 + [0 vecLocationZoomPlot2(4)+0.005 0 0];
+		ptrZoomPlot3 = axes(ptrMainGUI,'Position',vecLocationZoomPlot3);
+		ylabel(ptrZoomPlot3,'Loc X/Y','FontSize',10);
+		ptrZoomPlot3.XAxis.Visible = 'off';
+		set(ptrZoomPlot3,'ytick',[]);
+		hold(ptrZoomPlot3,'on');
+		grid(ptrZoomPlot3,'on');
+		
+		%add to global
+		sFigETC.ptrZoomPlot1 = ptrZoomPlot1; %sync lum
+		sFigETC.ptrZoomPlot2 = ptrZoomPlot2; %radius
+		sFigETC.ptrZoomPlot3 = ptrZoomPlot3; %x/y
+		
 		
 		%% normalize
 		ptrMainGUI.Units = 'normalized';
@@ -246,6 +310,9 @@ function getEyeTrackerChecker(sFile,strTempPath)
 		while ~sETC.boolForceQuit
 			pause(0.01);
 		end
+		
+		%% update sFile
+		sFile.sPupil.sPupil = sFigETC.sPupil;
 	catch ME
 		dispErr(ME);
 	end

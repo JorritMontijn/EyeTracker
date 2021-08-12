@@ -201,7 +201,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 				intFile = vecRunFiles(intFileIdx);
 				try
 					%run auto-parameters
-					getEyeTrackerChecker(sETO.sFiles(intFile),sETO.strTempPath);
+					sETO.sFiles(intFile) = getEyeTrackerChecker(sETO.sFiles(intFile),sETO.strTempPath);
 				catch ME
 					dispErr(ME);
 				end

@@ -8,6 +8,7 @@ function sLabels = ETP_GetImLabels(matAllIm)
 	movegui(h,'center');
 	%global hAxis
 	hAxis = axes();
+	axis(hAxis,'equal');
 	drawnow;
 	set (h, 'WindowButtonMotionFcn', @(h,e) ''); %needs a placeholder for some reason...
 	
@@ -73,8 +74,8 @@ function sLabels = ETP_GetImLabels(matAllIm)
 					boolAccept = true;
 					boolClicked = true;
 					delete(hBorder);
-					sLabels.X(intIm) = dblLocX;
-					sLabels.Y(intIm) = dblLocY;
+					sLabels.X(intIm) = dblX;
+					sLabels.Y(intIm) = dblY;
 					sLabels.R(intIm) = dblRadius;
 				end
 				if getAsyncKeyState(2)

@@ -1,6 +1,6 @@
 function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	%getEyeTrackingOffline Run offline pupil detection
-	%   sPupil = getEyeTrackingOffline(sFileLocs)
+	%   sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	
 	%% retrieve paths and copy required files
 	%placeholder
