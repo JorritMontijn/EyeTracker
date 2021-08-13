@@ -1,4 +1,4 @@
-function intNewFrame = ETC_GetCurrentFrame(handle,eventdata,strType)
+function intNewFrame = ETC_GetCurrentFrame(hObject,eventdata,strType)
 	
 	%get globals
 	global sETC;
@@ -25,9 +25,19 @@ function intNewFrame = ETC_GetCurrentFrame(handle,eventdata,strType)
 			intNewFrame = sETC.intF;
 		end
 	elseif strcmpi(strType,'Click')
+		%get time at click
 		dblT = eventdata.IntersectionPoint(1);
 		intNewFrame = find(sFigETC.sPupil.vecPupilTime>dblT,1);
-		if isempty(intNewFrame),intNewFrame=sETC.intF;end
+		if eventdata.Button == 1
+			%move to location
+			if isempty(intNewFrame),intNewFrame=sETC.intF;end
+		elseif eventdata.Button == 3
+			%set as interpolation begin/end
+			ETC_AddPupilEpoch(hObject,eventdata,intNewFrame);
+		elseif eventdata.Button == 2
+			%set as blink
+			ETC_SetBlinkEpoch(hObject,eventdata,intNewFrame);
+		end
 	elseif isnumeric(strType)
 		intNewFrame = strType;
 	end

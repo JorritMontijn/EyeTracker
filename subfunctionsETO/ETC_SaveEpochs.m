@@ -42,6 +42,9 @@ function ETC_SaveEpochs()
 				vecPupilFixedRadius(intBegin:intEnd) = sEpoch.Radius;
 			else
 				vecPupilFixedBlinks(intBegin:intEnd) = sEpoch.Blinks;
+				vecPupilFixedCenterX(intBegin:intEnd) = nan;
+				vecPupilFixedCenterY(intBegin:intEnd) = nan;
+				vecPupilFixedRadius(intBegin:intEnd) = nan;
 			end
 		end
 		

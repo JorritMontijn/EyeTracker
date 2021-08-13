@@ -173,7 +173,9 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecPupilSyncLum = nan(1,intDetectFrames);
 	vecPupilNotReflection = nan(1,intDetectFrames);
 	%prep minivid
-	objMiniVid = VideoWriter([strTempDir strMiniOut],'MPEG-4');
+	[strPath,strMiniFile,strExt]=fileparts(strMiniOut);
+	strMiniOut = strcat(strMiniFile,'.mj2');
+	objMiniVid = VideoWriter(fullpath(strTempDir,strMiniOut), 'Archival');
 	objMiniVid.FrameRate = objVid.FrameRate/intTempAvg;
 	open(objMiniVid);
 	
@@ -300,6 +302,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	indWrong = conv(indWrong,ones(1,5),'same')>0;
 	vecAllPoints = 1:numel(indWrong);
 	vecGoodPoints = find(~indWrong);
+	vecBadPoints = find(indWrong);
 	
 	%{
 	%initial roundness check
@@ -344,6 +347,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecPupilFixedCenterX = vecPupilFixedCenterX(1:intLastFrame);
 	vecPupilFixedCenterY = vecPupilFixedCenterY(1:intLastFrame);
 	vecPupilFixedRadius = vecPupilFixedRadius(1:intLastFrame);
+	vecPupilFixedPoints = indWrong;
 	
 	%output
 	sPupil = struct;
@@ -375,6 +379,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sPupil.vecPupilFixedCenterX = vecPupilFixedCenterX;
 	sPupil.vecPupilFixedCenterY = vecPupilFixedCenterY;
 	sPupil.vecPupilFixedRadius = vecPupilFixedRadius;
+	sPupil.vecPupilFixedPoints = vecPupilFixedPoints;
 	
 	%extra info
 	sPupil.strVidFile = strVidFile;

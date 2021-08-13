@@ -42,6 +42,10 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	end
 	if ~exist('sET','var')
 		sET.boolUseGPU = true;
+	elseif ~isstruct(sET)
+		boolUseGPU = sET;
+		sET=struct;
+		sET.boolUseGPU = boolUseGPU;
 	end
 	
 	%% perform pupil detection
@@ -119,7 +123,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%get potential area
 	
 	%turn BW image into double with slight gradient
-	if isfield(sET,'boolInvertImage') && sET.boolUseGPU
+	if isfield(sET,'boolUseGPU') && sET.boolUseGPU
 		matDbl = double(gather(imfilt(gpuArray(double(imBW)),gMatFilt)));
 	else
 		matDbl = double(imfilt(double(imBW),gMatFilt));
@@ -132,7 +136,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	
 	%for fitting, impose small penalty on pupil areas outside imBW
 	try
-		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,imBW);
+		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecPrevLoc,dblApproxRadius,imReflection,imBW);
 	catch
 		vecCentroid = vecApproxCentroid;
 		dblRadius = dblApproxRadius;

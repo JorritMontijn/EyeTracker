@@ -44,8 +44,9 @@ function ETC_redraw(varargin)
 	
 	%draw epoch if overlapping
 	indHasLabels = arrayfun(@(x) ~isempty(x.BeginLabels) & ~isempty(x.EndLabels),sFigETC.sPupil.sEpochs);
+	indHasOverlap = cell2vec({sFigETC.sPupil.sEpochs.BeginFrame}) <= sFigETC.intCurFrame & cell2vec({sFigETC.sPupil.sEpochs.EndFrame}) >= sFigETC.intCurFrame;
 	if ~isempty(indHasLabels)
-		indEligible = indHasLabels(:) & cell2vec({sFigETC.sPupil.sEpochs.BeginFrame}) <= sFigETC.intCurFrame & cell2vec({sFigETC.sPupil.sEpochs.EndFrame}) >= sFigETC.intCurFrame;
+		indEligible = indHasLabels(:) & indHasOverlap;
 		intUseEpoch = find(indEligible,1,'last');
 		if ~isempty(intUseEpoch)
 			%extract parameters
@@ -106,8 +107,8 @@ function ETC_redraw(varargin)
 	
 	%clear plots and redraw
 	fCallback = @ETC_GetCurrentFrame;
-	dblMeanX = mean(vecX);
-	dblMeanY = mean(vecY);
+	dblMeanX = nanmean(vecX);
+	dblMeanY = nanmean(vecY);
 	vecPlotX = vecPlotX-dblMeanX;
 	vecPlotY = vecPlotY-dblMeanY;
 	cla(sFigETC.ptrZoomPlot1);
@@ -115,14 +116,19 @@ function ETC_redraw(varargin)
 	cla(sFigETC.ptrZoomPlot3);
 	hLine = plot(sFigETC.ptrZoomPlot1,vecPlotT,vecPlotS);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
-	plot(sFigETC.ptrZoomPlot1,[dblT dblT],[min(vecPlotS) max(vecPlotS)],'--','Color',[0.5 0.5 0.5]);
+	hLine = plot(sFigETC.ptrZoomPlot1,[dblT dblT],[min(vecPlotS) max(vecPlotS)],'--','Color',[0.5 0.5 0.5]);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+	
 	hLine = plot(sFigETC.ptrZoomPlot2,vecPlotT,vecPlotR);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
-	plot(sFigETC.ptrZoomPlot2,[dblT dblT],[min(vecPlotR) max(vecPlotR)],'--','Color',[0.5 0.5 0.5]);
+	hLine = plot(sFigETC.ptrZoomPlot2,[dblT dblT],[min(vecPlotR) max(vecPlotR)],'--','Color',[0.5 0.5 0.5]);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+	
 	hLine = plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotX,'color',[0.8 0 0]);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	hLine = plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotY,'color',[0 0 0.8]);
-	plot(sFigETC.ptrZoomPlot3,[dblT dblT],[min(cat(1,vecPlotX(:),vecPlotY(:))) max(cat(1,vecPlotX(:),vecPlotY(:)))],'--','Color',[0.5 0.5 0.5]);
+	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+	hLine = plot(sFigETC.ptrZoomPlot3,[dblT dblT],[min(cat(1,vecPlotX(:),vecPlotY(:))) max(cat(1,vecPlotX(:),vecPlotY(:)))],'--','Color',[0.5 0.5 0.5]);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	xlim(sFigETC.ptrZoomPlot1,vecLimT);
 	xlim(sFigETC.ptrZoomPlot2,vecLimT);
@@ -134,6 +140,7 @@ function ETC_redraw(varargin)
 	vecE = cell2vec({sFigETC.sPupil.sEpochs.EndFrame});
 	vecLimF = [find(vecT >= vecLimT(1),1) find(vecT >= vecLimT(2),1)];
 	if ~isempty(indHasLabels)
+		%% corrected epochs
 		vecPlotEpochs = find(indHasLabels(:) & (vecB <= vecLimF(2) &  vecE >= vecLimF(1)));
 		for intEpochIdx=1:numel(vecPlotEpochs)
 			intEpoch = vecPlotEpochs(intEpochIdx);
@@ -154,6 +161,25 @@ function ETC_redraw(varargin)
 			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_Y,'color',[0 0 1],'linewidth',2);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		end
+		%% blink epochs
+		vecBlinkEpochs = find(~indHasLabels(:) & (vecB <= vecLimF(2) &  vecE >= vecLimF(1)));
+		for intEpochIdx=1:numel(vecBlinkEpochs)
+			intEpoch = vecBlinkEpochs(intEpochIdx);
+			
+			%extract parameters
+			sEpoch = sFigETC.sPupil.sEpochs(intEpoch);
+			vecEpochFramesBE = [sEpoch.BeginFrame sEpoch.EndFrame];
+			vecE_T = vecT(vecEpochFramesBE);
+			
+			%plot
+			hLine = plot(sFigETC.ptrZoomPlot1,vecE_T,max(get(sFigETC.ptrZoomPlot1,'ylim'))*[1 1],'color','k','linewidth',3);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,max(get(sFigETC.ptrZoomPlot2,'ylim'))*[1 1],'color','k','linewidth',3);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,max(get(sFigETC.ptrZoomPlot3,'ylim'))*[1 1],'color','k','linewidth',3);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+		end
+		
 	end
 	drawnow;
 	%error add epochs to overwrite plotting data; also add zoomed plots

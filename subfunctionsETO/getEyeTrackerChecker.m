@@ -106,6 +106,10 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 			'String',strGPU);
 		sFigETC.ptrTextVersion.Units = 'normalized';
 		
+		%help button
+		vecLocButtonHelp = [vecLocText(1)+vecLocText(3)+20 vecLocText(2)-2 60 25];
+		sFigETC.ptrButtonHelp = uicontrol(ptrMainGUI,'Style','pushbutton','Position',vecLocButtonHelp,'String','Help','Callback',@ETC_DisplayHelp,'FontSize',10);
+	
 		%file name
 		vecLocText1 = vecLocText - [0 vecLocText(4)+10 0 0];
 		sFigETC.ptrTextRoot = uicontrol(ptrMainGUI,'Style','text','HorizontalAlignment','left','FontSize',11,'BackgroundColor',vecMainColor,'Position',vecLocText1,...
@@ -264,7 +268,7 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		
 		%% epoch annotation
 		vecLocationEpochAnnotation = [vecLocVid(1) 0 vecLocVid(3)/4 1-vecLocVid(4)];
-		ETC_genEpochPanel(ptrMainGUI,vecLocationEpochAnnotation,fCallback);
+		ETC_genEpochPanel(ptrMainGUI,vecLocationEpochAnnotation);
 		
 		%% zoomed-in plot
 		dblZoomPlotH = (vecLocationEpochAnnotation(4)-0.06)/3;

@@ -1,4 +1,4 @@
-function ETC_genEpochPanel(ptrMainGUI,vecLocation,fCallback)
+function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	
 	%% get globals
 	global sETC;
@@ -32,7 +32,8 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation,fCallback)
 	ptrEpochList = uicontrol(ptrPanelEpoch,'Style','popupmenu','Units','normalized','Position',vecLocList,'String',{''},'Callback',@ETC_SelectEpoch,'FontSize',10);
 	
 	%populate list
-	ETC_GenEpochList(ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
+	cellEpochList = ETC_GenEpochList(ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
+	ptrEpochList.Value = numel(cellEpochList);
 	
 	%generate radio buttons
 	vecLocRadioGroup = [vecLocList(1) vecLocList(2)-0.27 vecLocList(3) 0.25];
@@ -55,12 +56,12 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation,fCallback)
 	%button 1: draw pupil begin; callback: draw pupil, save as temporary
 	%epoch if new, or overwrite old epoch
 	vecLocButtonTL = [dblLeftStart dblTopStart dblW dblH];
-	ptrButtonDrawPupilBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTL,'String','Draw Begin','Callback',{@ETC_DrawPupilEpoch,'begin'},'FontSize',10);
+	ptrButtonDrawPupilBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTL,'String','Draw Begin','Callback',{@ETC_AddPupilEpoch,'begin'},'FontSize',10);
 	
 	%button 2: draw pupil end; callback: draw pupil, make new epoch and add
 	%temporary epoch to list if new, or overwrite old epoch
 	vecLocButtonTR = [dblRightStart dblTopStart dblW dblH];
-	ptrButtonDrawPupilEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTR,'String','Draw End','Callback',{@ETC_DrawPupilEpoch,'end'},'FontSize',10);
+	ptrButtonDrawPupilEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTR,'String','Draw End','Callback',{@ETC_AddPupilEpoch,'end'},'FontSize',10);
 	
 	%button 3: set blink begin; callback: save as temporary epoch if new,
 	%or overwrite old epoch
@@ -87,153 +88,6 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation,fCallback)
 	sFigETC.ptrButtonDrawBlinkEnd = ptrButtonDrawBlinkEnd;
 	sFigETC.ptrButtonDeleteEpoch = ptrButtonDeleteEpoch;
 	sFigETC.sEpochTemp = [];
-end
-function ETC_DrawPupilEpoch(hObject,eventdata,strType)
-	%globals
-	global sFigETC;
-	%get temporary epoch
-	sEpoch = sFigETC.sEpochTemp;
-	
-	%if not new, set time to beginning & redraw
-	intSelectEpoch = sFigETC.ptrEpochList.Value;
-	cellEpochList = sFigETC.ptrEpochList.String;
-	if isempty(sEpoch)
-		if intSelectEpoch == numel(cellEpochList)
-			%gen
-			sEpoch = ETC_GenEmptyEpochs();
-			sEpoch(1).BeginFrame = nan;
-			sEpoch(1).EndFrame = nan;
-		else
-			%load data
-			sEpoch = sFigETC.sPupil.sEpochs(intSelectEpoch);
-		end
-	end
-	
-	%get current frame and ask for pupil drawing
-	intCurrFrame = sFigETC.intCurFrame;
-	sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
-	if strcmpi(strType,'begin')
-		sEpoch.BeginLabels = sLabels;
-		sEpoch.BeginFrame = intCurrFrame;
-	elseif strcmpi(strType,'end')
-		sEpoch.EndLabels = sLabels;
-		sEpoch.EndFrame = intCurrFrame;
-	else
-		error([mfilename ':TypeMissing'],'Type missing');
-	end
-	
-	%check if epoch is complete
-	if ~isnan(sEpoch.BeginFrame) && ~isnan(sEpoch.EndFrame) && sEpoch.BeginFrame > 0  && sEpoch.EndFrame > 0 && ~isempty(sEpoch.BeginLabels) && ~isempty(sEpoch.EndLabels)
-		%swap end/begin if end < begin
-		if sEpoch.EndFrame < sEpoch.BeginFrame
-			intOldBeginF = sEpoch.BeginFrame;
-			sOldBeginL = sEpoch.BeginLabels;
-			sEpoch.BeginFrame = sEpoch.EndFrame;
-			sEpoch.BeginLabels = sEpoch.EndLabels;
-			sEpoch.EndFrame = intOldBeginF;
-			sEpoch.EndLabels = sOldBeginL;
-		end
-		
-		%interpolate or detect pupil between beginning and end of epoch
-		intSwitchDetectOrInterpolate = sFigETC.ptrEpochInterpolate.Value; %0=detect,1=interp
-		vecFrames = sEpoch.BeginFrame:sEpoch.EndFrame;
-		intFrames = numel(vecFrames);
-		%if intSwitchDetectOrInterpolate == 1
-			sEpoch.CenterX = linspace(sEpoch.BeginLabels.X,sEpoch.EndLabels.X,intFrames);
-			sEpoch.CenterY = linspace(sEpoch.BeginLabels.Y,sEpoch.EndLabels.Y,intFrames);
-			sEpoch.Radius = linspace(sEpoch.BeginLabels.R,sEpoch.EndLabels.R,intFrames);
-			sEpoch.Blinks = [];
-		%else
-			
-		%end
-		
-		%remove temporary epoch
-		sFigETC.sEpochTemp = [];
-		%update epoch list
-		sFigETC.sPupil.sEpochs(intSelectEpoch) = sEpoch;
-		%reorder
-		[dummy,vecReorder] = sort(cell2vec({sFigETC.sPupil.sEpochs.BeginFrame}));
-		sFigETC.sPupil.sEpochs = sFigETC.sPupil.sEpochs(vecReorder);
-		%update gui epoch list
-		cellEpochList = ETC_GenEpochList(sFigETC.ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
-		sFigETC.ptrEpochList.Value = numel(cellEpochList);
-		%redraw traces
-		ETC_redraw();
-	else
-		%add temporary epoch
-		sFigETC.sEpochTemp = sEpoch;
-	end
-end
-function ETC_SetBlinkEpoch(hObject,eventdata,strType)
-	%globals
-	global sFigETC;
-	%get temporary epoch
-	sEpoch = sFigETC.sEpochTemp;
-	
-	%if not new, set time to beginning & redraw
-	intSelectEpoch = sFigETC.ptrEpochList.Value;
-	cellEpochList = sFigETC.ptrEpochList.String;
-	if isempty(sEpoch)
-		if intSelectEpoch == numel(cellEpochList)
-			%gen
-			sEpoch = struct;
-			sEpoch.BeginFrame = nan;
-			sEpoch.BeginLabels = [];
-			sEpoch.EndFrame = nan;
-			sEpoch.EndLabels = [];
-			sEpoch.CenterX = [];
-			sEpoch.CenterY = [];
-			sEpoch.Radius = [];
-			sEpoch.Blinks = [];
-		else
-			%load data
-			sEpoch = sFigETC.sPupil.sEpochs(intSelectEpoch);
-		end
-	end
-	
-	%get current frame
-	intCurrFrame = sFigETC.intCurFrame;
-	if strcmpi(strType,'begin')
-		sEpoch.BeginFrame = intCurrFrame;
-	elseif strcmpi(strType,'end')
-		sEpoch.EndFrame = intCurrFrame;
-	else
-		error([mfilename ':TypeMissing'],'Type missing');
-	end
-	
-	%check if epoch is complete
-	if ~isnan(sEpoch.BeginFrame) && ~isnan(sEpoch.EndFrame) && sEpoch.BeginFrame > 0  && sEpoch.EndFrame > 0 && isempty(sEpoch.BeginLabels) && isempty(sEpoch.EndLabels)
-		%swap end/begin if end < begin
-		if sEpoch.EndFrame < sEpoch.BeginFrame
-			intOldBeginF = sEpoch.BeginFrame;
-			sEpoch.BeginFrame = sEpoch.EndFrame;
-			sEpoch.EndFrame = intOldBeginF;
-		end
-		
-		%set blinks
-		vecFrames = sEpoch.BeginFrame:sEpoch.EndFrame;
-		intFrames = numel(vecFrames);
-		sEpoch.CenterX = [];
-		sEpoch.CenterY = [];
-		sEpoch.Radius = [];
-		sEpoch.Blinks = ones(1,intFrames);
-		
-		%remove temporary epoch
-		sFigETC.sEpochTemp = [];
-		%update epoch list
-		sFigETC.sPupil.sEpochs(intSelectEpoch) = sEpoch;
-		%reorder
-		[dummy,vecReorder] = sort(cell2vec({sFigETC.sPupil.sEpochs.BeginFrame}));
-		sFigETC.sPupil.sEpochs = sFigETC.sPupil.sEpochs(vecReorder);
-		%update gui epoch list
-		cellEpochList = ETC_GenEpochList(sFigETC.ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
-		sFigETC.ptrEpochList.Value = numel(cellEpochList);
-		%redraw traces
-		ETC_redraw();
-	else
-		%add temporary epoch
-		sFigETC.sEpochTemp = sEpoch;
-	end
 end
 function ETC_DeleteEpoch(hObject,eventdata)
 	%globals
@@ -270,16 +124,4 @@ function ETC_SelectEpoch(hObject,eventdata)
 		sEpoch = sFigETC.sPupil.sEpochs(intSelectEpoch);
 		ETC_GetCurrentFrame([],[],sEpoch.BeginFrame);
 	end
-end
-
-function cellEpochList = ETC_GenEpochList(ptrEpochList,sEpochs,vecPupilTime)
-	%vecPupilFixedCenterX(intBegin:intEnd) = sEpoch.CenterX;
-	%vecPupilFixedCenterY(intBegin:intEnd) = sEpoch.CenterY;
-	%vecPupilFixedRadius(intBegin:intEnd) = sEpoch.Radius;
-	%vecPupilFixedBlinks(intBegin:intEnd) = sEpoch.Blinks;
-	
-	cellEpochList = arrayfun(@(x) sprintf('%.1f - %.1f s (F# %d - %d)',vecPupilTime(x.BeginFrame),vecPupilTime(x.EndFrame),x.BeginFrame,x.EndFrame),...
-		sEpochs,'UniformOutput',false);
-	cellEpochList(end+1) = {'New'};
-	ptrEpochList.String = cellEpochList;
 end
