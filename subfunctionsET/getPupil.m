@@ -136,7 +136,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	
 	%for fitting, impose small penalty on pupil areas outside imBW
 	try
-		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecPrevLoc,dblApproxRadius,imReflection,imBW);
+		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,imBW);
 	catch
 		vecCentroid = vecApproxCentroid;
 		dblRadius = dblApproxRadius;
