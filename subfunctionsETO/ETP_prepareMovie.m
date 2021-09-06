@@ -39,7 +39,7 @@ function strVidFile = ETP_prepareMovie(strPath,strVideoFile,strTempPath,strAnswe
 		end
 	end
 	
-	if ~exist('strAnswer','var')
+	if ~exist('strAnswer','var') || isempty(strAnswer)
 		%ask whether to copy
 		sOpts.Interpreter = 'none';
 		sOpts.Default = 'Yes';

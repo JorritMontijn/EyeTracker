@@ -81,7 +81,12 @@ function [sTrackParams,sLabels] = getEyeTrackingParameters(sFile,strTempPath,boo
 		end
 		
 		%% access video
-		strVidFile = ETP_prepareMovie(strPath,strVideoFile,strTempPath);
+		if sFigETP.boolAutoRun
+			strAnswer = 'Yes';
+		else
+			strAnswer = [];
+		end
+		strVidFile = ETP_prepareMovie(strPath,strVideoFile,strTempPath,strAnswer);
 		sETP.objVid = VideoReader(strVidFile);
 		
 		%% data import/export
