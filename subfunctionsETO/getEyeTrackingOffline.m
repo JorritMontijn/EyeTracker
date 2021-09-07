@@ -48,6 +48,18 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 		strTrackedFile = [strTrackedFile 'Processed.mat'];
 	end
 	
+	%% create gui
+	%get paramaters & add video
+	sTrPar = sFile.sTrackParams.sET;
+	sTrPar.strVidFile = strVidFile;
+	sTrPar.strVidPath = strVidPath;
+	sTrPar.intAllFrames = 0;
+	sTrPar.dblTotDurSecs = 0;
+	
+	%make popup
+	sFigETOM = ETO_genFastMonitor(sTrPar);
+	sFigETOM.ptrTextCurT.String = sprintf('Initializing...');
+				
 	%% retrieve paths and copy optional files
 	%sync
 	if isfield(sFile,'sSync') && ~isempty(sFile.sSync)
@@ -67,7 +79,6 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	end
 	
 	%% get values
-	sTrPar = sFile.sTrackParams.sET;
 	dblGain = sTrPar.dblGain;
 	dblGamma = sTrPar.dblGamma;
 	intTempAvg = round(sTrPar.intTempAvg);
@@ -77,9 +88,6 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sglPupilT = sTrPar.dblThreshPupil;
 	vecPupil = sTrPar.vecPupil;
 	objSE = sTrPar.objSE;
-	%add video
-	sTrPar.strVidFile = strVidFile;
-	sTrPar.strVidPath = strVidPath;
 	
 	%% build elements & check gpu
 	% access video
@@ -141,9 +149,6 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecSyncX = vecRectSyncPix(1):(vecRectSyncPix(1)+vecRectSyncPix(3));
 	
 	%% pre-allocate & load initial frames
-	%create gui
-	sFigETOM = ETO_genFastMonitor(sTrPar);
-	
 	%prep vars
 	vecPrevLoc = [sTrPar.intX/2 sTrPar.intY/2];
 	intFrame = 0;

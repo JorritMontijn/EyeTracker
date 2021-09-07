@@ -22,10 +22,16 @@ function sFigETOM = ETO_genFastMonitor(sTrPar,dblMaxT,intMaxF)
 	% Move the window to the center of the screen.
 	movegui(ptrMainGUI,'center');
 	
+	%vid file
+	if isfield(sTrPar,'strVidFile')
+		strVidFile = sTrPar.strVidFile;%: 'RecMA7_2021-02-11R01'
+	else
+		strVidFile = 'N/A';
+	end
 	%file name
 	vecLocText = [dblPanelStartX 0.75 dblPanelWidth dblTextHeight];
 	ptrTextRoot = uicontrol(ptrMainGUI,'Style','text','HorizontalAlignment','left','FontSize',11,'BackgroundColor',vecMainColor,'Units','normalized','Position',vecLocText,...
-		'String',sprintf('File: %s',sTrPar.strVidFile));
+		'String',sprintf('File: %s',strVidFile));
 	
 	%recording
 	if isfield(sTrPar,'strRecordingNI')
