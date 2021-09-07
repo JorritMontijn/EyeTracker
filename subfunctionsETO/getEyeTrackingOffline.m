@@ -236,8 +236,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 			gMatVid(gMatVid(:)>1)=1;
 			
 			%write mini vid
-			writeVideo(objMiniVid,gather(gMatVid));
-		
+			writeVideo(objMiniVid,uint16(gather(gMatVid)*double(intmax('uint16'))));
+			
 			%detect
 			[sPupilDetected,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupil,sTrPar);
 			vecPrevLoc = sPupilDetected.vecCentroid;
