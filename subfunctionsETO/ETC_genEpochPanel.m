@@ -74,8 +74,12 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	ptrButtonDrawBlinkEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBR,'String','Blink End','Callback',{@ETC_SetBlinkEpoch,'end'},'FontSize',10);
 	
 	%button 5: callback: delete selected epoch if selected is not new
-	vecLocButtonDelete = [dblLeftStart+0.1 dblBottomStart-dblH-0.03 dblW*1.5 dblH];
-	ptrButtonDeleteEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonDelete,'String','Delete Epoch','ForegroundColor',[0.4 0 0],'Callback',@ETC_DeleteEpoch,'FontSize',10);
+	vecLocButtonDelete = [dblLeftStart dblBottomStart-dblH-0.03 dblW dblH];
+	ptrButtonDeleteEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonDelete,'String','Del Epoch','ForegroundColor',[0.4 0 0],'Callback',@ETC_DeleteEpoch,'FontSize',10);
+	
+	%button 6: apply all epochs & clear list
+	vecLocButtonApply = [dblRightStart vecLocButtonDelete(2) dblW dblH];
+	ptrButtonApplyEpochs = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonApply,'String','Apply All','ForegroundColor',[0.4 0 0],'Callback',@ETC_ApplyEpochs,'FontSize',10);
 	
 	%% add pointers
 	sFigETC.ptrPanelEpoch = ptrPanelEpoch;
@@ -87,7 +91,26 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	sFigETC.ptrButtonDrawBlinkBegin = ptrButtonDrawBlinkBegin;
 	sFigETC.ptrButtonDrawBlinkEnd = ptrButtonDrawBlinkEnd;
 	sFigETC.ptrButtonDeleteEpoch = ptrButtonDeleteEpoch;
+	sFigETC.ptrButtonApplyEpochs = ptrButtonApplyEpochs;
 	sFigETC.sEpochTemp = [];
+end
+function ETC_ApplyEpochs(hObject,eventdata)
+	%globals
+	global sFigETC;
+	
+	%apply
+	ETC_SaveEpochs();
+	
+	%delete
+	sFigETC.sEpochTemp = [];
+	sFigETC.sPupil.sEpochs(:) = [];
+	
+	%redraw traces
+	ETC_redraw();
+	
+	%update gui epoch list
+	cellEpochList = ETC_GenEpochList(sFigETC.ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
+	sFigETC.ptrEpochList.Value = numel(cellEpochList);
 end
 function ETC_DeleteEpoch(hObject,eventdata)
 	%globals

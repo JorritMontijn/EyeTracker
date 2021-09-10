@@ -1,20 +1,19 @@
-function ETC_SaveEpochs()
+function sPupil = ETC_SaveEpochs()
 	%get globals
 	global sETC;
 	global sFigETC;
 	
 	%get file
 	sPupil = sFigETC.sPupil;
-	strTargetFile = fullpath(sPupil.strProcPath,sPupil.strProcFile);
 	
 	if isfield(sPupil,'sEpochs') && ~isempty(sPupil.sEpochs)
 		%message
-		ptrMsg = dialog('Position',[600 400 250 50],'Name','Saving data');
+		ptrMsg = dialog('Position',[600 400 250 50],'Name','Applying epoch data');
 		ptrText = uicontrol('Parent',ptrMsg,...
 			'Style','text',...
 			'Position',[20 00 210 40],...
 			'FontSize',11,...
-			'String','Compiling and saving data...');
+			'String','Compiling and applying epoch data...');
 		movegui(ptrMsg,'center')
 		drawnow;
 		
@@ -27,6 +26,12 @@ function ETC_SaveEpochs()
 			vecPupilFixedBlinks = zeros(size(vecPupilFixedRadius));
 		else
 			vecPupilFixedBlinks = sPupil.vecPupilFixedBlinks;
+		end
+		if ~isfield(sPupil,'vecPupilIsEdited')
+			%generate blinkiness
+			vecPupilIsEdited = false(size(vecPupilFixedRadius));
+		else
+			vecPupilIsEdited = sPupil.vecPupilIsEdited;
 		end
 		
 		%construct new traces
@@ -46,6 +51,7 @@ function ETC_SaveEpochs()
 				vecPupilFixedCenterY(intBegin:intEnd) = nan;
 				vecPupilFixedRadius(intBegin:intEnd) = nan;
 			end
+			vecPupilIsEdited(intBegin:intEnd) = true;
 		end
 		
 		%overwrite 'Fixed' variables
@@ -53,9 +59,12 @@ function ETC_SaveEpochs()
 		sPupil.vecPupilFixedCenterY = vecPupilFixedCenterY;
 		sPupil.vecPupilFixedRadius = vecPupilFixedRadius;
 		sPupil.vecPupilFixedBlinks = vecPupilFixedBlinks;
+		sPupil.vecPupilIsEdited = vecPupilIsEdited;
 		
-		%save
-		save(strTargetFile,'sPupil');
+		%apply to figure
+		sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).YData = sPupil.vecPupilFixedCenterX;
+		sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData = sPupil.vecPupilFixedCenterY;
+		sFigETC.ptrAxesR.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesR.Children,'UniformOutput',false),'line')).YData = sPupil.vecPupilFixedRadius;
 		
 		%add to global
 		sFigETC.sPupil = sPupil;

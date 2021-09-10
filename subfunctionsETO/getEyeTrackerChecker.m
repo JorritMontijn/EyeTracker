@@ -11,14 +11,28 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 	%% find minivid
 	strMiniVidFile = sFile.sPupil.sPupil.strMiniVidFile;
 	strMiniVidPath = sFile.sPupil.sPupil.strMiniVidPath;
-	
-	if exist([strMiniVidPath strMiniVidFile],'file')
-		%this is fine
-	elseif exist(fullfile(sFile.folder,strMiniVidFile),'file')
-		strMiniVidPath = sFile.folder;
-	elseif exist(fullfile(strTempPath,strMiniVidFile),'file')
-		strMiniVidPath = strTempPath;
-	else
+	[dummy,strMiniFile,strExt]=fileparts(strMiniVidFile);
+	strMiniVidFile = [];
+	cellUseExt = {'.mp4','.avi','.mj2'};
+	cellUseExt{end+1}=strExt;
+	cellUseExt = unique(cellUseExt);
+	for intExt=1:numel(cellUseExt)
+		strUseExt = cellUseExt{intExt};
+		if exist([strMiniVidPath strMiniFile strUseExt],'file')
+			strMiniVidFile = [strMiniFile strUseExt];
+			strMiniVidPath = strMiniVidPath;
+		elseif exist(fullfile(sFile.folder,[strMiniFile strUseExt]),'file')
+			strMiniVidFile = [strMiniFile strUseExt];
+			strMiniVidPath = sFile.folder;
+		elseif exist(fullfile(strTempPath,[strMiniFile strUseExt]),'file')
+			strMiniVidFile = [strMiniFile strUseExt];
+			strMiniVidPath = strTempPath;
+		elseif exist(fullfile(sFile.sPupil.folder,[strMiniFile strUseExt]),'file')
+			strMiniVidFile = [strMiniFile strUseExt];
+			strMiniVidPath = sFile.sPupil.folder;
+		end
+	end
+	if isempty(strMiniVidFile)
 		error([mfilename ':CannotFindMiniVid'],'Could not find mini vid file');
 	end
 	
@@ -318,7 +332,10 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		end
 		
 		%% update sFile
-		sFile.sPupil.sPupil = sFigETC.sPupil;
+		boolSaveData = sETC.boolSaveData;
+		if boolSaveData
+			sFile.sPupil.sPupil = sFigETC.sPupil;
+		end
 	catch ME
 		dispErr(ME);
 	end

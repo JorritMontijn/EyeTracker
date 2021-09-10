@@ -162,15 +162,24 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 			intFile = vecRunFiles(intFileIdx);
 			try 
 				strMiniVid = sETO.sFiles(intFile).sPupil.sPupil.strMiniVidFile;
+				[dummy,strMiniFile,strExt]=fileparts(strMiniVid);
 				strMiniVidPath = sETO.sFiles(intFile).sPupil.sPupil.strMiniVidPath;
-				if exist([strMiniVidPath strMiniVid],'file')
-					indReady(intFileIdx) = true;
-				elseif exist(fullfile(sETO.sFiles(intFile).folder,strMiniVid),'file')
-					indReady(intFileIdx) = true;
-				elseif exist(fullfile(sETO.strTempPath,strMiniVid),'file')
-					indReady(intFileIdx) = true;
-				else
-					indReady(intFileIdx) = false;
+				cellUseExt = {'.mp4','.avi','.mj2'};
+				cellUseExt{end+1}=strExt;
+				cellUseExt = unique(cellUseExt);
+				for intExt=1:numel(cellUseExt)
+					strUseExt = cellUseExt{intExt};
+					if exist([strMiniVidPath strMiniFile strUseExt],'file')
+						indReady(intFileIdx) = true;
+					elseif exist(fullfile(sETO.sFiles(intFile).folder,[strMiniFile strUseExt]),'file')
+						indReady(intFileIdx) = true;
+					elseif exist(fullfile(sETO.strTempPath,[strMiniFile strUseExt]),'file')
+						indReady(intFileIdx) = true;
+					elseif exist(fullfile(sETO.sFiles(intFile).sPupil.folder,[strMiniFile strUseExt]),'file')
+						indReady(intFileIdx) = true;
+					else
+						indReady(intFileIdx) = false;
+					end
 				end
 			catch
 				indReady(intFileIdx) = false;

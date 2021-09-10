@@ -181,6 +181,24 @@ function ETC_redraw(varargin)
 		end
 		
 	end
+	
+	%% add blinks saved to vector
+	vecUseBlinkF = find(sFigETC.sPupil.vecPupilFixedBlinks(vecLimF(1):vecLimF(2)));
+	if ~isempty(vecUseBlinkF)
+		vecBlinkF = sort(vecUseBlinkF+vecFrames(1)-1,'ascend');
+		vecBlinkB = 1+[0 find(diff(vecBlinkF)>1)];
+		vecBlinkE = [find(diff(vecBlinkF)>1) numel(vecBlinkF)];
+		for intBlinkIdx=1:numel(vecBlinkB)
+			vecE_T = vecT(vecBlinkF([vecBlinkB(intBlinkIdx) vecBlinkE(intBlinkIdx)]));
+			
+			%plot
+			hLine = plot(sFigETC.ptrZoomPlot1,vecE_T,max(get(sFigETC.ptrZoomPlot1,'ylim'))*[1 1],'color','k','linewidth',3);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,max(get(sFigETC.ptrZoomPlot2,'ylim'))*[1 1],'color','k','linewidth',3);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,max(get(sFigETC.ptrZoomPlot3,'ylim'))*[1 1],'color','k','linewidth',3);
+			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+		end
+	end
 	drawnow;
-	%error add epochs to overwrite plotting data; also add zoomed plots
 end
