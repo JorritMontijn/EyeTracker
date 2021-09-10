@@ -183,6 +183,11 @@ function ETC_redraw(varargin)
 	end
 	
 	%% add blinks saved to vector
+	%assert presence
+	if ~isfield(sFigETC.sPupil,'vecPupilFixedBlinks') || isempty(sFigETC.sPupil.vecPupilFixedBlinks)
+		sFigETC.sPupil.vecPupilFixedBlinks = false(size(vecT));
+	end
+	
 	vecUseBlinkF = find(sFigETC.sPupil.vecPupilFixedBlinks(vecLimF(1):vecLimF(2)));
 	if ~isempty(vecUseBlinkF)
 		vecBlinkF = sort(vecUseBlinkF+vecFrames(1)-1,'ascend');

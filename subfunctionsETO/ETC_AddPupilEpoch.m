@@ -121,31 +121,6 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				vecPupil = sTrPar.vecPupil;
 				objSE = sTrPar.objSE;
 				
-				%% read values at starting frame
-				%load video frame
-				if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
-					matFrame = sETC.matVid(:,:,:,vecFrames(1));
-				else
-					matFrame = read(sETC.objVid,vecFrames(1));
-				end
-				matFrame = mean(matFrame,3);
-				%rescale
-				if any(all(matFrame<(max(matFrame(:))/10),2))
-					matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = [];
-				end
-				if any(all(matFrame<(max(matFrame(:))/10),1))
-					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = [];
-				end
-				matFrame = imnorm(matFrame)*255;
-				
-				%retrieve median pupil luminance
-				[matX,matY] = meshgrid(1:size(matFrame,2),1:size(matFrame,1));
-				[dummy,vecDist] = cart2pol(matY-sEpoch.BeginLabels.Y,matX-sEpoch.BeginLabels.X);
-				indInner = vecDist < sEpoch.BeginLabels.R;
-				dblOldPupilT = sTrPar.dblThreshPupil;
-				dblPupilT = median(matFrame(indInner));
-				vecPupil = (vecPupil - dblOldPupilT) + dblPupilT;
-				
 				%% make filter
 				%blur width
 				if dblGaussWidth == 0
@@ -166,28 +141,82 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 					end
 				end
 				
+				%% read values at starting frame
+				%load beginning video frame
+				if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
+					matFrame = sETC.matVid(:,:,:,vecFrames(1));
+				else
+					matFrame = read(sETC.objVid,vecFrames(1));
+				end
+				matFrame = mean(matFrame,3);
+				%rescale
+				if any(all(matFrame<(max(matFrame(:))/10),2))
+					matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
+				end
+				if any(all(matFrame<(max(matFrame(:))/10),1))
+					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
+				end
+				matFrame = imnorm(matFrame)*255;
+				
+				%prep im
+				matFrame = gather(ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false));
+	
+				%retrieve median pupil luminance
+				[matX,matY] = meshgrid(1:size(matFrame,2),1:size(matFrame,1));
+				[dummy,vecDist] = cart2pol(matY-sEpoch.BeginLabels.Y,matX-sEpoch.BeginLabels.X);
+				indInner = vecDist < sEpoch.BeginLabels.R;
+				dblOldPupilT = sTrPar.dblThreshPupil;
+				dblBeginPupilT = median(matFrame(indInner));
+				
+				%% load end video frame
+				if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
+					matFrame = sETC.matVid(:,:,:,vecFrames(end));
+				else
+					matFrame = read(sETC.objVid,vecFrames(end));
+				end
+				matFrame = mean(matFrame,3);
+				%rescale
+				if any(all(matFrame<(max(matFrame(:))/10),2))
+					matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
+				end
+				if any(all(matFrame<(max(matFrame(:))/10),1))
+					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
+				end
+				matFrame = imnorm(matFrame)*255;
+				
+				%prep im
+				matFrame = gather(ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false));
+					
+				%retrieve median pupil luminance for end
+				[dummy,vecDist] = cart2pol(matY-sEpoch.EndLabels.Y,matX-sEpoch.EndLabels.X);
+				indInner = vecDist < sEpoch.BeginLabels.R;
+				dblEndPupilT = median(matFrame(indInner));
+				vecPupil = linspace(dblBeginPupilT,dblEndPupilT,5);
+				dblPupilT = mean(vecPupil);
+				vecPupil = vecPupil-std(vecPupil);
+				
 				%% detect
 				%pre-allocate
-				vecPrevLoc = [sEpoch.BeginLabels.X sEpoch.BeginLabels.Y];
-				sEpoch.CenterX = zeros(1,intFrames);
-				sEpoch.CenterY = zeros(1,intFrames);
-				sEpoch.Radius = zeros(1,intFrames);
-				%assign first frame
-				sEpoch.CenterX(1) = sEpoch.BeginLabels.X;
-				sEpoch.CenterY(1) = sEpoch.BeginLabels.Y;
-				sEpoch.Radius(1) = sEpoch.BeginLabels.R;
+				vecForwardX = zeros(1,intFrames);
+				vecForwardY = zeros(1,intFrames);
+				vecForwardR = zeros(1,intFrames);
+				vecReverseX = zeros(1,intFrames);
+				vecReverseY = zeros(1,intFrames);
+				vecReverseR = zeros(1,intFrames);
+				%assign first & last frame
+				vecForwardX(1) = sEpoch.BeginLabels.X;
+				vecForwardY(1) = sEpoch.BeginLabels.Y;
+				vecForwardR(1) = sEpoch.BeginLabels.R;
+				vecReverseX(end) = sEpoch.EndLabels.X;
+				vecReverseY(end) = sEpoch.EndLabels.Y;
+				vecReverseR(end) = sEpoch.EndLabels.R;
 				
-				%run
+				%% load video frames
+				matEpochFrames = zeros(size(matFrame,1),size(matFrame,2),intFrames);
+				matEpochFrames(:,:,1) = matFrame;
 				for intFrame=2:intFrames
-					%msg
-					if toc(hTic) > 1
-						waitbar(intFrame/intFrames,hWaitbar,sprintf('Detecting pupil in frame %d/%d',intFrame,intFrames));
-						drawnow;
-						hTic = tic;
-					end
 					%get current image
 					intRealFrame = vecFrames(intFrame);
-					%load video frame
 					if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
 						matFrame = sETC.matVid(:,:,:,intRealFrame);
 					else
@@ -197,32 +226,89 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 					
 					%rescale
 					if any(all(matFrame<(max(matFrame(:))/10),2))
-						matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = [];
+						matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
 					end
 					if any(all(matFrame<(max(matFrame(:))/10),1))
-						matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = [];
+						matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
 					end
-					matFrame = imnorm(matFrame);
+					matEpochFrames(:,:,intFrame) = imnorm(matFrame);
+				end
+				
+				%% run
+				vecPrevLocForward = [vecForwardX(1) vecForwardY(1)];
+				vecPrevLocReverse = [vecReverseX(end) vecReverseY(end)];
+				for intFrame=2:intFrames
+					%msg
+					if toc(hTic) > 1
+						waitbar(intFrame/intFrames,hWaitbar,sprintf('Detecting pupil in frame %d/%d',intFrame,intFrames));
+						drawnow;
+						hTic = tic;
+					end
 					
+					%% forward detect
 					%send frame to gpu
+					matForwardFrame = matEpochFrames(:,:,intFrame);
 					if sETC.boolUseGPU
-						gMatVid = gpuArray(matFrame);
+						gMatVid = gpuArray(matForwardFrame);
 					else
-						gMatVid = matFrame;
+						gMatVid = matForwardFrame;
 					end
 					
 					%detect
-					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLoc,vecPupil,sETC.boolUseGPU);
+					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLocForward,vecPupil,sETC.boolUseGPU);
 					vecCentroid = sPupilDetected.vecCentroid;
 					dblRadius = sPupilDetected.dblRadius;
-					vecPrevLoc = vecCentroid;
+					vecPrevLocForward = vecCentroid;
 					
 					%assign
-					sEpoch.CenterX(intFrame) = vecCentroid(1);
-					sEpoch.CenterY(intFrame) = vecCentroid(2);
-					sEpoch.Radius(intFrame) = dblRadius(1);
+					vecForwardX(intFrame) = vecCentroid(1);
+					vecForwardY(intFrame) = vecCentroid(2);
+					vecForwardR(intFrame) = dblRadius(1);
+					
+					%% reverse detect
+					%send frame to gpu
+					intRevFrame = intFrames-intFrame+1;
+					matReverseFrame = matEpochFrames(:,:,intRevFrame);
+					if sETC.boolUseGPU
+						gMatVid = gpuArray(matReverseFrame);
+					else
+						gMatVid = matReverseFrame;
+					end
+					%reverse detect
+					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLocReverse,vecPupil,sETC.boolUseGPU);
+					vecCentroid = sPupilDetected.vecCentroid;
+					dblRadius = sPupilDetected.dblRadius;
+					vecPrevLocReverse = vecCentroid;
+					
+					%assign
+					vecReverseX(intRevFrame) = vecCentroid(1);
+					vecReverseY(intRevFrame) = vecCentroid(2);
+					vecReverseR(intRevFrame) = dblRadius(1);
 				end
 				sEpoch.Blinks = [];
+				
+				%% assign closest match
+				vecInterpX = linspace(sEpoch.BeginLabels.X,sEpoch.EndLabels.X,intFrames);
+				vecInterpY = linspace(sEpoch.BeginLabels.Y,sEpoch.EndLabels.Y,intFrames);
+				vecFinalX = zeros(1,intFrames);
+				vecFinalY = zeros(1,intFrames);
+				vecFinalR = zeros(1,intFrames);
+				
+				vecForwardDist = (vecForwardX - vecInterpX).^2 + (vecForwardY - vecInterpY).^2;
+				vecReverseDist = (vecReverseX - vecInterpX).^2 + (vecReverseY - vecInterpY).^2;
+				indUseForward = vecForwardDist < vecReverseDist;
+				vecFinalX(indUseForward) = vecForwardX(indUseForward);
+				vecFinalY(indUseForward) = vecForwardY(indUseForward);
+				vecFinalR(indUseForward) = vecForwardR(indUseForward);
+				vecFinalX(~indUseForward) = vecReverseX(~indUseForward);
+				vecFinalY(~indUseForward) = vecReverseY(~indUseForward);
+				vecFinalR(~indUseForward) = vecReverseR(~indUseForward);
+				
+				sEpoch.CenterX = vecFinalX;
+				sEpoch.CenterY = vecFinalY;
+				sEpoch.Radius = vecFinalR;
+				
+				%% done
 				delete(hWaitbar);
 				uiunlock(sFigETC);
 			catch ME

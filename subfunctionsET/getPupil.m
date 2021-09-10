@@ -47,35 +47,14 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		sET=struct;
 		sET.boolUseGPU = boolUseGPU;
 	end
+	if ~isfield(sET,'boolInvertImage') || isempty(sET.boolInvertImage)
+		boolInvertImage = false;
+	else
+		boolInvertImage = sET.boolInvertImage;
+	end
 	
 	%% perform pupil detection
-	%move to GPU and rescale
-	gMatVid = (gMatVid - min(gMatVid(:)));
-	gMatVid = (gMatVid / max(gMatVid(:)))*255;
-	
-	%filter image
-	if ~isempty(gMatFilt) && ~isscalar(gMatFilt)
-		gMatVid = imfilt(gMatVid,gMatFilt);
-	end
-	%detect reflection; dilate area and ignore for fit later on
-	imReflection = gMatVid > sglReflT;
-	imReflection = logical(gather(imdilate(imReflection,objSE)));
-	if isfield(sET,'boolInvertImage') && sET.boolInvertImage
-		if all(imReflection(:))
-			imReflection = false;
-		end
-		gMatVid = -(gMatVid - max(flat(gMatVid(~imReflection))));
-		gMatVid(gMatVid<0) = 255;
-	end
-	
-	%rescale after reflection removal
-	dblNewMax = max(flat(gMatVid(~imReflection)));
-	if ~isempty(dblNewMax)
-		gMatVid(imReflection) = dblNewMax;
-	end
-	gMatVid = (gMatVid - min(gMatVid(:)));
-	gMatVid = (gMatVid / max(gMatVid(:)))*255;
-	
+	[gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,boolInvertImage);
 	if nargout > 4
 		imGrey = gather(gMatVid);
 		imGrey(imReflection) = 0;
