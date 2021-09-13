@@ -4,6 +4,10 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 	%get temporary epoch
 	sEpoch = sFigETC.sEpochTemp;
 	
+	%get modifier
+	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
+	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
+	
 	%if not new, set time to beginning & redraw
 	intSelectEpoch = sFigETC.ptrEpochList.Value;
 	cellEpochList = sFigETC.ptrEpochList.String;
@@ -64,7 +68,11 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 		sEpoch.CenterX = [];
 		sEpoch.CenterY = [];
 		sEpoch.Radius = [];
-		sEpoch.Blinks = ones(1,intFrames);
+		if boolControlPressed || boolAltPressed
+			sEpoch.Blinks = zeros(1,intFrames);
+		else
+			sEpoch.Blinks = ones(1,intFrames);
+		end
 		
 		%remove temporary epoch
 		sFigETC.sEpochTemp = [];

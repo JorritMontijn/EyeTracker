@@ -7,6 +7,10 @@ function intNewFrame = ETC_GetCurrentFrame(hObject,eventdata,strType)
 	%lock
 	uilock(sFigETC);
 	
+	%get modifier
+	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
+	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
+	
 	%% get frame
 	if ~exist('strType','var')
 		strType = '';
@@ -18,7 +22,15 @@ function intNewFrame = ETC_GetCurrentFrame(hObject,eventdata,strType)
 	elseif strcmpi(strType,'Slider')
 		intNewFrame = round(sFigETC.ptrSliderFrame.Value);
 	elseif strcmpi(strType,'Scroll')
-		intNewFrame = round(intOldFrame + (eventdata.VerticalScrollCount*eventdata.VerticalScrollAmount));
+		if boolControlPressed
+			intNewFrame = round(intOldFrame + sign(eventdata.VerticalScrollCount*eventdata.VerticalScrollAmount));
+		elseif boolAltPressed
+			intNewFrame = round(intOldFrame + 10*(eventdata.VerticalScrollCount*eventdata.VerticalScrollAmount));
+		else
+			intNewFrame = round(intOldFrame + (eventdata.VerticalScrollCount*eventdata.VerticalScrollAmount));
+		
+		end
+		
 		if intNewFrame < 1
 			intNewFrame = 1;
 		elseif intNewFrame > sETC.intF

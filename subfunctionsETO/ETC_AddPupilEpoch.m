@@ -6,6 +6,10 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 	%get temporary epoch
 	sEpoch = sFigETC.sEpochTemp;
 	
+	%get modifier
+	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
+	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
+	
 	%if not new, set time to beginning & redraw
 	intSelectEpoch = sFigETC.ptrEpochList.Value;
 	cellEpochList = sFigETC.ptrEpochList.String;
@@ -97,7 +101,7 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 		intSwitchDetectOrInterpolate = sFigETC.ptrEpochInterpolate.Value; %0=detect,1=interp
 		vecFrames = sEpoch.BeginFrame:sEpoch.EndFrame;
 		intFrames = numel(vecFrames);
-		if intSwitchDetectOrInterpolate == 1 || ~isfield(sFigETC.sPupil,'sTrackParams')
+		if (intSwitchDetectOrInterpolate == 1 && ~boolAltPressed) || ~isfield(sFigETC.sPupil,'sTrackParams') || boolControlPressed
 			sEpoch.CenterX = linspace(sEpoch.BeginLabels.X,sEpoch.EndLabels.X,intFrames);
 			sEpoch.CenterY = linspace(sEpoch.BeginLabels.Y,sEpoch.EndLabels.Y,intFrames);
 			sEpoch.Radius = linspace(sEpoch.BeginLabels.R,sEpoch.EndLabels.R,intFrames);
@@ -314,7 +318,11 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 			catch ME
 				delete(hWaitbar);
 				uiunlock(sFigETC);
-				dispErr(ME);
+				if strcmp(ME.identifier,'MATLAB:waitbar:InvalidSecondInput')
+					%cancelled by clicking wait bar; this is not an error
+				else
+					dispErr(ME);
+				end
 				%remove temporary epoch
 				sFigETC.sEpochTemp = [];
 				return;

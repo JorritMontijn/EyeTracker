@@ -28,7 +28,7 @@ function sPupil = ETC_SaveEpochs()
 			vecPupilFixedBlinks = sPupil.vecPupilFixedBlinks;
 		end
 		if ~isfield(sPupil,'vecPupilIsEdited')
-			%generate blinkiness
+			%assign edit
 			vecPupilIsEdited = false(size(vecPupilFixedRadius));
 		else
 			vecPupilIsEdited = sPupil.vecPupilIsEdited;
@@ -47,9 +47,6 @@ function sPupil = ETC_SaveEpochs()
 				vecPupilFixedRadius(intBegin:intEnd) = sEpoch.Radius;
 			else
 				vecPupilFixedBlinks(intBegin:intEnd) = sEpoch.Blinks;
-				vecPupilFixedCenterX(intBegin:intEnd) = nan;
-				vecPupilFixedCenterY(intBegin:intEnd) = nan;
-				vecPupilFixedRadius(intBegin:intEnd) = nan;
 			end
 			vecPupilIsEdited(intBegin:intEnd) = true;
 		end

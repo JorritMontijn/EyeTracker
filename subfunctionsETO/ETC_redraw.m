@@ -170,13 +170,18 @@ function ETC_redraw(varargin)
 			sEpoch = sFigETC.sPupil.sEpochs(intEpoch);
 			vecEpochFramesBE = [sEpoch.BeginFrame sEpoch.EndFrame];
 			vecE_T = vecT(vecEpochFramesBE);
-			
+			boolIsRemoveEpoch = all(sEpoch.Blinks==0);
+			if boolIsRemoveEpoch
+				vecColor = [0.5 0.5 0.5];
+			else
+				vecColor = [0 0 0];
+			end
 			%plot
-			hLine = plot(sFigETC.ptrZoomPlot1,vecE_T,max(get(sFigETC.ptrZoomPlot1,'ylim'))*[1 1],'color','k','linewidth',3);
+			hLine = plot(sFigETC.ptrZoomPlot1,vecE_T,max(get(sFigETC.ptrZoomPlot1,'ylim'))*[1 1],'color',vecColor,'linewidth',3);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
-			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,max(get(sFigETC.ptrZoomPlot2,'ylim'))*[1 1],'color','k','linewidth',3);
+			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,max(get(sFigETC.ptrZoomPlot2,'ylim'))*[1 1],'color',vecColor,'linewidth',3);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
-			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,max(get(sFigETC.ptrZoomPlot3,'ylim'))*[1 1],'color','k','linewidth',3);
+			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,max(get(sFigETC.ptrZoomPlot3,'ylim'))*[1 1],'color',vecColor,'linewidth',3);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 		end
 		
