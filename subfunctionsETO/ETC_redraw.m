@@ -138,7 +138,11 @@ function ETC_redraw(varargin)
 	indHasLabels = arrayfun(@(x) ~isempty(x.BeginLabels) & ~isempty(x.EndLabels),sFigETC.sPupil.sEpochs);
 	vecB = cell2vec({sFigETC.sPupil.sEpochs.BeginFrame});
 	vecE = cell2vec({sFigETC.sPupil.sEpochs.EndFrame});
-	vecLimF = [find(vecT >= vecLimT(1),1) find(vecT >= vecLimT(2),1)];
+	intEnd = find(vecT >= vecLimT(2),1);
+	if isempty(intEnd)
+		intEnd = numel(vecT);
+	end
+	vecLimF = [find(vecT >= vecLimT(1),1) intEnd];
 	if ~isempty(indHasLabels)
 		%% corrected epochs
 		vecPlotEpochs = find(indHasLabels(:) & (vecB <= vecLimF(2) &  vecE >= vecLimF(1)));

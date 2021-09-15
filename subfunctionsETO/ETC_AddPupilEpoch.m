@@ -28,12 +28,22 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 	%get current frame and ask for pupil drawing
 	if strcmpi(strType,'begin')
 		intCurrFrame = sFigETC.intCurFrame;
-		sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
+		try
+			sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
+		catch
+			%input was cancelled
+			return
+		end
 		sEpoch.BeginLabels = sLabels;
 		sEpoch.BeginFrame = intCurrFrame;
 	elseif strcmpi(strType,'end')
 		intCurrFrame = sFigETC.intCurFrame;
-		sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
+		try
+			sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
+		catch
+			%input was cancelled
+			return
+		end
 		sEpoch.EndLabels = sLabels;
 		sEpoch.EndFrame = intCurrFrame;
 	elseif isscalar(strType) && isint(strType) && strType > 0
