@@ -123,7 +123,8 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		%help button
 		vecLocButtonHelp = [vecLocText(1)+vecLocText(3)+20 vecLocText(2)-2 60 25];
 		sFigETC.ptrButtonHelp = uicontrol(ptrMainGUI,'Style','pushbutton','Position',vecLocButtonHelp,'String','Help','Callback',@ETC_DisplayHelp,'FontSize',10);
-	
+		sFigETC.ptrButtonHelp.Units = 'normalized';
+		
 		%file name
 		vecLocText1 = vecLocText - [0 vecLocText(4)+10 0 0];
 		sFigETC.ptrTextRoot = uicontrol(ptrMainGUI,'Style','text','HorizontalAlignment','left','FontSize',11,'BackgroundColor',vecMainColor,'Position',vecLocText1,...

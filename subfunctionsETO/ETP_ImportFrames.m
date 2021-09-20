@@ -24,7 +24,10 @@ function ETP_ImportFrames(handles,dummy,boolInit)
 	%import frames
 	vecFrames = unique(round(linspace(1,intTotFrames,sETP.intImportPoints+2)));
 	vecFrames = vecFrames(2:(end-1));
+	vecFrames((vecFrames + sETP.intImportStretch - 1) > intTotFrames) = [];
 	intUseFrameNr = numel(vecFrames);
+	sETP.intImportStretch = intUseFrameNr;
+	sFigETP.ptrEditImportPoints.String = num2str(intUseFrameNr);
 	matFrames = repmat(read(sETP.objVid,1),[1 1 1 intUseFrameNr sETP.intImportStretch]);
 	for intFrameIdx=1:intUseFrameNr
 		ptrText.String = sprintf('Loading frame %d (%d/%d).',vecFrames(intFrameIdx),intFrameIdx,sETP.intImportPoints);
