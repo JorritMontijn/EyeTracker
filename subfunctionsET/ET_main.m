@@ -223,7 +223,7 @@ function ET_main(varargin)
 				end
 				
 				%show video
-				imagesc(sEyeFig.ptrAxesMainVideo,matVidRaw(:,:,1,end));
+				imagesc(sEyeFig.ptrAxesMainVideo,matVidRaw(:,:,1,end),[0 255]);
 				colormap(sEyeFig.ptrAxesMainVideo,'grey');
                 axis(sEyeFig.ptrAxesMainVideo,'off');
 				
@@ -261,7 +261,7 @@ function ET_main(varargin)
 					hold(sEyeFig.ptrAxesMainVideo,'off');
 					
 					%closed
-					imagesc(sEyeFig.ptrAxesSubVid1,imGrey);
+					imagesc(sEyeFig.ptrAxesSubVid1,imGrey,[0 255]);
 					colormap(sEyeFig.ptrAxesSubVid1,'grey');
 					axis(sEyeFig.ptrAxesSubVid1,'off');
 					
