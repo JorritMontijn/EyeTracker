@@ -177,8 +177,6 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 						indReady(intFileIdx) = true;
 					elseif exist(fullfile(sETO.sFiles(intFile).sPupil.folder,[strMiniFile strUseExt]),'file')
 						indReady(intFileIdx) = true;
-					else
-						indReady(intFileIdx) = false;
 					end
 				end
 			catch
