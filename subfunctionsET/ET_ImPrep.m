@@ -3,8 +3,8 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 	%   [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,boolInvertImage)
 	
 	%move to GPU and rescale
-	%gMatVid = (gMatVid - min(gMatVid(:)));
-	%gMatVid = (gMatVid / max(gMatVid(:)))*255;
+	gMatVid = (gMatVid - min(gMatVid(:)));
+	gMatVid = (gMatVid / max(gMatVid(:)))*255;
 	
 	%filter image
 	if ~isempty(gMatFilt) && ~isscalar(gMatFilt)
@@ -26,8 +26,8 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 	if ~isempty(dblNewMax)
 		gMatVid(imReflection) = dblNewMax;
 	end
-	%gMatVid = (gMatVid - min(gMatVid(:)));
-	%gMatVid = (gMatVid / max(gMatVid(:)))*255;
+	gMatVid = (gMatVid - min(gMatVid(:)));
+	gMatVid = (gMatVid / max(gMatVid(:)))*255;
 	
 end
 
