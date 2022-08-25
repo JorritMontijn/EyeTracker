@@ -110,6 +110,13 @@ function dblError = ETP_FitWrapper(vecX,boolRescale)
 	vecImX = ETP_sLabels.X;
 	vecImY = ETP_sLabels.Y;
 	vecImR = ETP_sLabels.R;
+	if isfield(ETP_sLabels,'R2')
+		vecImR2 = ETP_sLabels.R2;
+		vecImA = ETP_sLabels.A;
+	else
+		vecImR2 = vecImR;
+		vecImA = zeros(size(vecImR));
+	end
 	vecImE = zeros(size(ETP_sLabels.R));
 	for intIm=1:intF
 		gMatVid = ETP_matAllIm(:,:,intIm);

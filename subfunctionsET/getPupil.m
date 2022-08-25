@@ -1,13 +1,15 @@
 function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT,sET)
 	%getPupil Detects pupil in image using GPU-accelerated image processing
-	%syntax: [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT)
+	%syntax: [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupilT,sET)
 	%	input:
 	%	- gMatVid [Y x X]: gpuArray-class 2D image
 	%	- gMatFilt [Y x X]: gpuArray-class 2D smoothing filter
 	%	- sglReflT [single]: reflection threshold (in pixel luminance)
 	%	- sglPupilT [single]: pupil threshold (in pixel luminance)
 	%	- objSE: [object]: structuring element object for image processing
-	%	- dblPupilMinPixSize: minimum contiguous pupil area in pixels
+	%	- vecPrevLoc: previous pupil location
+	%	- vecPupilT: vector of pupil thresholds
+	%	- sET: eye-tracking data structure
 	%
 	%	output:
 	%	- sPupil; structure with pupil parameters:
@@ -109,9 +111,6 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		%matDbl = double(imfilt(double(imBW),gMatFilt));
 	end
 	%matDbl = double(imBW);
-	
-	%idea: for fitting, impose ridge (L2) regularization for x&y location and radius
-	%	(all three relative to initial approximate pupil estimate
 	
 	%for fitting, impose small penalty on pupil areas outside imBW
 	try

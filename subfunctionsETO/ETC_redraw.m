@@ -26,6 +26,9 @@ function ETC_redraw(varargin)
 			matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = [];
 		end
 		matFrame = imnorm(matFrame);
+		
+		[matFrame,imReflection] = ET_ImPrep(matFrame,sETC.gMatFilt,sETC.dblThreshReflect,sETC.objSE,sETC.boolInvertImage);
+		matFrame(imReflection) = 0;
 	end
 	
 	%redraw image

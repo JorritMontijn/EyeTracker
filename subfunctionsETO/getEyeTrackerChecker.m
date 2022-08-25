@@ -45,6 +45,22 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 	else
 		sFigETC.sOldEpochs = ETC_GenEmptyEpochs();
 	end
+	sTrackParams = sFile.sParams.sET;
+	sETC.dblGaussWidth = sTrackParams.dblGaussWidth;
+	sETC.dblThreshReflect = sTrackParams.dblThreshReflect;
+	sETC.dblThreshPupil = sTrackParams.dblThreshPupil;
+	sETC.dblPupilMinRadius = sTrackParams.dblPupilMinRadius;
+	sETC.dblStrEl = sTrackParams.dblStrEl;
+	
+	%prep derived parameters
+	sETC.boolInvertImage = false;
+	intRadStrEl = round(sETC.dblStrEl);
+	vecChoose=[4 6 8];
+	[dummy,intChooseIdx]=min(abs(vecChoose-intRadStrEl*2));
+	intN = vecChoose(intChooseIdx);
+	objSE = strel('disk',intRadStrEl,intN);
+	sETC.objSE = objSE;
+	
 	try
 		%% build GUI master parameters
 		dblHeight = 720;
@@ -114,6 +130,25 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 			strGPU = 'CUDA test failed: will not use gpu acceleration.';
 		end
 		sETC.boolUseGPU = boolUseGPU;
+		
+		%blur width
+		if sETC.dblGaussWidth == 0
+			if sETC.boolUseGPU
+				sETC.gMatFilt = gpuArray(single(1));
+			else
+				sETC.gMatFilt = single(1);
+			end
+		else
+			intGaussSize = ceil(sETC.dblGaussWidth*2);
+			vecFilt = normpdf(-intGaussSize:intGaussSize,0,sETC.dblGaussWidth);
+			matFilt = vecFilt' * vecFilt;
+			matFilt = matFilt / sum(matFilt(:));
+			if sETC.boolUseGPU
+				sETC.gMatFilt = gpuArray(single(matFilt));
+			else
+				sETC.gMatFilt = single(matFilt);
+			end
+		end
 		
 		vecLocText = [20 dblHeight-30 400 20];
 		sFigETC.ptrTextVersion = uicontrol(ptrMainGUI,'Style','text','HorizontalAlignment','left','FontSize',11,'BackgroundColor',vecMainColor,'Position',vecLocText,...

@@ -30,6 +30,8 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	sETP.dblStrEl = str2double(sFigETP.sHandles.StrEl.String);
 	sETP.dblThreshReflect = str2double(sFigETP.sHandles.ReflLum.String);
 	sETP.dblThreshPupil = str2double(sFigETP.sHandles.PupLum.String);
+	sglReflT = sETP.dblThreshReflect;
+	sglPupilT = sETP.dblThreshPupil;
 	
 	%% get selected frame
 	sFigETP.intCurFrame = ETP_GetCurrentFrame();
@@ -75,8 +77,6 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 	end
 			
 	%get parameters
-	sglReflT = sETP.dblThreshReflect;
-	sglPupilT = sETP.dblThreshPupil;
 	%vecPupil = (sglPupilT-40):10:(sglPupilT+20);
 	vecPupil = (sglPupilT-6):2:(sglPupilT+4);
 	vecPupil(vecPupil<0)=[];
@@ -102,8 +102,23 @@ function ETP_DetectEdit(hObject,eventdata,strParam)
 		gMatVid = sFigETP.matVid(vecKeepY,vecKeepX);
 	end
 	vecPrevLoc = [size(gMatVid,1)/2 size(gMatVid,2)/2];
+	
 	%detect
 	[sFigETP.sPupil,sFigETP.imPupil,sFigETP.imReflection,sFigETP.imBW,sFigETP.imGrey] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupil,sETP);
+	
+	%prep main image
+	if ~isfield(sETP,'boolInvertImage') || isempty(sETP.boolInvertImage)
+		boolInvertImage = false;
+		sETP.boolInvertImage = boolInvertImage;
+	else
+		boolInvertImage = sETP.boolInvertImage;
+	end
+	imReflBig = false(size(sFigETP.matVid));
+	imReflBig(vecKeepY,vecKeepX) = sFigETP.imReflection;
+	imReflBig = imdilate(imReflBig,objSE);
+	matMain = ET_ImPrep(sFigETP.matVid,[],sglReflT,objSE,boolInvertImage);
+	matMain(imReflBig) = 0;
+	sFigETP.matMain = matMain./255;
 	
 	%% redraw image, boxes & detection
 	ETP_redraw();

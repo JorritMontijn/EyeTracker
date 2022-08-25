@@ -45,9 +45,9 @@ function sLabels = ETP_SetLabels(hObject,eventdata)
 		
 		% apply image corrections
 		matMeanIm = (sum(ETP_matAllImOrig(:,:,1,intIm,1:floor(intTempAvg)),5) + (intTempAvg-floor(intTempAvg))*ETP_matAllImOrig(:,:,1,intIm,ceil(intTempAvg)))./intTempAvg;
-		matIm = imadjust(matMeanIm./255,[],[],dblGamma).*dblGain;
-		matIm(matIm(:)>1)=1;
-		ETP_matAllIm(:,:,intIm) = matIm;
+		[matIm,imReflection] = ET_ImPrep(matMeanIm,sETP.gMatFilt,sETP.dblThreshReflect,sETP.objSE,sETP.boolInvertImage);
+		matIm(imReflection) = 0;
+		ETP_matAllIm(:,:,intIm) = imadjust(matIm./255);
 	end
 	if sETP.boolUseGPU
 		ETP_matAllIm = gpuArray(ETP_matAllIm);

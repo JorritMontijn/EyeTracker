@@ -291,6 +291,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 			%ETO_updateMonitor(sFigETOM,sPupil,sPupil1,dblT,sTrPar.dblTotDurSecs);
 		end
 	end
+	
 	%close monitor
 	close(sFigETOM.ptrMainGUI);
 	
