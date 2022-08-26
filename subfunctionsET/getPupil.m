@@ -135,7 +135,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	imPupil = logical(imPupil);
 	%retrieve original brightness of fitted area
 	if all(~imPupil(:))
-		imPupil(1,1) = imBW;
+		imPupil(1,1) = 1;
 	end
 	vecPixVals = flat(gMatVid(imPupil));
 	dblMeanPupilLum = gather(mean(vecPixVals));
