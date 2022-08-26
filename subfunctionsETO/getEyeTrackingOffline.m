@@ -168,6 +168,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecPupilCenterX = nan(1,intDetectFrames);
 	vecPupilCenterY = nan(1,intDetectFrames);
 	vecPupilRadius = nan(1,intDetectFrames);
+	vecPupilRadius2 = nan(1,intDetectFrames);
+	vecPupilAngle = nan(1,intDetectFrames);
 	vecPupilEdgeHardness = nan(1,intDetectFrames);
 	vecPupilMeanPupilLum = nan(1,intDetectFrames);
 	vecPupilSdPupilLum = nan(1,intDetectFrames);
@@ -254,6 +256,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 			vecPupilCenterX(intDetectFrame) = sPupilDetected.vecCentroid(1);
 			vecPupilCenterY(intDetectFrame) = sPupilDetected.vecCentroid(2);
 			vecPupilRadius(intDetectFrame) = sPupilDetected.dblRadius;
+			vecPupilRadius2(intDetectFrame) = sPupilDetected.dblRadius2;
+			vecPupilAngle(intDetectFrame) = sPupilDetected.dblAngle;
 			vecPupilEdgeHardness(intDetectFrame) = sPupilDetected.dblEdgeHardness;
 			vecPupilMeanPupilLum(intDetectFrame) = sPupilDetected.dblMeanPupilLum;
 			vecPupilSdPupilLum(intDetectFrame) = sPupilDetected.dblSdPupilLum;
@@ -332,6 +336,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecPupilFixedCenterX = interp1(vecGoodPoints,vecPupilCenterX(~indWrong),vecAllPoints,'linear','extrap');
 	vecPupilFixedCenterY = interp1(vecGoodPoints,vecPupilCenterY(~indWrong),vecAllPoints,'linear','extrap');
 	vecPupilFixedRadius = interp1(vecGoodPoints,vecPupilRadius(~indWrong),vecAllPoints,'linear','extrap');
+	vecPupilFixedRadius2 = interp1(vecGoodPoints,vecPupilRadius2(~indWrong),vecAllPoints,'linear','extrap');
+	vecPupilFixedAngle = interp1(vecGoodPoints,vecPupilAngle(~indWrong),vecAllPoints,'linear','extrap');
 	
 	%% gather data
 	%check which frames to remove
@@ -353,6 +359,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecPupilFixedCenterX = vecPupilFixedCenterX(1:intLastFrame);
 	vecPupilFixedCenterY = vecPupilFixedCenterY(1:intLastFrame);
 	vecPupilFixedRadius = vecPupilFixedRadius(1:intLastFrame);
+	vecPupilFixedRadius2 = vecPupilFixedRadius2(1:intLastFrame);
+	vecPupilFixedAngle = vecPupilFixedAngle(1:intLastFrame);
 	vecPupilFixedPoints = indWrong;
 	
 	%output
@@ -372,6 +380,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sPupil.vecPupilCenterX = vecPupilCenterX;
 	sPupil.vecPupilCenterY = vecPupilCenterY;
 	sPupil.vecPupilRadius = vecPupilRadius;
+	sPupil.vecPupilRadius2 = vecPupilRadius2;
+	sPupil.vecPupilAngle = vecPupilAngle;
 	sPupil.vecPupilEdgeHardness = vecPupilEdgeHardness;
 	sPupil.vecPupilMeanPupilLum = vecPupilMeanPupilLum;
 	sPupil.vecPupilAbsVidLum = vecPupilAbsVidLum;
@@ -385,6 +395,8 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sPupil.vecPupilFixedCenterX = vecPupilFixedCenterX;
 	sPupil.vecPupilFixedCenterY = vecPupilFixedCenterY;
 	sPupil.vecPupilFixedRadius = vecPupilFixedRadius;
+	sPupil.vecPupilFixedRadius2 = vecPupilFixedRadius2;
+	sPupil.vecPupilFixedAngle = vecPupilFixedAngle;
 	sPupil.vecPupilFixedPoints = vecPupilFixedPoints;
 	
 	%extra info

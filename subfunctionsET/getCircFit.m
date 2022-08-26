@@ -1,14 +1,11 @@
 function vecValues = getCircFit(vecOptimParams,matXY)
 	%getCircFit Returns values in the range 0-1 depending on x-y location
-	%	within (1) or outside (0) circle defined by vecParams (x, y, r)
+	%	within (1) or outside (0) fitted area defined by vecParams (x, y, r) for a circle or 
+	%	(x, y, r1, r2, a) for an ellipse
 	%Syntax: vecValues = getCircFit(vecParams,matXY)
 	
-	error(['work in progress: please the previous version if you want to do eye-tracking. '...
-		'this function now uses ellipses, but that''s not implemented in the other scripts yet. '...
-		'note to self: the grid-warp operations can be separated from the circle calculation if the minor:major axis ratio and ellipse angle are constant'])
-	
 	if numel(vecOptimParams) == 3
-		%get distance
+		%fit circle
 		vecDist = hypot(matXY(:,2)-vecOptimParams(2),matXY(:,1)-vecOptimParams(1));
 		indInner = vecDist < (vecOptimParams(3) - 1);
 		indOuter = vecDist > vecOptimParams(3);
@@ -17,7 +14,7 @@ function vecValues = getCircFit(vecOptimParams,matXY)
 		vecValues(indOuter) = 0;
 		vecValues(~indInner & ~indOuter) = vecOptimParams(3) - vecDist(~indInner & ~indOuter);
 	elseif numel(vecOptimParams) == 5
-		%get vars
+		%fit ellipse
 		dblX = vecOptimParams(1);
 		dblY = vecOptimParams(2);
 		dblR = vecOptimParams(3);

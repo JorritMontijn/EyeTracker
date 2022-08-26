@@ -1,4 +1,4 @@
-function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,imBW)
+function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,imBW)
 	
 	%% check if mask is supplied
 	if ~exist('imIgnore','var') || isempty(imIgnore)
@@ -12,64 +12,37 @@ function [vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(m
 	vecY = matY(~imIgnore);
 	vecZ = (matIn(~imIgnore)./max(matIn(~imIgnore)));
 	vecP = ~imBW(~imIgnore).*-1;
-	vecParams0 = [vecApproxCentroid(:)' dblApproxRadius/2];%dblApproxRadius];
-	%figure%,imagesc(imBW.*10);
-	%colorbar
-	%% build function
+	vecParams0 = [vecApproxCentroid(:)' dblApproxRadius/2 dblApproxRadius/2 0];
+	
+	% build data grid
 	matXY = [vecX vecY];
 	
-	sConstants = struct;
-	sConstants.vecX = vecX;
-	sConstants.vecY = vecY;
-	sConstants.vecZ = vecZ;
-	sConstants.vecApproxParams = vecParams0;
-	
-	%% fit
+	%% fit ellipse
 	sOpt = struct;
 	sOpt.Display = 'off';
-	%sOpt.TolFun = 1e-15;
-	%sOpt.TolX = 1e-15;
-	vecLB = [0 0 0.5];
-	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1)];
-	%[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@fCircFit,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
-	%[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@getCircFit,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
-	[vecParamsFit,dblVal,flag,out] = lsqcurvefit(@getCircFitPenalty,vecParams0,matXY,vecZ,vecLB,vecUB,sOpt);
-	%dblVal
-	
-	%[vecParamsFit,dblVal,flag,out] = fminsearch(fCircFit,vecParams0,sOpt);
-	%[vecParamsFit,dblVal,flag,out] = fminunc(fCircFit,vecParams0,sOpt);
-	vecCentroid = vecParamsFit(1:2);
-	dblRadius = vecParamsFit(3);
-	
-	%plot values
-	%vecV = getCircFitPenalty(vecParamsFit,matXY);
-	%hold on;scatter(vecX,vecY,[],vecV);hold off;
+	vecLB = [0 0 0.5 0.5 -pi];
+	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1) size(matIn,1) pi];
+	[vecOptimParams,dblVal,flag,out] = lsqcurvefit(@getCircFitPenalty,vecParams0,matXY,vecZ,vecLB(1:numel(vecParams0)),vecUB(1:numel(vecParams0)),sOpt);
 	
 	%% calculate edge hardness
 	if nargout > 2
-		%get relative locations
-		vecRelX = sConstants.vecX - vecParamsFit(1);
-		vecRelY = sConstants.vecY - vecParamsFit(2);
-		
-		%get distance
-		[dummy,vecDist] = cart2pol(vecRelX,vecRelY);
-		%get pixel identities
-		indInnerBorder = (vecDist > (dblRadius - 2)) & (vecDist <= dblRadius);
-		indOuterBorder = (vecDist > (dblRadius)) & (vecDist <= dblRadius + 2);
-		%get border sharpness
-		dblEdgeHardness = mean(sConstants.vecZ(indInnerBorder)) - mean(sConstants.vecZ(indOuterBorder));
-	end
+		%add ignored areas back in
+		matXY = [matX(:) matY(:)];
 	
-	%% calculate mask
-	if nargout > 3
-		%get relative locations
-		matRelX = matX - vecParamsFit(1);
-		matRelY = matY - vecParamsFit(2);
+		%get fitted pupil
+		vecValues = getCircFit(vecOptimParams,matXY);
 		
-		%get distance
-		[dummy,matDist] = cart2pol(matRelX,matRelY);
+		%get mask
+		imPupil = reshape(vecValues,size(matX))>0.5;
 		
 		%get pixel identities
-		imPupil = matDist < vecParamsFit(3);
+		indBorder = (vecValues > 0) & (vecValues < 1);
+		matB = reshape(indBorder,size(matX));
+		matDilB = imdilate(matB,strel('disk',2,8));
+		indOuterBorder = matDilB & ~imPupil & ~imIgnore;
+		indInnerBorder = matDilB & imPupil & ~imIgnore;
+		
+		%get border sharpness
+		dblEdgeHardness = mean(vecZ(indInnerBorder)) - mean(vecZ(indOuterBorder));
 	end
 end

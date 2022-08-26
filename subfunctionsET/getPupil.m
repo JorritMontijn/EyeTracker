@@ -15,6 +15,8 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%	- sPupil; structure with pupil parameters:
 	%		sPupil.vecCentroid;			center in pixel coordinates
 	%		sPupil.dblRadius;			radius in pixels
+	%		sPupil.dblRadius2;			radius2 in pixels
+	%		sPupil.dblAngle;			angle in rads
 	%		sPupil.dblEdgeHardness;		0 if uniform (no edge), 1 if mask drops from 1 to 0 at exactly the fitted boundary
 	%		sPupil.dblMeanPupilLum;		average pupil area intensity
 	%		sPupil.dblSdPupilLum;		sd of pupil area intensity
@@ -32,11 +34,14 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%performance, but this should be barely noticeable on most systems.
 	%
 	%Version history:
-	%1.0 - Sept 11 2019
+	%1.0 - 11 Sept 2019
 	%	Created by Jorrit Montijn
-	%2.0 - Dec 18 2019
+	%2.0 - 18 Dec 2019
 	%	New algorithm dynamically chooses pupil threshold, then performs
 	%	L2-regularized ridge fitting with circle [by JM]
+	%2.1 - 18 August 2022
+	%	Changed fits to ellipse rather than circle; applied some computational improvements so speed
+	%	should be approximately the same as before [by JM]
 	
 	%% check inputs
 	if ~exist('vecPupilT','var') || isempty(vecPupilT)
@@ -114,17 +119,23 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	
 	%for fitting, impose small penalty on pupil areas outside imBW
 	try
-		[vecCentroid,dblRadius,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,imBW);
+		[vecFitParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,imBW);
+		vecCentroid = vecFitParams(1:2);
+		dblRadius = vecFitParams(3);
+		dblRadius2 = vecFitParams(4);
+		dblAngle = vecFitParams(5);
 	catch
 		vecCentroid = vecApproxCentroid;
 		dblRadius = dblApproxRadius;
+		dblRadius2 = dblRadius;
+		dblAngle = 0;
 		dblEdgeHardness = 0;
 		imPupil = false.*imReflection;
 	end
 	imPupil = logical(imPupil);
 	%retrieve original brightness of fitted area
 	if all(~imPupil(:))
-		imPupil(1,1) = true;
+		imPupil(1,1) = imBW;
 	end
 	vecPixVals = flat(gMatVid(imPupil));
 	dblMeanPupilLum = gather(mean(vecPixVals));
@@ -135,6 +146,8 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%assign detected pupil parameters
 	sPupil.vecCentroid = vecCentroid; %center in pixel coordinates
 	sPupil.dblRadius = dblRadius; %radius in pixels
+	sPupil.dblRadius2 = dblRadius2; %radius2 in pixels
+	sPupil.dblAngle = dblAngle; %angle of ellipse
 	sPupil.dblEdgeHardness = dblEdgeHardness; %0 if uniform (no edge), 1 if mask drops from 1 to 0 at exactly the fitted boundary
 	sPupil.dblMeanPupilLum = dblMeanPupilLum; %average pupil area intensity
 	sPupil.dblSdPupilLum = dblSdPupilLum; %sd of pupil area intensity

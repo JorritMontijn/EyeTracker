@@ -107,6 +107,11 @@ function dblError = ETP_FitWrapper(vecX,boolRescale)
 	
 	
 	%% detect all images
+	%get grid
+	[matX,matY] = meshgrid(1:size(ETP_matAllIm,2),1:size(ETP_matAllIm,1));
+	matXY = [matX(:) matY(:)];
+		
+	%get labelled images
 	vecImX = ETP_sLabels.X;
 	vecImY = ETP_sLabels.Y;
 	vecImR = ETP_sLabels.R;
@@ -120,20 +125,15 @@ function dblError = ETP_FitWrapper(vecX,boolRescale)
 	vecImE = zeros(size(ETP_sLabels.R));
 	for intIm=1:intF
 		gMatVid = ETP_matAllIm(:,:,intIm);
-		sPupil = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupil,sETP);
-		vecCentroid = sPupil.vecCentroid; %center in pixel coordinates
+		[sPupil,imPupil] = getPupil(gMatVid,gMatFilt,sglReflT,sglPupilT,objSE,vecPrevLoc,vecPupil,sETP);
 		
-		dblX = vecImX(intIm);
-		dblFitX = vecCentroid(1);
+		%get labelled pupil
+		vecLabelParams = [vecImX(intIm) vecImY(intIm) vecImR(intIm) vecImR2(intIm) vecImA(intIm)];
+		vecValues = getCircFit(vecLabelParams,matXY);
+		imLabel = reshape(vecValues,size(imPupil));
 		
-		dblY = vecImY(intIm);
-		dblFitY = vecCentroid(2);
-		
-		dblR = vecImR(intIm);
-		dblFitR = sPupil.dblRadius;
-		
-		vecImE(intIm) =sqrt( (dblX - dblFitX)^2 + (dblY - dblFitY)^2) + abs(dblR - dblFitR);
-		
+		%get error
+		vecImE(intIm) = sum((imLabel(:) - imPupil(:)).^2);% + sum(max(0,imPupil(:) - imLabel(:)));
 	end
 	dblError = sum(vecImE);
 end

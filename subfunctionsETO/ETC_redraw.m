@@ -38,12 +38,21 @@ function ETC_redraw(varargin)
 	
 	%extract parameters
 	dblR = vecR(sFigETC.intCurFrame);
-	dblOri = 0;
+	if isfield(sFigETC.sPupil,'vecPupilFixedRadius2')
+		dblR2  = sFigETC.sPupil.vecPupilFixedRadius2(sFigETC.intCurFrame);
+	else
+		dblR2 = dblR;
+	end
+	if isfield(sFigETC.sPupil,'vecPupilFixedAngle')
+		dblA  = sFigETC.sPupil.vecPupilFixedAngle(sFigETC.intCurFrame);
+	else
+		dblA = 0;
+	end
 	dblX = vecX(sFigETC.intCurFrame);
 	dblY = vecY(sFigETC.intCurFrame);
 	
 	%orig with overlays
-	ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR,deg2rad(dblOri)-pi/4,'Color','r','LineStyle','--');
+	ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR2,dblA,'Color','r','LineStyle',':');
 	
 	%draw epoch if overlapping
 	indHasLabels = arrayfun(@(x) ~isempty(x.BeginLabels) & ~isempty(x.EndLabels),sFigETC.sPupil.sEpochs);
@@ -56,12 +65,12 @@ function ETC_redraw(varargin)
 			sEpoch = sFigETC.sPupil.sEpochs(intUseEpoch);
 			intFrameInEpoch = sFigETC.intCurFrame - sEpoch.BeginFrame + 1;
 			dblR = sEpoch.Radius(intFrameInEpoch);
-			dblOri = 0;
+			dblA = 0;
 			dblX = sEpoch.CenterX(intFrameInEpoch);
 			dblY = sEpoch.CenterY(intFrameInEpoch);
 			
 			%orig with overlays
-			ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR,deg2rad(dblOri)-pi/4,'Color','b','LineStyle','--');
+			ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR,dblA,'Color','b','LineStyle','--');
 		end
 	end
 	%% redraw current x/y/r scatters

@@ -206,7 +206,7 @@ function [sTrackParams,sLabels] = getEyeTrackingParameters(sFile,strTempPath,boo
 		%% check if only labelling is enabled
 		if boolOnlyLabels
 			%set labels
-			ETP_SetLabels();
+			ETP_sLabels = ETP_SetLabels();
 			%quit
 			ETP_DeleteFcn;
 		end

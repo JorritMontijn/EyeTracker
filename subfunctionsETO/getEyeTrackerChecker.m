@@ -8,6 +8,8 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 	sFigETC = [];
 	sETC = [];
 	
+	error('still need to implement ellipses');
+	
 	%% find minivid
 	strMiniVidFile = sFile.sPupil.sPupil.strMiniVidFile;
 	strMiniVidPath = sFile.sPupil.sPupil.strMiniVidPath;
