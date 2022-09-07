@@ -11,12 +11,15 @@ function ETC_redraw(varargin)
 	vecY = sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData;
 	vecR = sFigETC.ptrAxesR.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesR.Children,'UniformOutput',false),'line')).YData;
 	
+	sFigETC.sPupil
+	
 	%load video frame
 	if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
 		matFrame = sETC.matVid(:,:,:,sFigETC.intCurFrame);
 	else
 		matFrame = read(sETC.objVid,sFigETC.intCurFrame);
 	end
+	matFrame = im2double(matFrame);
 	if sFigETC.ptrImNorm.Value==1
 		matFrame = mean(matFrame,3);
 		if any(all(matFrame<(max(matFrame(:))/10),2))
@@ -33,7 +36,7 @@ function ETC_redraw(varargin)
 	
 	%redraw image
 	cla(sFigETC.ptrAxesMainVid);
-	sFigETC.ptrCurFrame=imshow(matFrame,'Parent', sFigETC.ptrAxesMainVid);
+	sFigETC.ptrCurFrame=imshow(uint8(matFrame),'Parent', sFigETC.ptrAxesMainVid);
 	hold(sFigETC.ptrAxesMainVid,'on');
 	
 	%extract parameters
