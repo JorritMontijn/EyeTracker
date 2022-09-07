@@ -9,7 +9,7 @@ function ETC_redraw(varargin)
 	vecT = sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).XData;
 	vecX = sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).YData;
 	vecY = sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData;
-	vecR = sFigETC.ptrAxesR.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesR.Children,'UniformOutput',false),'line')).YData;
+	vecArea = sFigETC.ptrAxesA.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesA.Children,'UniformOutput',false),'line')).YData;
 	
 	sFigETC.sPupil
 	
@@ -40,22 +40,23 @@ function ETC_redraw(varargin)
 	hold(sFigETC.ptrAxesMainVid,'on');
 	
 	%extract parameters
-	dblR = vecR(sFigETC.intCurFrame);
+	dblArea = vecArea(sFigETC.intCurFrame);
+	dblR = sFigETC.sPupil.vecPupilFixedRadius(sFigETC.intCurFrame);
 	if isfield(sFigETC.sPupil,'vecPupilFixedRadius2')
 		dblR2  = sFigETC.sPupil.vecPupilFixedRadius2(sFigETC.intCurFrame);
 	else
 		dblR2 = dblR;
 	end
 	if isfield(sFigETC.sPupil,'vecPupilFixedAngle')
-		dblA  = sFigETC.sPupil.vecPupilFixedAngle(sFigETC.intCurFrame);
+		dblAngle  = sFigETC.sPupil.vecPupilFixedAngle(sFigETC.intCurFrame);
 	else
-		dblA = 0;
+		dblAngle = 0;
 	end
 	dblX = vecX(sFigETC.intCurFrame);
 	dblY = vecY(sFigETC.intCurFrame);
 	
 	%orig with overlays
-	ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR2,dblA,'Color','r','LineStyle',':');
+	ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR2,dblAngle,'Color','r','LineStyle',':');
 	
 	%draw epoch if overlapping
 	indHasLabels = arrayfun(@(x) ~isempty(x.BeginLabels) & ~isempty(x.EndLabels),sFigETC.sPupil.sEpochs);
@@ -67,26 +68,26 @@ function ETC_redraw(varargin)
 			%extract parameters
 			sEpoch = sFigETC.sPupil.sEpochs(intUseEpoch);
 			intFrameInEpoch = sFigETC.intCurFrame - sEpoch.BeginFrame + 1;
-			dblR = sEpoch.Radius(intFrameInEpoch);
-			dblA = 0;
+			dblArea = sEpoch.Radius(intFrameInEpoch);
+			dblAngle = 0;
 			dblX = sEpoch.CenterX(intFrameInEpoch);
 			dblY = sEpoch.CenterY(intFrameInEpoch);
 			
 			%orig with overlays
-			ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR,dblA,'Color','b','LineStyle','--');
+			ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblArea,dblArea,dblAngle,'Color','b','LineStyle','--');
 		end
 	end
-	%% redraw current x/y/r scatters
-	delete(sFigETC.ptrScatterR);
+	%% redraw current x/y/a scatters
+	delete(sFigETC.ptrScatterA);
 	delete(sFigETC.ptrScatterY);
 	delete(sFigETC.ptrScatterX);
-	delete(sFigETC.ptrScatterTxtR);
+	delete(sFigETC.ptrScatterTxtA);
 	delete(sFigETC.ptrScatterTxtY);
 	delete(sFigETC.ptrScatterTxtX);
 	dblT = vecT(sFigETC.intCurFrame);
 	
-	sFigETC.ptrScatterR = scatter(sFigETC.ptrAxesR,dblT,dblR,48,'k.','LineWidth',2);
-	sFigETC.ptrScatterTxtR = text(sFigETC.ptrAxesR,dblT,dblR+range(sFigETC.ptrAxesR.YLim)/7,sprintf('R=%.3f',dblR));
+	sFigETC.ptrScatterA = scatter(sFigETC.ptrAxesA,dblT,dblArea,48,'k.','LineWidth',2);
+	sFigETC.ptrScatterTxtA = text(sFigETC.ptrAxesA,dblT,dblArea+range(sFigETC.ptrAxesA.YLim)/7,sprintf('A=%.3f',dblArea));
 	sFigETC.ptrScatterY = scatter(sFigETC.ptrAxesY,dblT,dblY,48,'b.','LineWidth',2);
 	sFigETC.ptrScatterTxtY = text(sFigETC.ptrAxesY,dblT,dblY+range(sFigETC.ptrAxesY.YLim)/7,sprintf('Y=%.3f',dblY));
 	sFigETC.ptrScatterX = scatter(sFigETC.ptrAxesX,dblT,dblX,48,'r.','LineWidth',2);
@@ -117,7 +118,7 @@ function ETC_redraw(varargin)
 	vecPlotT = vecT(vecFrames);
 	vecPlotX = vecX(vecFrames);
 	vecPlotY = vecY(vecFrames);
-	vecPlotR = vecR(vecFrames);
+	vecPlotA = vecArea(vecFrames);
 	vecPlotS = sFigETC.sPupil.vecPupilFiltSyncLum(vecFrames);
 	
 	%clear plots and redraw
@@ -134,9 +135,9 @@ function ETC_redraw(varargin)
 	hLine = plot(sFigETC.ptrZoomPlot1,[dblT dblT],[min(vecPlotS) max(vecPlotS)],'--','Color',[0.5 0.5 0.5]);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	
-	hLine = plot(sFigETC.ptrZoomPlot2,vecPlotT,vecPlotR);
+	hLine = plot(sFigETC.ptrZoomPlot2,vecPlotT,vecPlotA);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
-	hLine = plot(sFigETC.ptrZoomPlot2,[dblT dblT],[min(vecPlotR) max(vecPlotR)],'--','Color',[0.5 0.5 0.5]);
+	hLine = plot(sFigETC.ptrZoomPlot2,[dblT dblT],[min(vecPlotA) max(vecPlotA)],'--','Color',[0.5 0.5 0.5]);
 	set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 	
 	hLine = plot(sFigETC.ptrZoomPlot3,vecPlotT,vecPlotX,'color',[0.8 0 0]);

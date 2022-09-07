@@ -22,6 +22,8 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 			sEpoch.CenterX = [];
 			sEpoch.CenterY = [];
 			sEpoch.Radius = [];
+			sEpoch.Radius2 = [];
+			sEpoch.Angle = [];
 			sEpoch.Blinks = [];
 		else
 			%load data
@@ -68,6 +70,8 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 		sEpoch.CenterX = [];
 		sEpoch.CenterY = [];
 		sEpoch.Radius = [];
+		sEpoch.Radius2 = [];
+		sEpoch.Angle = [];
 		if boolControlPressed || boolAltPressed
 			sEpoch.Blinks = zeros(1,intFrames);
 		else

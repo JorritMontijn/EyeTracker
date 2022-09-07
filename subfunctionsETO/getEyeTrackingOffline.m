@@ -15,10 +15,10 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	end
 	
 	%vid
-	strVidFile = sFile.name;
-	strVidPath = sFile.folder;
-	if ~strcmp(strVidPath(end),filesep)
-		strVidPath(end+1) = filesep;
+	strSourceVidFile = sFile.name;
+	strSourceVidPath = sFile.folder;
+	if ~strcmp(strSourceVidPath(end),filesep)
+		strSourceVidPath(end+1) = filesep;
 	end
 	%params
 	strParFile = sFile.sTrackParams.name;
@@ -28,8 +28,11 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	end
 	
 	% copy files to local temp directory
-	fprintf('Copying "%s" to local path "%s" [%s]\n',strVidFile,strTempDir,getTime);
-	ETP_prepareMovie(strVidPath,strVidFile,strTempDir,'Yes');
+	strFullVidFile = ETP_prepareMovie(strSourceVidPath,strSourceVidFile,strTempDir,'Yes');
+	[strVidPath,strVidFileName,strVidFileExt] = fileparts(strFullVidFile);
+	strVidFile = [strVidFileName strVidFileExt];
+	
+	%copy parameters file
 	[status2,msg2,msgID2] = copyfile([strParPath strParFile],[strTempDir strParFile]);
 	if status2 == 0,error(msgID2,sprintf('Error copying "%s": %s',strParFile,msg2));end
 	if contains(strVidFile,'Raw')
@@ -91,7 +94,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	
 	%% build elements & check gpu
 	% access video
-	objVid = VideoReader([strTempDir strVidFile]);
+	objVid = VideoReader(strFullVidFile);
 	intAllFrames = objVid.NumberOfFrames;
 	dblTotDurSecs = objVid.Duration;
 	sTrPar.intAllFrames = intAllFrames;

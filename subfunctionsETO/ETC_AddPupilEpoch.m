@@ -51,7 +51,10 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 		vecT = sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).XData;
 		vecX = sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).YData;
 		vecY = sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData;
-		vecR = sFigETC.ptrAxesR.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesR.Children,'UniformOutput',false),'line')).YData;
+		vecR = sFigETC.sPupil.vecPupilFixedRadius;
+		vecR2 = sFigETC.sPupil.vecPupilFixedRadius2;
+		vecA = sFigETC.sPupil.vecPupilFixedAngle;
+			
 		%check end
 		intCurrFrame = strType;
 		if intCurrFrame > numel(vecT),return;end
@@ -73,6 +76,8 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				sLabels.X = sReadFromEpoch.CenterX(intFrameInEpoch);
 				sLabels.Y = sReadFromEpoch.CenterY(intFrameInEpoch);
 				sLabels.R = sReadFromEpoch.Radius(intFrameInEpoch);
+				sLabels.R2 = sReadFromEpoch.Radius2(intFrameInEpoch);
+				sLabels.A = sReadFromEpoch.Angle(intFrameInEpoch);
 				boolUseDefault = false;
 			end
 		end
@@ -81,6 +86,8 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 			sLabels.X = vecX(intCurrFrame);
 			sLabels.Y = vecY(intCurrFrame);
 			sLabels.R = vecR(intCurrFrame);
+			sLabels.R2 = vecR2(intCurrFrame);
+			sLabels.A = vecA(intCurrFrame);
 		end
 		
 		%assign
@@ -115,6 +122,10 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 			sEpoch.CenterX = linspace(sEpoch.BeginLabels.X,sEpoch.EndLabels.X,intFrames);
 			sEpoch.CenterY = linspace(sEpoch.BeginLabels.Y,sEpoch.EndLabels.Y,intFrames);
 			sEpoch.Radius = linspace(sEpoch.BeginLabels.R,sEpoch.EndLabels.R,intFrames);
+			sEpoch.Radius2 = linspace(sEpoch.BeginLabels.R2,sEpoch.EndLabels.R2,intFrames);
+			dblStartA = sEpoch.BeginLabels.A;
+			dblEndA = dblStartA + circ_dist(dblStartA,sEpoch.EndLabels.A);
+			sEpoch.Angle = mod(linspace(dblStartA,dblEndA,intFrames),2*pi);
 			sEpoch.Blinks = [];
 		else
 			%% run detection algorithm
@@ -214,16 +225,24 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				vecForwardX = zeros(1,intFrames);
 				vecForwardY = zeros(1,intFrames);
 				vecForwardR = zeros(1,intFrames);
+				vecForwardR2 = zeros(1,intFrames);
+				vecForwardA = zeros(1,intFrames);
 				vecReverseX = zeros(1,intFrames);
 				vecReverseY = zeros(1,intFrames);
 				vecReverseR = zeros(1,intFrames);
+				vecReverseR2 = zeros(1,intFrames);
+				vecReverseA = zeros(1,intFrames);
 				%assign first & last frame
 				vecForwardX(1) = sEpoch.BeginLabels.X;
 				vecForwardY(1) = sEpoch.BeginLabels.Y;
 				vecForwardR(1) = sEpoch.BeginLabels.R;
+				vecForwardR2(1) = sEpoch.BeginLabels.R2;
+				vecForwardA(1) = sEpoch.BeginLabels.A;
 				vecReverseX(end) = sEpoch.EndLabels.X;
 				vecReverseY(end) = sEpoch.EndLabels.Y;
 				vecReverseR(end) = sEpoch.EndLabels.R;
+				vecReverseR2(end) = sEpoch.EndLabels.R2;
+				vecReverseA(end) = sEpoch.EndLabels.A;
 				
 				%% load video frames
 				matEpochFrames = zeros(size(matFrame,1),size(matFrame,2),intFrames);
@@ -272,12 +291,16 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLocForward,vecPupil,sETC.boolUseGPU);
 					vecCentroid = sPupilDetected.vecCentroid;
 					dblRadius = sPupilDetected.dblRadius;
+					dblRadius2 = sPupilDetected.dblRadius2;
+					dblAngle = sPupilDetected.dblAngle;
 					vecPrevLocForward = vecCentroid;
 					
 					%assign
 					vecForwardX(intFrame) = vecCentroid(1);
 					vecForwardY(intFrame) = vecCentroid(2);
 					vecForwardR(intFrame) = dblRadius(1);
+					vecForwardR2(intFrame) = dblRadius2(1);
+					vecForwardA(intFrame) = dblAngle(1);
 					
 					%% reverse detect
 					%send frame to gpu
@@ -292,12 +315,16 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLocReverse,vecPupil,sETC.boolUseGPU);
 					vecCentroid = sPupilDetected.vecCentroid;
 					dblRadius = sPupilDetected.dblRadius;
+					dblRadius2 = sPupilDetected.dblRadius2;
+					dblAngle = sPupilDetected.dblAngle;
 					vecPrevLocReverse = vecCentroid;
 					
 					%assign
 					vecReverseX(intRevFrame) = vecCentroid(1);
 					vecReverseY(intRevFrame) = vecCentroid(2);
 					vecReverseR(intRevFrame) = dblRadius(1);
+					vecReverseR2(intRevFrame) = dblRadius2(1);
+					vecReverseA(intRevFrame) = dblAngle(1);
 				end
 				sEpoch.Blinks = [];
 				
@@ -314,13 +341,19 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				vecFinalX(indUseForward) = vecForwardX(indUseForward);
 				vecFinalY(indUseForward) = vecForwardY(indUseForward);
 				vecFinalR(indUseForward) = vecForwardR(indUseForward);
+				vecFinalR2(indUseForward) = vecForwardR2(indUseForward);
+				vecFinalA(indUseForward) = vecForwardA(indUseForward);
 				vecFinalX(~indUseForward) = vecReverseX(~indUseForward);
 				vecFinalY(~indUseForward) = vecReverseY(~indUseForward);
 				vecFinalR(~indUseForward) = vecReverseR(~indUseForward);
+				vecFinalR2(~indUseForward) = vecReverseR2(~indUseForward);
+				vecFinalA(~indUseForward) = vecReverseA(~indUseForward);
 				
 				sEpoch.CenterX = vecFinalX;
 				sEpoch.CenterY = vecFinalY;
 				sEpoch.Radius = vecFinalR;
+				sEpoch.Radius2 = vecFinalR2;
+				sEpoch.Angle = vecFinalA;
 				
 				%% done
 				delete(hWaitbar);

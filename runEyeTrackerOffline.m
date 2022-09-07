@@ -5,11 +5,14 @@
 %You can set the algorithm's parameters manually, or set a limited number
 %of labelled frames and let the algorithm optimize by itself.
 %
-%	Created by Jorrit Montijn, 2021-05-12 (YYYY-MM-DD)
+%	Version 1.1 - 2022-09-07 (YYYY-MM-DD)
+%	Created by Jorrit Montijn
 
 %Version history:
 %1.0 - 12 May 2021
 %	Created by Jorrit Montijn
+%1.1 - 7 Sept 2022
+%	Optimized code and added support for elliptic pupil fits [by JM]
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');

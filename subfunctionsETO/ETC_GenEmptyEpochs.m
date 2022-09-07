@@ -7,6 +7,8 @@ function sEpochs = ETC_GenEmptyEpochs
 	sEpochs.CenterX = [];
 	sEpochs.CenterY = [];
 	sEpochs.Radius = [];
+	sEpochs.Radius2 = [];
+	sEpochs.Angle = [];
 	sEpochs.Blinks = [];
 	sEpochs(:) = [];
 end
