@@ -272,7 +272,7 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		vecLocationA = vecLocationVL + [0 vecLocationVL(4)+0.01 0 0];
 		sFigETC.ptrAxesA = axes(ptrMainGUI,'Position',vecLocationA,'Units','normalized');
 		vecRadius1 = sFigETC.sPupil.vecPupilFixedRadius2;
-		if isfield(sFigETC.sPupil.vecPupilFixedRadius2)
+		if isfield(sFigETC.sPupil,'vecPupilFixedRadius2')
 			vecRadius2 = sFigETC.sPupil.vecPupilFixedRadius2;
 		else
 			vecRadius2 = vecRadius1;

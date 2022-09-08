@@ -174,6 +174,11 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 					matFrame = read(sETC.objVid,vecFrames(1));
 				end
 				matFrame = mean(matFrame,3);
+				if sETC.boolUseGPU
+					matFrame = gpuArray(single(matFrame));
+				else
+					matFrame = single(matFrame);
+				end
 				%rescale
 				if any(all(matFrame<(max(matFrame(:))/10),2))
 					matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
@@ -181,17 +186,36 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				if any(all(matFrame<(max(matFrame(:))/10),1))
 					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
 				end
-				matFrame = imnorm(matFrame)*255;
+				matScaledFrame = imnorm(matFrame);
+				matFrame = matScaledFrame*255;
 				
 				%prep im
-				matFrame = gather(ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false));
-	
-				%retrieve median pupil luminance
+				[matFrame,imReflection] = ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false);
+				
+				%get pupil mask
 				[matX,matY] = meshgrid(1:size(matFrame,2),1:size(matFrame,1));
-				[dummy,vecDist] = cart2pol(matY-sEpoch.BeginLabels.Y,matX-sEpoch.BeginLabels.X);
-				indInner = vecDist < sEpoch.BeginLabels.R;
-				dblOldPupilT = sTrPar.dblThreshPupil;
-				dblBeginPupilT = median(matFrame(indInner));
+				matXY = [matX(:) matY(:)];
+				
+				%get fitted pupil
+				vecParams = [...
+					sEpoch.BeginLabels.X...
+					sEpoch.BeginLabels.Y...
+					sEpoch.BeginLabels.R...
+					sEpoch.BeginLabels.R2...
+					sEpoch.BeginLabels.A...
+					];
+				vecValues = getCircFit(vecParams,matXY);
+				
+				%get mask
+				imPupil = reshape(vecValues,size(matX))>0.5;
+				imPupil(imReflection)=false;
+				
+				%find optimal pupil threshold
+				%dblPupilT0 = mean(matFrame(imPupil));
+				%dblBeginPupilT = ETC_FitPupilThreshold(dblPupilT0,matFrame,imPupil,imReflection,objSE);
+				dblPupilT0 = mean(matScaledFrame(imPupil));
+				vecPrevLoc = [sEpoch.BeginLabels.X sEpoch.BeginLabels.Y];
+				dblBeginPupilT = ETC_FitPupilThreshold(dblPupilT0,matScaledFrame,imPupil,gMatFilt,dblReflT,objSE,vecPrevLoc,sETC.boolUseGPU);
 				
 				%% load end video frame
 				if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
@@ -207,18 +231,36 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				if any(all(matFrame<(max(matFrame(:))/10),1))
 					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
 				end
-				matFrame = imnorm(matFrame)*255;
+				matScaledFrame = imnorm(matFrame);
+				matFrame = matScaledFrame*255;
 				
 				%prep im
-				matFrame = gather(ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false));
-					
-				%retrieve median pupil luminance for end
-				[dummy,vecDist] = cart2pol(matY-sEpoch.EndLabels.Y,matX-sEpoch.EndLabels.X);
-				indInner = vecDist < sEpoch.BeginLabels.R;
-				dblEndPupilT = median(matFrame(indInner));
+				[matFrame,imReflection] = ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false);
+				
+				%get pupil mask
+				[matX,matY] = meshgrid(1:size(matFrame,2),1:size(matFrame,1));
+				matXY = [matX(:) matY(:)];
+				
+				%get fitted pupil
+				vecParams = [...
+					sEpoch.EndLabels.X...
+					sEpoch.EndLabels.Y...
+					sEpoch.EndLabels.R...
+					sEpoch.EndLabels.R2...
+					sEpoch.EndLabels.A...
+					];
+				vecValues = getCircFit(vecParams,matXY);
+				
+				%get mask
+				imPupil = reshape(vecValues,size(matX))>0.5;
+				imPupil(imReflection)=false;
+				
+				%find optimal pupil threshold
+				dblPupilT0 = mean(matScaledFrame(imPupil));
+				dblEndPupilT = ETC_FitPupilThreshold(dblPupilT0,matScaledFrame,imPupil,gMatFilt,dblReflT,objSE,[sEpoch.EndLabels.X sEpoch.EndLabels.Y],sETC.boolUseGPU);
 				vecPupil = linspace(dblBeginPupilT,dblEndPupilT,5);
-				dblPupilT = mean(vecPupil);
-				vecPupil = vecPupil-std(vecPupil);
+				dblPupilT = 2*255*max(vecPupil);
+				vecPupil = dblPupilT;
 				
 				%% detect
 				%pre-allocate
@@ -246,8 +288,7 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				
 				%% load video frames
 				matEpochFrames = zeros(size(matFrame,1),size(matFrame,2),intFrames);
-				matEpochFrames(:,:,1) = matFrame;
-				for intFrame=2:intFrames
+				for intFrame=1:intFrames
 					%get current image
 					intRealFrame = vecFrames(intFrame);
 					if isfield(sETC,'matVid') && ~isempty(sETC.matVid)

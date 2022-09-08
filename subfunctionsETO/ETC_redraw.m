@@ -11,8 +11,6 @@ function ETC_redraw(varargin)
 	vecY = sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData;
 	vecArea = sFigETC.ptrAxesA.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesA.Children,'UniformOutput',false),'line')).YData;
 	
-	sFigETC.sPupil
-	
 	%load video frame
 	if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
 		matFrame = sETC.matVid(:,:,:,sFigETC.intCurFrame);
@@ -68,13 +66,14 @@ function ETC_redraw(varargin)
 			%extract parameters
 			sEpoch = sFigETC.sPupil.sEpochs(intUseEpoch);
 			intFrameInEpoch = sFigETC.intCurFrame - sEpoch.BeginFrame + 1;
-			dblArea = sEpoch.Radius(intFrameInEpoch);
-			dblAngle = 0;
 			dblX = sEpoch.CenterX(intFrameInEpoch);
 			dblY = sEpoch.CenterY(intFrameInEpoch);
+			dblR = sEpoch.Radius(intFrameInEpoch);
+			dblR2 = sEpoch.Radius2(intFrameInEpoch);
+			dblA = sEpoch.Angle(intFrameInEpoch);
 			
 			%orig with overlays
-			ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblArea,dblArea,dblAngle,'Color','b','LineStyle','--');
+			ellipse(sFigETC.ptrAxesMainVid,dblX,dblY,dblR,dblR2,dblA,'Color','b','LineStyle','--');
 		end
 	end
 	%% redraw current x/y/a scatters
@@ -172,9 +171,12 @@ function ETC_redraw(varargin)
 			vecE_X = sEpoch.CenterX - dblMeanX;
 			vecE_Y = sEpoch.CenterY - dblMeanY;
 			vecE_R = sEpoch.Radius;
+			vecE_R2 = sEpoch.Radius2;
+			vecE_Angle = sEpoch.Angle;
+			vecE_Area = pi.*vecE_R.*vecE_R2;
 			
 			%plot
-			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,vecE_R,'color',lines(1),'linewidth',2);
+			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,vecE_Area,'color',lines(1),'linewidth',2);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_X,'color',[1 0 0],'linewidth',2);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});

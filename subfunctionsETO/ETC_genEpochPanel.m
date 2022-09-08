@@ -13,15 +13,7 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	%% generate elements
 	%list of epochs
 	if ~isfield(sFigETC.sPupil,'sEpochs')
-		sEpochs = struct;
-		sEpochs.BeginFrame = nan;
-		sEpochs.BeginLabels = [];
-		sEpochs.EndFrame = nan;
-		sEpochs.EndLabels = [];
-		sEpochs.CenterX = [];
-		sEpochs.CenterY = [];
-		sEpochs.Radius = [];
-		sEpochs.Blinks = [];
+		sEpochs = ETC_GenEmptyEpochs;
 		sEpochs(:) = [];
 		sFigETC.sPupil.sEpochs = sEpochs;
 	end
