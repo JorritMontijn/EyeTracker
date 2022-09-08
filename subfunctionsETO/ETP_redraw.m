@@ -21,19 +21,27 @@ function ETP_redraw()
 	
 	vecCentroid = sPupil.vecCentroid;
 	dblMajAx = sPupil.dblRadius;
-	dblMinAx = dblMajAx;
-	dblOri = 0;
+	if isfield(sPupil,'dblRadius2')
+		dblMinAx = sPupil.dblRadius2;
+	else
+		dblMinAx = dblMajAx;
+	end
+	if isfield(sPupil,'dblAngle')
+		dblAngle = sPupil.dblAngle;
+	else
+		dblAngle = 0;
+	end
 	
 	%orig with overlays
 	dblX = vecCentroid(1) + vecRectROIPix(1);
 	dblY = vecCentroid(2) + vecRectROIPix(2);
-	ellipse(sFigETP.ptrAxesMainVid,dblX,dblY,dblMajAx,dblMinAx,deg2rad(dblOri)-pi/4,'Color','r','LineStyle',':');
+	ellipse(sFigETP.ptrAxesMainVid,dblX,dblY,dblMajAx,dblMinAx,dblAngle,'Color','r','LineStyle',':');
 	
 	%closed
 	cla(sFigETP.ptrAxesSubVid1);
 	imshow(sFigETP.imGrey/single(intmax(class(sETP.matFrames))),'Parent', sFigETP.ptrAxesSubVid1);
 	hold(sFigETP.ptrAxesSubVid1,'on');
-	ellipse(sFigETP.ptrAxesSubVid1,vecCentroid(1),vecCentroid(2),dblMajAx,dblMinAx,deg2rad(dblOri)-pi/4,'Color','r','LineStyle',':');
+	ellipse(sFigETP.ptrAxesSubVid1,vecCentroid(1),vecCentroid(2),dblMajAx,dblMinAx,dblAngle,'Color','r','LineStyle',':');
 	hold(sFigETP.ptrAxesSubVid1,'off');
 	title(sFigETP.ptrAxesSubVid1,sprintf('Edge hardness: %.3f',sFigETP.sPupil.dblEdgeHardness));
 	

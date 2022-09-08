@@ -2,6 +2,9 @@ function [sTrackParams,sLabels] = getEyeTrackingParameters(sFile,strTempPath,boo
 	%getEyeTrackingParameters Run offline pupil detection parameter setter
 	%   sTrackParams = getEyeTrackingParameters(sFile)
 	
+	%sFile=sETO.sFiles(intFile);
+	%strTempPath=sETO.strTempPath;
+	
 	%% globals
 	global sFigETP;
 	global sETP;
