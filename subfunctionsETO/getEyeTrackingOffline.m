@@ -33,7 +33,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	strVidFile = [strVidFileName strVidFileExt];
 	
 	%copy parameters file
-	[status2,msg2,msgID2] = copyfile([strParPath strParFile],[strTempDir strParFile]);
+	[status2,msg2,msgID2] = copyfile(fullpath(strParPath,strParFile),fullpath(strTempDir,strParFile));
 	if status2 == 0,error(msgID2,sprintf('Error copying "%s": %s',strParFile,msg2));end
 	if contains(strVidFile,'Raw')
 		strMiniOut = strrep(strVidFile,'Raw','MiniVid');
@@ -311,7 +311,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	vecEdge = abs(max(zscore(vecPupilEdgeHardness)) - zscore(vecPupilEdgeHardness));
 	vecDist = sqrt(zscore(vecPupilCenterX).^2 + zscore(vecPupilCenterY).^2);
 	vecRound = abs(max(zscore(vecPupilApproxRoundness)) - zscore(vecPupilApproxRoundness));
-	indWrong = (zscore(vecRound+vecDist) > 1) | abs(zscore(vecPupilCenterX))>2;
+	indWrong = (zscore(vecRound+vecDist) > 3) | abs(zscore(vecPupilCenterX))>3;
 	indWrong = conv(indWrong,ones(1,5),'same')>0;
 	vecAllPoints = 1:numel(indWrong);
 	vecGoodPoints = find(~indWrong);
@@ -413,12 +413,12 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	
 	%% save file
 	%save
-	save([strVidPath strTrackedFile],'sPupil');
+	save(fullpath(strParPath,strTrackedFile),'sPupil');
 	fprintf('Saved data to %s (source: %s, path: %s) [%s]\n',strTrackedFile,strVidFile,strVidPath,getTime);
 	
 	%copy mini vid
-	copyfile([strTempDir strMiniOut],[strVidPath strMiniOut]);
-	fprintf('Saved minivid to %s (source: %s, target: %s) [%s]\n',strMiniOut,strTempDir,strVidPath,getTime);
+	copyfile(fullpath(strTempDir,strMiniOut),fullpath(strParPath,strMiniOut));
+	fprintf('Saved minivid to %s (source: %s, target: %s) [%s]\n',strMiniOut,strTempDir,strParPath,getTime);
 	
 	%% plot output
 	ETO_plotResults(sPupil);
