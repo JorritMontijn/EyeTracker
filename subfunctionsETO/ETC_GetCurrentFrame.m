@@ -17,6 +17,7 @@ function intNewFrame = ETC_GetCurrentFrame(hObject,eventdata,strType)
 	end
 	intOldFrame = sFigETC.intCurFrame;
 	intNewFrame = intOldFrame;
+	boolMove = true;
 	if strcmpi(strType,'Edit')
 		intNewFrame = round(str2double(sFigETC.ptrEditFrame.String));
 	elseif strcmpi(strType,'Slider')
@@ -45,28 +46,34 @@ function intNewFrame = ETC_GetCurrentFrame(hObject,eventdata,strType)
 			if isempty(intNewFrame),intNewFrame=sETC.intF;end
 		elseif eventdata.Button == 3
 			%set as interpolation begin/end
-			ETC_AddPupilEpoch(hObject,eventdata,intNewFrame);
+			boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,intNewFrame);
+			boolMove = ~boolAddedEpoch;
 		elseif eventdata.Button == 2
 			%set as blink
-			ETC_SetBlinkEpoch(hObject,eventdata,intNewFrame);
+			boolAddedEpoch = ETC_SetBlinkEpoch(hObject,eventdata,intNewFrame);
+			boolMove = ~boolAddedEpoch;
 		end
 	elseif isnumeric(strType)
 		intNewFrame = strType;
 	end
 	
-	%check if valid
-	if ~(isnumeric(intNewFrame) && intNewFrame > 0 && intNewFrame <= sETC.intF)
-		intNewFrame = intOldFrame;
+	if boolMove
+		%check if valid
+		if ~(isnumeric(intNewFrame) && intNewFrame > 0 && intNewFrame <= sETC.intF)
+			intNewFrame = intOldFrame;
+		end
+		%match values
+		sFigETC.ptrSliderFrame.Value = intNewFrame;
+		sFigETC.ptrEditFrame.String = sprintf('%d',intNewFrame);
+		sFigETC.intCurFrame = intNewFrame;
+		
+		
+		%% redraw
+		if ~isempty(strType)
+			ETC_redraw();
+		end
 	end
-	%match values
-	sFigETC.ptrSliderFrame.Value = intNewFrame;
-	sFigETC.ptrEditFrame.String = sprintf('%d',intNewFrame);
-	sFigETC.intCurFrame = intNewFrame;
 	
-	%% redraw
-	if ~isempty(strType)
-		ETC_redraw();
-	end
 	%unlock
 	uiunlock(sFigETC);
 	

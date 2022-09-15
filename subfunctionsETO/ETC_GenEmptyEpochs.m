@@ -10,5 +10,6 @@ function sEpochs = ETC_GenEmptyEpochs
 	sEpochs.Radius2 = [];
 	sEpochs.Angle = [];
 	sEpochs.Blinks = [];
+	sEpochs.IsDetected = [];
 	sEpochs(:) = [];
 end

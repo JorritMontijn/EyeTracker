@@ -394,6 +394,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 	sPupil.vecPupilApproxRoundness = vecPupilApproxRoundness;
 	sPupil.vecPupilApproxRadius = vecPupilApproxRadius;
 	sPupil.vecPupilNotReflection = vecPupilNotReflection;
+	
 	%fixed
 	sPupil.vecPupilFixedCenterX = vecPupilFixedCenterX;
 	sPupil.vecPupilFixedCenterY = vecPupilFixedCenterY;

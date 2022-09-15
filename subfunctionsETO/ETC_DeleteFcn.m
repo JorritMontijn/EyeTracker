@@ -12,7 +12,7 @@ function ETC_DeleteFcn
 	switch strAns
 		case 'Save & Exit'
 			%save epochs
-			sPupil = ETC_SaveEpochs();
+			sPupil = sFigETC.sPupil;
 			
 			
 			%message

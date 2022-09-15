@@ -13,6 +13,8 @@
 %	Created by Jorrit Montijn
 %1.1 - 7 Sept 2022
 %	Optimized code and added support for elliptic pupil fits [by JM]
+%1.2 - 15 Sept 2022
+%	Improved checker tracker [by JM]
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');

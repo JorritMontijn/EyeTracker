@@ -10,6 +10,7 @@ function ETC_redraw(varargin)
 	vecX = sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).YData;
 	vecY = sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData;
 	vecArea = sFigETC.ptrAxesA.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesA.Children,'UniformOutput',false),'line')).YData;
+	vecBlink = sFigETC.ptrAxesB.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesB.Children,'UniformOutput',false),'line')).YData;
 	
 	%load video frame
 	if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
@@ -17,7 +18,7 @@ function ETC_redraw(varargin)
 	else
 		matFrame = read(sETC.objVid,sFigETC.intCurFrame);
 	end
-	matFrame = im2double(matFrame);
+	matFrame = 255*im2double(matFrame);
 	if sFigETC.ptrImNorm.Value==1
 		matFrame = mean(matFrame,3);
 		if any(all(matFrame<(max(matFrame(:))/10),2))
@@ -95,16 +96,16 @@ function ETC_redraw(varargin)
 	
 	%% redraw sync scatters
 	delete(sFigETC.ptrScatterL);
-	delete(sFigETC.ptrScatterVL);
+	delete(sFigETC.ptrScatterB);
 	delete(sFigETC.ptrScatterTxtL);
-	delete(sFigETC.ptrScatterTxtVL);
+	delete(sFigETC.ptrScatterTxtB);
 	dblT = vecT(sFigETC.intCurFrame);
 	dblS = sFigETC.sPupil.vecPupilFiltSyncLum(sFigETC.intCurFrame);
-	dblVL = sFigETC.sPupil.vecPupilFiltAbsVidLum(sFigETC.intCurFrame);
+	dblB = sFigETC.sPupil.vecPupilFixedBlinks(sFigETC.intCurFrame);
 	sFigETC.ptrScatterL = scatter(sFigETC.ptrAxesS,dblT,dblS,48,'k.','LineWidth',2);
 	sFigETC.ptrScatterTxtL = text(sFigETC.ptrAxesS,dblT,dblS+range(sFigETC.ptrAxesS.YLim)/7,sprintf('L=%.3f',dblS));
-	sFigETC.ptrScatterVL = scatter(sFigETC.ptrAxesVL,dblT,dblVL,48,'b.','LineWidth',2);
-	sFigETC.ptrScatterTxtVL = text(sFigETC.ptrAxesVL,dblT,dblVL+range(sFigETC.ptrAxesVL.YLim)/7,sprintf('B=%.3f',dblVL));
+	sFigETC.ptrScatterB = scatter(sFigETC.ptrAxesB,dblT,dblB,48,'b.','LineWidth',2);
+	sFigETC.ptrScatterTxtB = text(sFigETC.ptrAxesB,dblT,dblB+range(sFigETC.ptrAxesB.YLim)/7,sprintf('B=%.3f',dblB));
 		
 	%% update time
 	sFigETC.ptrTextTime.String = sprintf('%.3f',dblT);
@@ -119,6 +120,7 @@ function ETC_redraw(varargin)
 	vecPlotY = vecY(vecFrames);
 	vecPlotA = vecArea(vecFrames);
 	vecPlotS = sFigETC.sPupil.vecPupilFiltSyncLum(vecFrames);
+	vecPlotB = vecBlink(vecFrames);
 	
 	%clear plots and redraw
 	fCallback = @ETC_GetCurrentFrame;
@@ -174,6 +176,7 @@ function ETC_redraw(varargin)
 			vecE_R2 = sEpoch.Radius2;
 			vecE_Angle = sEpoch.Angle;
 			vecE_Area = pi.*vecE_R.*vecE_R2;
+			vecE_Blink = sEpoch.Blinks;
 			
 			%plot
 			hLine = plot(sFigETC.ptrZoomPlot2,vecE_T,vecE_Area,'color',lines(1),'linewidth',2);
@@ -182,6 +185,21 @@ function ETC_redraw(varargin)
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
 			hLine = plot(sFigETC.ptrZoomPlot3,vecE_T,vecE_Y,'color',[0 0 1],'linewidth',2);
 			set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			
+			%plot blink
+			if ~all(vecE_Blink==0)
+				intBlinkB = find(vecE_Blink==1,1,'first');
+				intBlinkE = find(vecE_Blink==1,1,'last');
+				vecBlinkT = vecT(vecEpochFrames([intBlinkB intBlinkE]));
+				vecColor = [0 0 0];
+				%plot
+				hLine = plot(sFigETC.ptrZoomPlot1,vecBlinkT,max(get(sFigETC.ptrZoomPlot1,'ylim'))*[1 1],'color',vecColor,'linewidth',3);
+				set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+				hLine = plot(sFigETC.ptrZoomPlot2,vecBlinkT,max(get(sFigETC.ptrZoomPlot2,'ylim'))*[1 1],'color',vecColor,'linewidth',3);
+				set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+				hLine = plot(sFigETC.ptrZoomPlot3,vecBlinkT,max(get(sFigETC.ptrZoomPlot3,'ylim'))*[1 1],'color',vecColor,'linewidth',3);
+				set(hLine,'ButtonDownFcn',{fCallback,'Click'});
+			end
 		end
 		%% blink epochs
 		vecBlinkEpochs = find(~indHasLabels(:) & (vecB <= vecLimF(2) &  vecE >= vecLimF(1)));

@@ -1,4 +1,4 @@
-function sPupil = ETC_SaveEpochs()
+function sPupil = ETC_SaveEpochs(intSelectEpoch)
 	%get globals
 	global sETC;
 	global sFigETC;
@@ -35,24 +35,41 @@ function sPupil = ETC_SaveEpochs()
 		else
 			vecPupilIsEdited = sPupil.vecPupilIsEdited;
 		end
+		if ~isfield(sPupil,'vecPupilIsDetected')
+			%assign edit
+			vecPupilIsDetected = true(size(vecPupilFixedRadius));
+		else
+			vecPupilIsDetected = sPupil.vecPupilIsDetected;
+		end
 		
 		%construct new traces
 		sEpochs = sFigETC.sPupil.sEpochs;
 		intEpochNum = numel(sEpochs);
-		for intEpoch=1:intEpochNum
+		if ~exist('intSelectEpoch','var')
+			vecApplyEpochs = 1:intEpochNum;
+		else
+			vecApplyEpochs = intSelectEpoch;
+		end
+		for intEpoch=vecApplyEpochs
 			sEpoch = sEpochs(intEpoch);
 			intBegin = sEpoch.BeginFrame;
 			intEnd = sEpoch.EndFrame;
 			if isempty(sEpoch.Blinks)
+				sEpoch.Blinks = vecPupilFixedBlinks(intBegin:intEnd);
+			end
+			if isempty(sEpoch.IsDetected)
+				sEpoch.IsDetected = false(size(sEpoch.Blinks));
+			end
+			if ~isempty(sEpoch.CenterX)
 				vecPupilFixedCenterX(intBegin:intEnd) = sEpoch.CenterX;
 				vecPupilFixedCenterY(intBegin:intEnd) = sEpoch.CenterY;
 				vecPupilFixedRadius(intBegin:intEnd) = sEpoch.Radius;
 				vecPupilFixedRadius2(intBegin:intEnd) = sEpoch.Radius2;
 				vecPupilFixedAngle(intBegin:intEnd) = sEpoch.Angle;
-			else
-				vecPupilFixedBlinks(intBegin:intEnd) = sEpoch.Blinks;
 			end
+			vecPupilFixedBlinks(intBegin:intEnd) = sEpoch.Blinks;
 			vecPupilIsEdited(intBegin:intEnd) = true;
+			vecPupilIsDetected(intBegin:intEnd) = sEpoch.IsDetected;
 		end
 		
 		%overwrite 'Fixed' variables
@@ -63,12 +80,13 @@ function sPupil = ETC_SaveEpochs()
 		sPupil.vecPupilFixedAngle = vecPupilFixedAngle;
 		sPupil.vecPupilFixedBlinks = vecPupilFixedBlinks;
 		sPupil.vecPupilIsEdited = vecPupilIsEdited;
+		sPupil.vecPupilIsDetected = vecPupilIsDetected;
 		
 		%apply to figure
 		sFigETC.ptrAxesX.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesX.Children,'UniformOutput',false),'line')).YData = sPupil.vecPupilFixedCenterX;
 		sFigETC.ptrAxesY.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesY.Children,'UniformOutput',false),'line')).YData = sPupil.vecPupilFixedCenterY;
 		sFigETC.ptrAxesA.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesA.Children,'UniformOutput',false),'line')).YData = pi*sPupil.vecPupilFixedRadius.*sPupil.vecPupilFixedRadius2;
-		
+		sFigETC.ptrAxesB.Children(contains(arrayfun(@(x) x.Type,sFigETC.ptrAxesB.Children,'UniformOutput',false),'line')).YData = double(sPupil.vecPupilFixedBlinks);
 		%add to global
 		sFigETC.sPupil = sPupil;
 		

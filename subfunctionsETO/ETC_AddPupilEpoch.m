@@ -1,4 +1,4 @@
-function ETC_AddPupilEpoch(hObject,eventdata,strType)
+function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 	%globals
 	global sFigETC;
 	global sETC;
@@ -10,19 +10,15 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
 	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
 	
-	%if not new, set time to beginning & redraw
-	intSelectEpoch = sFigETC.ptrEpochList.Value;
+	%if not new, create new
 	cellEpochList = sFigETC.ptrEpochList.String;
+	sFigETC.ptrEpochList.Value = numel(cellEpochList);
+	intSelectEpoch = sFigETC.ptrEpochList.Value;
 	if isempty(sEpoch)
-		if intSelectEpoch == numel(cellEpochList)
-			%gen
-			sEpoch = ETC_GenEmptyEpochs();
-			sEpoch(1).BeginFrame = nan;
-			sEpoch(1).EndFrame = nan;
-		else
-			%load data
-			sEpoch = sFigETC.sPupil.sEpochs(intSelectEpoch);
-		end
+		%gen
+		sEpoch = ETC_GenEmptyEpochs();
+		sEpoch(1).BeginFrame = nan;
+		sEpoch(1).EndFrame = nan;
 	end
 	
 	%get current frame and ask for pupil drawing
@@ -103,6 +99,7 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 	end
 	
 	%check if epoch is complete
+	boolAddedEpoch = false;
 	if ~isnan(sEpoch.BeginFrame) && ~isnan(sEpoch.EndFrame) && sEpoch.BeginFrame > 0  && sEpoch.EndFrame > 0 && ~isempty(sEpoch.BeginLabels) && ~isempty(sEpoch.EndLabels)
 		%swap end/begin if end < begin
 		if sEpoch.EndFrame < sEpoch.BeginFrame
@@ -127,6 +124,8 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 			dblEndA = dblStartA + circ_dist(dblStartA,sEpoch.EndLabels.A);
 			sEpoch.Angle = mod(linspace(dblStartA,dblEndA,intFrames),2*pi);
 			sEpoch.Blinks = [];
+			sEpoch.IsDetected = false(size(sEpoch.Radius));
+				
 		else
 			%% run detection algorithm
 			%set message
@@ -395,6 +394,7 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 				sEpoch.Radius = vecFinalR;
 				sEpoch.Radius2 = vecFinalR2;
 				sEpoch.Angle = vecFinalA;
+				sEpoch.IsDetected = true(size(vecFinalA));
 				
 				%% done
 				delete(hWaitbar);
@@ -422,7 +422,12 @@ function ETC_AddPupilEpoch(hObject,eventdata,strType)
 		sFigETC.sPupil.sEpochs = sFigETC.sPupil.sEpochs(vecReorder);
 		%update gui epoch list
 		cellEpochList = ETC_GenEpochList(sFigETC.ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
-		sFigETC.ptrEpochList.Value = numel(cellEpochList);
+		sFigETC.ptrEpochList.Value = find(vecReorder==intSelectEpoch);
+		boolAddedEpoch = true;
+		
+		%set to epoch start
+		ETC_GetCurrentFrame([],[],sEpoch.BeginFrame);
+		
 		%redraw traces
 		ETC_redraw();
 	else

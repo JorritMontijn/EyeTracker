@@ -1,4 +1,4 @@
-function ETC_SetBlinkEpoch(hObject,eventdata,strType)
+function boolAddedEpoch = ETC_SetBlinkEpoch(hObject,eventdata,strType)
 	%globals
 	global sFigETC;
 	%get temporary epoch
@@ -8,28 +8,17 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
 	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
 	
-	%if not new, set time to beginning & redraw
-	intSelectEpoch = sFigETC.ptrEpochList.Value;
+	%if not new, create new
 	cellEpochList = sFigETC.ptrEpochList.String;
-	if isempty(sEpoch)
-		if intSelectEpoch == numel(cellEpochList)
-			%gen
-			sEpoch = struct;
-			sEpoch.BeginFrame = nan;
-			sEpoch.BeginLabels = [];
-			sEpoch.EndFrame = nan;
-			sEpoch.EndLabels = [];
-			sEpoch.CenterX = [];
-			sEpoch.CenterY = [];
-			sEpoch.Radius = [];
-			sEpoch.Radius2 = [];
-			sEpoch.Angle = [];
-			sEpoch.Blinks = [];
-		else
-			%load data
-			sEpoch = sFigETC.sPupil.sEpochs(intSelectEpoch);
-		end
+	intSelectedEpoch = sFigETC.ptrEpochList.Value;
+	if isempty(sEpoch) || intSelectedEpoch ~= numel(cellEpochList)
+		%gen
+		sEpoch = ETC_GenEmptyEpochs();
+		sEpoch(1).BeginFrame = nan;
+		sEpoch(1).EndFrame = nan;
 	end
+	sFigETC.ptrEpochList.Value = numel(cellEpochList);
+	
 	
 	%get current frame
 	if strcmpi(strType,'begin')
@@ -56,6 +45,7 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 	end
 	
 	%check if epoch is complete
+	boolAddedEpoch = false;
 	if ~isnan(sEpoch.BeginFrame) && ~isnan(sEpoch.EndFrame) && sEpoch.BeginFrame > 0  && sEpoch.EndFrame > 0 && isempty(sEpoch.BeginLabels) && isempty(sEpoch.EndLabels)
 		%swap end/begin if end < begin
 		if sEpoch.EndFrame < sEpoch.BeginFrame
@@ -81,13 +71,18 @@ function ETC_SetBlinkEpoch(hObject,eventdata,strType)
 		%remove temporary epoch
 		sFigETC.sEpochTemp = [];
 		%update epoch list
-		sFigETC.sPupil.sEpochs(intSelectEpoch) = sEpoch;
+		sFigETC.sPupil.sEpochs(intSelectedEpoch) = sEpoch;
 		%reorder
 		[dummy,vecReorder] = sort(cell2vec({sFigETC.sPupil.sEpochs.BeginFrame}));
 		sFigETC.sPupil.sEpochs = sFigETC.sPupil.sEpochs(vecReorder);
 		%update gui epoch list
 		cellEpochList = ETC_GenEpochList(sFigETC.ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime);
-		sFigETC.ptrEpochList.Value = numel(cellEpochList);
+		sFigETC.ptrEpochList.Value = find(vecReorder==intSelectedEpoch);
+		boolAddedEpoch = true;
+		
+		%set to epoch start
+		ETC_GetCurrentFrame([],[],sEpoch.BeginFrame);
+		
 		%redraw traces
 		ETC_redraw();
 	else
