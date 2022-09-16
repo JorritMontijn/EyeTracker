@@ -22,53 +22,55 @@ function [cellEpochList,sEpochs] = ETC_GenEpochList(ptrEpochList,sEpochs,vecPupi
 		dblMinInterEpochDurSecs = 0.5;
 		vecInterEpochDurSecs = (vecInterEpochDur/sPupil.sTrackParams.dblRealFrameRate)*sPupil.sTrackParams.intTempAvg;
 		vecMergeEpochs = find(vecInterEpochDurSecs < dblMinInterEpochDurSecs);
-		vecEpochStretchEndIdx = find([diff(vecMergeEpochs) 2]>1);
-		vecEpochStretchEnd = vecMergeEpochs(vecEpochStretchEndIdx)+1;
-		vecEpochStretchStart = [1 vecMergeEpochs(vecEpochStretchEndIdx(1:(end-1))+1)];
-		
-		%get singleton epochs
-		vecAllEpochs = 1:numel(vecStartEpochs);
-		vecSingetonEpochs = vecAllEpochs(~ismember(vecAllEpochs,[vecMergeEpochs vecMergeEpochs+1]));
-		
-		%combine
-		vecNewEpochStarts = sort([vecStartEpochs(vecSingetonEpochs)...
-			vecStartEpochs(vecEpochStretchStart)]);
-		vecNewEpochEnds = sort([vecEndEpochs(vecSingetonEpochs)...
-			vecEndEpochs(vecEpochStretchEnd)]);
-		
-		%add to epochs
-		intOldEpochs = numel(sEpochs);
-		for intNewEpochIdx=numel(vecNewEpochStarts):-1:1
-			intAssignEpochIdx = intNewEpochIdx+intOldEpochs;
-			%get begin labels
-			intB = vecNewEpochStarts(intNewEpochIdx);
-			BeginLabels = struct('X',sPupil.vecPupilCenterX(intB),...
-				'Y',sPupil.vecPupilCenterY(intB),...
-				'R',sPupil.vecPupilRadius(intB),...
-				'R2',sPupil.vecPupilRadius2(intB),...
-				'A',sPupil.vecPupilAngle(intB));
+		if ~isempty(vecMergeEpochs)
+			vecEpochStretchEndIdx = find([diff(vecMergeEpochs) 2]>1);
+			vecEpochStretchEnd = vecMergeEpochs(vecEpochStretchEndIdx)+1;
+			vecEpochStretchStart = [1 vecMergeEpochs(vecEpochStretchEndIdx(1:(end-1))+1)];
 			
-			%get end labels
-			intE = vecNewEpochEnds(intNewEpochIdx);
-			EndLabels = struct('X',sPupil.vecPupilCenterX(intE),...
-				'Y',sPupil.vecPupilCenterY(intE),...
-				'R',sPupil.vecPupilRadius(intE),...
-				'R2',sPupil.vecPupilRadius2(intE),...
-				'A',sPupil.vecPupilAngle(intE));
+			%get singleton epochs
+			vecAllEpochs = 1:numel(vecStartEpochs);
+			vecSingetonEpochs = vecAllEpochs(~ismember(vecAllEpochs,[vecMergeEpochs vecMergeEpochs+1]));
 			
-			%assign data
-			vecF = intB:intE;
-			sEpochs(intAssignEpochIdx).BeginFrame = intB;
-			sEpochs(intAssignEpochIdx).BeginLabels = BeginLabels;
-			sEpochs(intAssignEpochIdx).EndFrame = intE;
-			sEpochs(intAssignEpochIdx).EndLabels = EndLabels;
-			sEpochs(intAssignEpochIdx).CenterX = sPupil.vecPupilCenterX(vecF);
-			sEpochs(intAssignEpochIdx).CenterY = sPupil.vecPupilCenterY(vecF);
-			sEpochs(intAssignEpochIdx).Radius = sPupil.vecPupilRadius(vecF);
-			sEpochs(intAssignEpochIdx).Radius2 = sPupil.vecPupilRadius2(vecF);
-			sEpochs(intAssignEpochIdx).Angle = sPupil.vecPupilAngle(vecF);
-			sEpochs(intAssignEpochIdx).Blinks = true(size(vecF));
-			sEpochs(intAssignEpochIdx).IsDetected = true(size(vecF));
+			%combine
+			vecNewEpochStarts = sort([vecStartEpochs(vecSingetonEpochs)...
+				vecStartEpochs(vecEpochStretchStart)]);
+			vecNewEpochEnds = sort([vecEndEpochs(vecSingetonEpochs)...
+				vecEndEpochs(vecEpochStretchEnd)]);
+			
+			%add to epochs
+			intOldEpochs = numel(sEpochs);
+			for intNewEpochIdx=numel(vecNewEpochStarts):-1:1
+				intAssignEpochIdx = intNewEpochIdx+intOldEpochs;
+				%get begin labels
+				intB = vecNewEpochStarts(intNewEpochIdx);
+				BeginLabels = struct('X',sPupil.vecPupilCenterX(intB),...
+					'Y',sPupil.vecPupilCenterY(intB),...
+					'R',sPupil.vecPupilRadius(intB),...
+					'R2',sPupil.vecPupilRadius2(intB),...
+					'A',sPupil.vecPupilAngle(intB));
+				
+				%get end labels
+				intE = vecNewEpochEnds(intNewEpochIdx);
+				EndLabels = struct('X',sPupil.vecPupilCenterX(intE),...
+					'Y',sPupil.vecPupilCenterY(intE),...
+					'R',sPupil.vecPupilRadius(intE),...
+					'R2',sPupil.vecPupilRadius2(intE),...
+					'A',sPupil.vecPupilAngle(intE));
+				
+				%assign data
+				vecF = intB:intE;
+				sEpochs(intAssignEpochIdx).BeginFrame = intB;
+				sEpochs(intAssignEpochIdx).BeginLabels = BeginLabels;
+				sEpochs(intAssignEpochIdx).EndFrame = intE;
+				sEpochs(intAssignEpochIdx).EndLabels = EndLabels;
+				sEpochs(intAssignEpochIdx).CenterX = sPupil.vecPupilCenterX(vecF);
+				sEpochs(intAssignEpochIdx).CenterY = sPupil.vecPupilCenterY(vecF);
+				sEpochs(intAssignEpochIdx).Radius = sPupil.vecPupilRadius(vecF);
+				sEpochs(intAssignEpochIdx).Radius2 = sPupil.vecPupilRadius2(vecF);
+				sEpochs(intAssignEpochIdx).Angle = sPupil.vecPupilAngle(vecF);
+				sEpochs(intAssignEpochIdx).Blinks = true(size(vecF));
+				sEpochs(intAssignEpochIdx).IsDetected = true(size(vecF));
+			end
 		end
 	end
 	
