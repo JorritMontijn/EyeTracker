@@ -20,16 +20,16 @@ function ETC_redraw(varargin)
 	end
 	matFrame = 255*im2double(matFrame);
 	if sFigETC.ptrImNorm.Value==1
-		matFrame = mean(matFrame,3);
-		if any(all(matFrame<(max(matFrame(:))/10),2))
-			matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = [];
-		end
-		if any(all(matFrame<(max(matFrame(:))/10),1))
-			matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = [];
-		end
+		%matFrame = mean(matFrame,3);
+		%if any(all(matFrame<(max(matFrame(:))/10),2))
+		%	matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = [];
+		%end
+		%if any(all(matFrame<(max(matFrame(:))/10),1))
+		%	matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = [];
+		%end
 		matFrame = imnorm(matFrame);
 		
-		[matFrame,imReflection] = ET_ImPrep(matFrame,sETC.gMatFilt,sETC.dblThreshReflect,sETC.objSE,sETC.boolInvertImage);
+		[matFrame,imReflection] = ET_ImPrep(matFrame,sETC.gMatFilt,sETC.dblThreshReflect*sETC.dblReflectionFactor,sETC.objSE,sETC.boolInvertImage);
 		matFrame(imReflection) = 0;
 	end
 	

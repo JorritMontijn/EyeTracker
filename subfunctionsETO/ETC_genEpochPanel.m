@@ -10,7 +10,35 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	set(ptrPanelEpoch,'Position',vecLocation,'BackgroundColor',vecColor,'Title','Epoch Annotation','FontSize',10);
 	ptrPanelEpoch.Units = 'normalized';
 	
-	%% generate elements
+	%% generate threshold corrections
+	%text
+	vecLocTextTop = [0.05 0.9 0.9 0.08];
+	ptrTextParameters = uicontrol(ptrPanelEpoch,'Style','text','Units','normalized','Position',vecLocTextTop,'String','Parameter corrections','FontSize',10,'BackgroundColor',[1 1 1]);
+	
+	%pupil
+	vecLocTextPupil = [0.05 0.84 0.4 0.06];
+	ptrTextPupil = uicontrol(ptrPanelEpoch,'Style','text','Units','normalized','Position',vecLocTextPupil,'String','Pupil:','FontSize',10,'BackgroundColor',vecColor);
+	
+	%edit box for pupil factor
+	ptrEditPupil= uicontrol('Style','edit','Parent',ptrPanelEpoch,'FontSize',10,...
+		'Units','normalized','Position',[vecLocTextPupil(1) vecLocTextPupil(2)-0.1 0.4 0.1],...
+		'String',sprintf('%.3f',sETC.dblPupilFactor),...
+		'Callback',@ETC_EditPupilCallback,...
+		'Tooltip',sprintf('Correction factor for pupil luminance threshold'));
+	
+	%reflection
+	vecLocTextReflection = [0.55 0.84 0.4 0.06];
+	ptrTextReflection = uicontrol(ptrPanelEpoch,'Style','text','Units','normalized','Position',vecLocTextReflection,'String','Reflection','FontSize',10,'BackgroundColor',vecColor);
+	
+	%edit box for reflection factor
+	ptrEditReflection= uicontrol('Style','edit','Parent',ptrPanelEpoch,'FontSize',10,...
+		'Units','normalized','Position',[vecLocTextReflection(1) vecLocTextReflection(2)-0.1 0.4 0.1],...
+		'String',sprintf('%.3f',sETC.dblReflectionFactor),...
+		'Callback',@ETC_EditReflectionCallback,...
+		'Tooltip',sprintf('Correction factor for reflection luminance threshold'));
+	
+	
+	%% generate list elements
 	%list of epochs
 	if ~isfield(sFigETC.sPupil,'sEpochs') || isempty(sFigETC.sPupil.sEpochs)
 		sEpochs = ETC_GenEmptyEpochs;
@@ -21,7 +49,7 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	
 	%generate list
 	%vecLocList = [5 170 120 20];
-	vecLocList = [0.05 0.88 0.9 0.1];
+	vecLocList = [0.05 0.64 0.9 0.1];
 	ptrEpochList = uicontrol(ptrPanelEpoch,'Style','popupmenu','Units','normalized','Position',vecLocList,'String',{''},'Callback',@ETC_SelectEpoch,'FontSize',10);
 	
 	%create epochs from fixed data
@@ -29,7 +57,7 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	ptrEpochList.Value = numel(cellEpochList);
 	
 	%generate radio buttons
-	vecLocRadioGroup = [vecLocList(1) vecLocList(2)-0.27 vecLocList(3) 0.25];
+	vecLocRadioGroup = [vecLocList(1) vecLocList(2)-0.20 vecLocList(3) 0.19];
 	ptrGroup = uibuttongroup(ptrPanelEpoch,'Units','normalized','Position',vecLocRadioGroup);
 	vecLocRadio1 = [0 0 1 0.5];
 	ptrEpochAutoDetect = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio1,'String','Auto-detect','Callback',@ETC_ResetFocus,'FontSize',10);
@@ -43,8 +71,8 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	dblH = 0.10;
 	dblLeftStart = vecLocList(1);
 	dblRightStart = vecLocList(1)+dblW+0.02;
-	dblTopStart = vecLocRadioGroup(2)-dblH-0.05;
-	dblBottomStart = dblTopStart-dblH-0.02;
+	dblTopStart = vecLocRadioGroup(2)-dblH-0.02;
+	dblBottomStart = dblTopStart-dblH-0.01;
 	
 	%button 1: draw pupil begin; callback: draw pupil, save as temporary
 	%epoch if new, or overwrite old epoch
@@ -67,23 +95,38 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	ptrButtonDrawBlinkEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBR,'String','Blink End','Callback',{@ETC_SetBlinkEpoch,'end'},'FontSize',10);
 	
 	%button 5: set epoch as blink
-	vecLocButtonBlinkEpoch = [dblLeftStart dblBottomStart-dblH-0.03 dblW dblH];
-	ptrButtonBlinkEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBlinkEpoch,'String','Mark Blink','ForegroundColor',[0.4 0 0],'Callback',@ETC_BlinkEpoch,'FontSize',10);
+	dblBS = 2/3; %button size
+	vecLocButtonBlinkEpoch = [dblLeftStart dblBottomStart-dblH-0.01 dblW*dblBS dblH];
+	ptrButtonBlinkEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBlinkEpoch,'String','Blink','ForegroundColor',[0.4 0 0],'Callback',@ETC_BlinkEpoch,'FontSize',10,...
+		'Tooltip',sprintf('Set selected epoch as blink\nKeyboard shortcut: b'));
 	
 	%button 6: keep epoch tracking and set as non-blink
-	vecLocButtonKeepEpoch = [dblRightStart vecLocButtonBlinkEpoch(2) dblW dblH];
-	ptrButtonKeepEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonKeepEpoch,'String','Non-blink','ForegroundColor',[0.4 0 0],'Callback',@ETC_KeepEpoch,'FontSize',10);
+	vecLocButtonKeepEpoch = [dblLeftStart+dblW*dblBS+0.01 vecLocButtonBlinkEpoch(2) dblW*dblBS dblH];
+	ptrButtonKeepEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonKeepEpoch,'String','Keep','ForegroundColor',[0.4 0 0],'Callback',@ETC_KeepEpoch,'FontSize',10,...
+		'Tooltip',sprintf('Keep selected epoch as non-blink\nKeyboard shortcut: n or k'));
 	
-	%button 7: callback: delete selected epoch if selected is not new
-	vecLocButtonDelete = [dblLeftStart vecLocButtonKeepEpoch(2)-dblH-0.03 dblW dblH];
-	ptrButtonDeleteEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonDelete,'String','Del Epoch','ForegroundColor',[0.4 0 0],'Callback',@ETC_DeleteEpoch,'FontSize',10);
+	%button 7: recalculate current epoch
+	vecLocButtonRecalc = [dblLeftStart+2*dblW*dblBS+0.02 vecLocButtonKeepEpoch(2) dblW*dblBS dblH];
+	ptrButtonRecalcEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonRecalc,'String','Recalc','ForegroundColor',[0.4 0 0],'Callback',@ETC_RecalcEpoch,'FontSize',10,...
+		'Tooltip',sprintf('Recalculate selected epoch \nKeyboard shortcut: r'));
 	
-	%button 8: apply all epochs & clear list
+	%button 8: callback: delete selected epoch if selected is not new
+	vecLocButtonDelete = [dblLeftStart vecLocButtonKeepEpoch(2)-dblH-0.01 dblW dblH];
+	ptrButtonDeleteEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonDelete,'String','Del Epoch','ForegroundColor',[0.4 0 0],'Callback',@ETC_DeleteEpoch,'FontSize',10,...
+		'Tooltip',sprintf('Delete selected epoch \nKeyboard shortcut: d'));
+	
+	%button 9: apply all epochs & clear list
 	vecLocButtonApply = [dblRightStart vecLocButtonDelete(2) dblW dblH];
-	ptrButtonApplyEpochs = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonApply,'String','Apply','ForegroundColor',[0.4 0 0],'Callback',@ETC_ApplyEpochs,'FontSize',10);
+	ptrButtonApplyEpochs = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonApply,'String','Apply','ForegroundColor',[0.4 0 0],'Callback',@ETC_ApplyEpochs,'FontSize',10,...
+		'Tooltip',sprintf('Apply selected epoch \nKeyboard shortcut: a'));
 	
 	%% add pointers
 	sFigETC.ptrPanelEpoch = ptrPanelEpoch;
+	sFigETC.ptrTextParameters = ptrTextParameters;
+	sFigETC.ptrTextPupil = ptrTextPupil;
+	sFigETC.ptrTextReflection = ptrTextReflection;
+	sFigETC.ptrEditReflection = ptrEditReflection;
+	sFigETC.ptrEditPupil = ptrEditPupil;
 	sFigETC.ptrEpochList = ptrEpochList;
 	sFigETC.ptrEpochAutoDetect = ptrEpochAutoDetect;
 	sFigETC.ptrEpochInterpolate = ptrEpochInterpolate;
@@ -93,9 +136,33 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	sFigETC.ptrButtonDrawBlinkEnd = ptrButtonDrawBlinkEnd;
 	sFigETC.ptrButtonBlinkEpoch = ptrButtonBlinkEpoch;
 	sFigETC.ptrButtonKeepEpoch = ptrButtonKeepEpoch;
+	sFigETC.ptrButtonRecalcEpoch = ptrButtonRecalcEpoch;
 	sFigETC.ptrButtonDeleteEpoch = ptrButtonDeleteEpoch;
 	sFigETC.ptrButtonApplyEpochs = ptrButtonApplyEpochs;
 	sFigETC.sEpochTemp = [];
+end
+function ETC_RecalcEpoch(hObject,eventdata)
+	%globals
+	global sFigETC;
+	
+	%if not new, set time to beginning & redraw
+	intSelectEpoch = sFigETC.ptrEpochList.Value;
+	cellEpochList = sFigETC.ptrEpochList.String;
+	if intSelectEpoch < numel(cellEpochList)
+		%remove blinking from whole epoch
+		sFigETC.sPupil.sEpochs(intSelectEpoch).Blinks = zeros(size(1,...
+			sFigETC.sPupil.sEpochs(intSelectEpoch).EndFrame -sFigETC.sPupil.sEpochs(intSelectEpoch).BeginFrame+1));
+		
+		%recalculate
+		ETC_AddPupilEpoch([],[],'recalc');
+	end
+	
+	%reset focus
+	if exist('hObject','var') && ~isempty(hObject)
+		set(hObject, 'enable', 'off');
+		drawnow;
+		set(hObject, 'enable', 'on');
+	end
 end
 function ETC_BlinkEpoch(hObject,eventdata)
 	%globals
@@ -247,4 +314,29 @@ function ETC_ResetFocus(hObject,eventdata)
 		drawnow;
 		set(hObject, 'enable', 'on');
 	end
+end
+function ETC_EditPupilCallback(hObject,eventdata)
+	%globals
+	global sETC;
+	
+	%get numerical value
+	dblPupFac = str2double(hObject.String);
+	if ~isempty(dblPupFac) && ~isnan(dblPupFac) && dblPupFac > 0
+		sETC.dblPupilFactor = dblPupFac;
+	end
+	hObject.String = sprintf('%.3f',sETC.dblPupilFactor);
+end
+function ETC_EditReflectionCallback(hObject,eventdata)
+	%globals
+	global sETC;
+	
+	%get numerical value
+	dblReflFac = str2double(hObject.String);
+	if ~isempty(dblReflFac) && ~isnan(dblReflFac) && dblReflFac > 0
+		sETC.dblReflectionFactor = dblReflFac;
+	end
+	hObject.String = sprintf('%.3f',sETC.dblReflectionFactor);
+	
+	%redraw
+	ETC_redraw();
 end

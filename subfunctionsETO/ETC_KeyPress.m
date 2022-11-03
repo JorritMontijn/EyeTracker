@@ -41,13 +41,17 @@ function ETC_KeyPress(hMain,eventdata)
 		%mark set as blink
 		feval(sFigETC.ptrButtonBlinkEpoch.Callback);
 		ETC_redraw();
-	elseif strcmp(eventdata.Key,'n')
+	elseif strcmp(eventdata.Key,'n') || strcmp(eventdata.Key,'k')
 		%mark as non-blink
 		feval(sFigETC.ptrButtonKeepEpoch.Callback);
 		ETC_redraw();
 	elseif strcmp(eventdata.Key,'a')
 		%apply epoch
 		feval(sFigETC.ptrButtonApplyEpochs.Callback);
+		ETC_redraw();
+	elseif strcmp(eventdata.Key,'r')
+		%recalc epoch
+		feval(sFigETC.ptrButtonRecalcEpoch.Callback);
 		ETC_redraw();
 	elseif strcmp(eventdata.Key,'d')
 		%delete epoch

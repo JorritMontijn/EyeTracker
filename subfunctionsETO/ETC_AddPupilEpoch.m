@@ -10,19 +10,28 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
 	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
 	
-	%if not new, create new
-	cellEpochList = sFigETC.ptrEpochList.String;
-	sFigETC.ptrEpochList.Value = numel(cellEpochList);
-	intSelectEpoch = sFigETC.ptrEpochList.Value;
-	if isempty(sEpoch)
-		%gen
-		sEpoch = ETC_GenEmptyEpochs();
-		sEpoch(1).BeginFrame = nan;
-		sEpoch(1).EndFrame = nan;
+	if strcmpi(strType,'recalc') && sFigETC.ptrEpochList.Value > 0 && sFigETC.ptrEpochList.Value <= numel(sFigETC.sPupil.sEpochs)
+		%retrieve epoch
+		intSelectEpoch = sFigETC.ptrEpochList.Value;
+		sEpoch = sFigETC.sPupil.sEpochs(intSelectEpoch);
+	else
+		%if not new, create new
+		cellEpochList = sFigETC.ptrEpochList.String;
+		sFigETC.ptrEpochList.Value = numel(cellEpochList);
+		intSelectEpoch = sFigETC.ptrEpochList.Value;
+		if isempty(sEpoch)
+			%gen
+			sEpoch = ETC_GenEmptyEpochs();
+			sEpoch(1).BeginFrame = nan;
+			sEpoch(1).EndFrame = nan;
+		end
 	end
 	
-	%get current frame and ask for pupil drawing
-	if strcmpi(strType,'begin')
+	%check input type
+	if strcmpi(strType,'recalc')
+		%all data is already present
+	elseif strcmpi(strType,'begin')
+		%get current frame and ask for pupil drawing
 		intCurrFrame = sFigETC.intCurFrame;
 		try
 			sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
@@ -33,6 +42,7 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 		sEpoch.BeginLabels = sLabels;
 		sEpoch.BeginFrame = intCurrFrame;
 	elseif strcmpi(strType,'end')
+		%get current frame and ask for pupil drawing
 		intCurrFrame = sFigETC.intCurFrame;
 		try
 			sLabels = ETP_GetImLabels(sFigETC.ptrCurFrame.CData(:,:,1));
@@ -50,7 +60,7 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 		vecR = sFigETC.sPupil.vecPupilFixedRadius;
 		vecR2 = sFigETC.sPupil.vecPupilFixedRadius2;
 		vecA = sFigETC.sPupil.vecPupilFixedAngle;
-			
+		
 		%check end
 		intCurrFrame = strType;
 		if intCurrFrame > numel(vecT),return;end
@@ -125,7 +135,7 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 			sEpoch.Angle = mod(linspace(dblStartA,dblEndA,intFrames),2*pi);
 			sEpoch.Blinks = [];
 			sEpoch.IsDetected = false(size(sEpoch.Radius));
-				
+			
 		else
 			%% run detection algorithm
 			%set message
@@ -141,7 +151,7 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				%% get values
 				sTrPar = sFigETC.sPupil.sTrackParams;
 				dblGaussWidth = sTrPar.dblGaussWidth;
-				dblReflT = sTrPar.dblThreshReflect;
+				dblReflT = sTrPar.dblThreshReflect*sETC.dblReflectionFactor;
 				vecPupil = sTrPar.vecPupil;
 				objSE = sTrPar.objSE;
 				
@@ -172,7 +182,10 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				else
 					matFrame = read(sETC.objVid,vecFrames(1));
 				end
-				matFrame = mean(matFrame,3);
+				matFrame = mean(im2double(matFrame),3);
+				%do detection as in offline
+				%[sPupilDetected,imPupil,imReflection,imBW,imGrey] = getPupil(matFrame,gMatFilt,dblReflT,mean(vecPupil),objSE,[60 60],vecPupil,sTrPar);
+				
 				if sETC.boolUseGPU
 					matFrame = gpuArray(single(matFrame));
 				else
@@ -258,7 +271,8 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				dblPupilT0 = mean(matScaledFrame(imPupil));
 				dblEndPupilT = ETC_FitPupilThreshold(dblPupilT0,matScaledFrame,imPupil,gMatFilt,dblReflT,objSE,[sEpoch.EndLabels.X sEpoch.EndLabels.Y],sETC.boolUseGPU);
 				vecPupil = linspace(dblBeginPupilT,dblEndPupilT,5);
-				dblPupilT = 2*255*max(vecPupil);
+				dblPupilT = 255*max(vecPupil)*sETC.dblPupilFactor;
+				%dblPupilT = max(vecPupil)*200;
 				vecPupil = dblPupilT;
 				
 				%% detect

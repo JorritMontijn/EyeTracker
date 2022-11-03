@@ -15,6 +15,8 @@
 %	Optimized code and added support for elliptic pupil fits [by JM]
 %1.2 - 15 Sept 2022
 %	Improved checker tracker [by JM]
+%1.2.1 - 3 Nov 2022
+%	Added parameter correction factors for pupil and reflection thresholds [by JM]
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');
