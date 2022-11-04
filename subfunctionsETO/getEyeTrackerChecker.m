@@ -53,6 +53,7 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 	sETC.dblStrEl = sTrackParams.dblStrEl;
 	sETC.dblPupilFactor = 1;
 	sETC.dblReflectionFactor = 1;
+	sETC.dblCircMaskSize = 1;
 	
 	%prep derived parameters
 	sETC.boolInvertImage = false;

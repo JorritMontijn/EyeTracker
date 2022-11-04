@@ -312,12 +312,12 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 					matFrame = mean(matFrame,3);
 					
 					%rescale
-					if any(all(matFrame<(max(matFrame(:))/10),2))
-						matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
-					end
-					if any(all(matFrame<(max(matFrame(:))/10),1))
-						matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
-					end
+					%if any(all(matFrame<(max(matFrame(:))/10),2))
+					%	matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
+					%end
+					%if any(all(matFrame<(max(matFrame(:))/10),1))
+					%	matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
+					%end
 					matEpochFrames(:,:,intFrame) = imnorm(matFrame);
 				end
 				
