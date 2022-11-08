@@ -70,7 +70,8 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	
 	%generate list
 	%vecLocList = [5 170 120 20];
-	ptrEpochList = uicontrol(ptrPanelEpoch,'Style','popupmenu','Units','normalized','Position',vecLocList,'String',{''},'Callback',@ETC_SelectEpoch,'FontSize',10);
+	ptrEpochList = uicontrol(ptrPanelEpoch,'Style','popupmenu','Units','normalized','Position',vecLocList,'String',{''},'Callback',@ETC_SelectEpoch,'FontSize',10,...
+		'Tooltip',sprintf('Select an epoch from the list'));
 	
 	%create epochs from fixed data
 	[cellEpochList,sFigETC.sPupil.sEpochs] = ETC_GenEpochList(ptrEpochList,sFigETC.sPupil.sEpochs,sFigETC.sPupil.vecPupilTime,sFigETC.sPupil);
@@ -79,30 +80,36 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	%generate radio buttons
 	ptrGroup = uibuttongroup(ptrPanelEpoch,'Units','normalized','Position',vecLocRadioGroup);
 	vecLocRadio1 = [0 0 1 0.5];
-	ptrEpochAutoDetect = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio1,'String','Auto-detect','Callback',@ETC_ResetFocus,'FontSize',10);
+	ptrEpochAutoDetect = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio1,'String','Auto-detect','Callback',@ETC_ResetFocus,'FontSize',10,...
+		'Tooltip',sprintf('Each frame in an epoch will be detected using the pupil detection algorithm'));
 	vecLocRadio2 = [0 0.5 1 0.5];
-	ptrEpochInterpolate = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio2,'String','Interpolate','Callback',@ETC_ResetFocus,'FontSize',10);
+	ptrEpochInterpolate = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio2,'String','Interpolate','Callback',@ETC_ResetFocus,'FontSize',10,...
+		'Tooltip',sprintf('The pupil size/location will be interpolated between the first and last frames of the epoch'));
 	
 	%% populate panel based on current epoch
 	%button 1: draw pupil begin; callback: draw pupil, save as temporary
 	%epoch if new, or overwrite old epoch
 	vecLocButtonTL = [dblLeftStart dblTopStart dblW dblH];
-	ptrButtonDrawPupilBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTL,'String','Draw Begin','Callback',{@ETC_AddPupilEpoch,'begin'},'FontSize',10);
+	ptrButtonDrawPupilBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTL,'String','Draw Begin','Callback',{@ETC_AddPupilEpoch,'begin'},'FontSize',10,...
+		'Tooltip',sprintf('Create new epoch and draw the pupil manually'));
 	
 	%button 2: draw pupil end; callback: draw pupil, make new epoch and add
 	%temporary epoch to list if new, or overwrite old epoch
 	vecLocButtonTR = [dblRightStart dblTopStart dblW dblH];
-	ptrButtonDrawPupilEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTR,'String','Draw End','Callback',{@ETC_AddPupilEpoch,'end'},'FontSize',10);
+	ptrButtonDrawPupilEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTR,'String','Draw End','Callback',{@ETC_AddPupilEpoch,'end'},'FontSize',10,...
+		'Tooltip',sprintf('Finish new epoch and draw the pupil manually'));
 	
 	%button 3: set blink begin; callback: save as temporary epoch if new,
 	%or overwrite old epoch
 	vecLocButtonBL = [dblLeftStart dblBottomStart dblW dblH];
-	ptrButtonDrawBlinkBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBL,'String','Blink Begin','Callback',{@ETC_SetBlinkEpoch,'begin'},'FontSize',10);
+	ptrButtonDrawBlinkBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBL,'String','Blink Begin','Callback',{@ETC_SetBlinkEpoch,'begin'},'FontSize',10,...
+		'Tooltip',sprintf('Create new epoch and mark as blinking period \nTip: you can also use the middle mouse button'));
 	
 	%button 4: set blink end; callback: make new epoch and add temporary
 	%epoch to list if new, or overwrite old epoch
 	vecLocButtonBR = [dblRightStart dblBottomStart dblW dblH];
-	ptrButtonDrawBlinkEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBR,'String','Blink End','Callback',{@ETC_SetBlinkEpoch,'end'},'FontSize',10);
+	ptrButtonDrawBlinkEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonBR,'String','Blink End','Callback',{@ETC_SetBlinkEpoch,'end'},'FontSize',10,...
+		'Tooltip',sprintf('Finish new epoch and mark as blinking period \nTip: you can also use the middle mouse button'));
 	
 	%button 5: set epoch as blink
 	vecLocButtonBlinkEpoch = [dblLeftStart dblBottomStart-dblH-0.01 dblW*dblBS dblH];

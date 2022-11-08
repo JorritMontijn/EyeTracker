@@ -50,7 +50,7 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 	sETC.dblThreshReflect = sTrackParams.dblThreshReflect;
 	sETC.dblThreshPupil = sTrackParams.dblThreshPupil;
 	sETC.dblPupilMinRadius = sTrackParams.dblPupilMinRadius;
-	sETC.dblStrEl = sTrackParams.dblStrEl;
+	if isfield(sTrackParams,'dblStrEl'),sETC.dblStrEl = sTrackParams.dblStrEl;else sETC.dblStrEl = 4;end
 	sETC.dblPupilFactor = 1;
 	sETC.dblReflectionFactor = 1;
 	sETC.dblCircMaskSize = 1;
@@ -226,14 +226,18 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		sFigETC.ptrTextTime = sH.txt;
 		
 		%% check data
-		if ~isfield(sFigETC.sPupil,'vecPupilFixedBlinks') || isempty(sFigETC.sPupil.vecPupilFixedBlinks)
-			sFigETC.sPupil.vecPupilFixedBlinks = false(size(sFigETC.sPupil.vecPupilTime));
+		vecDataSize = size(sFigETC.sPupil.vecPupilTime);
+		if ~isfield(sFigETC.sPupil,'vecPupilFixedPoints') || ~all(size(sFigETC.sPupil.vecPupilFixedPoints) == vecDataSize)
+			sFigETC.sPupil.vecPupilFixedPoints = false(vecDataSize);
 		end
-		if ~isfield(sFigETC.sPupil,'vecPupilIsEdited') || isempty(sFigETC.sPupil.vecPupilIsEdited)
-			sFigETC.sPupil.vecPupilIsEdited = false(size(sFigETC.sPupil.vecPupilTime));
+		if ~isfield(sFigETC.sPupil,'vecPupilFixedBlinks') || ~all(size(sFigETC.sPupil.vecPupilFixedBlinks) == vecDataSize)
+			sFigETC.sPupil.vecPupilFixedBlinks = false(vecDataSize);
 		end
-		if ~isfield(sFigETC.sPupil,'vecPupilIsDetected') || isempty(sFigETC.sPupil.vecPupilIsDetected)
-			sFigETC.sPupil.vecPupilIsDetected = true(size(sFigETC.sPupil.vecPupilTime));
+		if ~isfield(sFigETC.sPupil,'vecPupilIsEdited') || ~all(size(sFigETC.sPupil.vecPupilIsEdited) == vecDataSize)
+			sFigETC.sPupil.vecPupilIsEdited = false(vecDataSize);
+		end
+		if ~isfield(sFigETC.sPupil,'vecPupilIsDetected') || ~all(size(sFigETC.sPupil.vecPupilIsDetected) == vecDataSize)
+			sFigETC.sPupil.vecPupilIsDetected = true(vecDataSize);
 		end
 		
 		%% sync lum bottom left
@@ -288,7 +292,11 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		%vecLocationR = [dblPanelStartX+dblLeftGap vecLocationNormCheckTxt(2)+vecLocationNormCheckTxt(4)+0.1 dblPanelWidth-dblLeftGap dblAxH];%[dblPanelStartX 0.12 dblPanelWidth 0.1];
 		vecLocationA = vecLocationB + [0 vecLocationB(4)+0.01 0 0];
 		sFigETC.ptrAxesA = axes(ptrMainGUI,'Position',vecLocationA,'Units','normalized');
-		vecRadius1 = sFigETC.sPupil.vecPupilFixedRadius2;
+		if isfield(sFigETC.sPupil,'vecPupilFixedRadius1')
+			vecRadius1 = sFigETC.sPupil.vecPupilFixedRadius1;
+		elseif isfield(sFigETC.sPupil,'vecPupilFixedRadius')
+			vecRadius1 = sFigETC.sPupil.vecPupilFixedRadius;
+		end
 		if isfield(sFigETC.sPupil,'vecPupilFixedRadius2')
 			vecRadius2 = sFigETC.sPupil.vecPupilFixedRadius2;
 		else
