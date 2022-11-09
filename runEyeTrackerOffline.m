@@ -19,6 +19,8 @@
 %	Added parameter correction factors for pupil and reflection thresholds [by JM]
 %1.2.2 - 4 Nov 2022
 %	Added circular mask [by JM]
+%1.2.3 - 11 Nov 2022
+%	Updated tooltips, manual, and made some cosmetic changes [by JM]
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');

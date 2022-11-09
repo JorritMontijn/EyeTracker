@@ -33,8 +33,19 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	vecPosGUI = [0,0,600,500];
 	ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Resize','off');
 	%set main gui properties
-	set(ptrMainGUI,'DeleteFcn','ETO_DeleteFcn')
-	set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
+	set(ptrMainGUI,'DeleteFcn','ETO_DeleteFcn');
+	set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none','NumberTitle','off');
+	
+	%change icon
+	strPathET = ET_getIniPath();
+	try
+		warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+		warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+		jframe=get(ptrMainGUI,'javaframe');
+		jIcon=javax.swing.ImageIcon(fullpath(strPathET,'icon.png'));
+		jframe.setFigureIcon(jIcon);
+	catch
+	end
 	
 	% set mouse & scroll wheel callback
 	set(ptrMainGUI,'windowscrollWheelFcn',@ETO_Scrollwheel);
@@ -134,7 +145,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 	
 	%% set properties
 	% Assign a name to appear in the window title.
-	ptrMainGUI.Name = 'Offline Eyetracker GUI';
+	ptrMainGUI.Name = 'EyeTracking Library';
 	
 	% Move the window to the center of the screen.
 	movegui(ptrMainGUI,'center')

@@ -64,8 +64,8 @@ function [sTrackParams,sLabels] = getEyeTrackingParameters(sFile,strTempPath,boo
 		vecPosGUI = [0,0,dblWidth,dblHeight];
 		ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Color',vecMainColor);
 		set(ptrMainGUI,'DeleteFcn','ETP_DeleteFcn')
-		set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
-		ptrMainGUI.Name = 'Eyetracker Parameter GUI';
+		set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none','NumberTitle','off');
+		ptrMainGUI.Name = 'Parameter Setter';
 		
 		%set output
 		sFigETP.output = ptrMainGUI;

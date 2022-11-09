@@ -107,6 +107,19 @@ function ptrListSelectDevice_CreateFcn(hObject, eventdata, handles),end%#ok<DEFN
 function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	%opening actions
 	
+	%add paths
+	if ~isdeployed
+		strFullpath = mfilename('fullpath');
+		strPath = fileparts(strFullpath);
+		sDir=dir([strPath filesep '**' filesep]);
+		%remove git folders
+		sDir(contains({sDir.folder},[filesep '.git'])) = [];
+		cellFolders = unique({sDir.folder});
+		for intFolder=1:numel(cellFolders)
+			addpath(cellFolders{intFolder});
+		end
+	end
+	
 	%define globals
 	global sEyeFig;
 	global sET;
@@ -114,10 +127,21 @@ function runEyeTracker_OpeningFcn(hObject, eventdata, handles, varargin)
 	sET = [];
 	
 	%set closing function
-	set(hObject,'DeleteFcn','ET_DeleteFcn')
+	set(hObject,'DeleteFcn','ET_DeleteFcn','Name','Online EyeTracker');
+	
+	%change icon
+	strPathET = ET_getIniPath();
+	try
+		warning('off','MATLAB:ui:javaframe:PropertyToBeRemoved');
+		warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+		jframe=get(hObject,'javaframe');
+		jIcon=javax.swing.ImageIcon(fullpath(strPathET,'icon.png'));
+		jframe.setFigureIcon(jIcon);
+	catch
+	end
 	
 	% set logo
-	I = imread('EyeTracker.jpg');
+	I = imread(fullpath(strPathET,'EyeTracker.jpg'));
 	axes(handles.ptrAxesLogo);
 	imshow(I);
 	drawnow;

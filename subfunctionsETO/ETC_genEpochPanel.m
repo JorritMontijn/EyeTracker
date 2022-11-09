@@ -91,13 +91,13 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	%epoch if new, or overwrite old epoch
 	vecLocButtonTL = [dblLeftStart dblTopStart dblW dblH];
 	ptrButtonDrawPupilBegin = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTL,'String','Draw Begin','Callback',{@ETC_AddPupilEpoch,'begin'},'FontSize',10,...
-		'Tooltip',sprintf('Create new epoch and draw the pupil manually'));
+		'Tooltip',sprintf('Create new epoch and draw the pupil manually \nTip: you can also use the right mouse button to use the detected pupil at the frame you click at'));
 	
 	%button 2: draw pupil end; callback: draw pupil, make new epoch and add
 	%temporary epoch to list if new, or overwrite old epoch
 	vecLocButtonTR = [dblRightStart dblTopStart dblW dblH];
 	ptrButtonDrawPupilEnd = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonTR,'String','Draw End','Callback',{@ETC_AddPupilEpoch,'end'},'FontSize',10,...
-		'Tooltip',sprintf('Finish new epoch and draw the pupil manually'));
+		'Tooltip',sprintf('Finish new epoch and draw the pupil manually \nTip: you can also use the right mouse button to use the detected pupil at the frame you click at'));
 	
 	%button 3: set blink begin; callback: save as temporary epoch if new,
 	%or overwrite old epoch

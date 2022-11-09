@@ -17,7 +17,8 @@ function sFigETOM = ETO_genFastMonitor(sTrPar,dblMaxT,intMaxF)
 	dblPanelWidth = 1-dblPanelStartX;
 	dblTextHeight = 0.21;
 	vecPosGUI = [0,0,dblWidth,dblHeight];
-	ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Color',vecMainColor,'Name','Eye tracker','resize','off','MenuBar', 'none','ToolBar', 'none');
+	ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Color',vecMainColor,'Name','EyeTracking Progress','resize','off');
+	set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none','NumberTitle','off');
 	ptrMainGUI.Units = 'normalized';
 	% Move the window to the center of the screen.
 	movegui(ptrMainGUI,'center');

@@ -75,8 +75,8 @@ function sFile = getEyeTrackerChecker(sFile,strTempPath)
 		vecPosGUI = [0,0,dblWidth,dblHeight];
 		ptrMainGUI = figure('Visible','on','Units','pixels','Position',vecPosGUI,'Color',vecMainColor);
 		set(ptrMainGUI,'CloseRequestFcn','ETC_DeleteFcn')
-		set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none');
 		ptrMainGUI.Name = 'Tracker Checker';
+		set(ptrMainGUI, 'MenuBar', 'none','ToolBar', 'none','NumberTitle','off');
 		
 		%set output
 		sFigETC.output = ptrMainGUI;
