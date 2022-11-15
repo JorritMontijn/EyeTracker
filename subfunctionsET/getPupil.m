@@ -7,7 +7,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%	- sglReflT [single]: reflection threshold (in pixel luminance)
 	%	- sglPupilT [single]: pupil threshold (in pixel luminance)
 	%	- objSE: [object]: structuring element object for image processing
-	%	- vecPrevLoc: previous pupil location
+	%	- vecPrevLoc: previous pupil location / previous pupil parameters
 	%	- vecPupilT: vector of pupil thresholds
 	%	- sET: eye-tracking data structure
 	%
@@ -68,6 +68,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	end
 	
 	%% get pupil estimate at different thresholds
+	vecPrevCentroid = flat(vecPrevLoc(1:2));
 	vecImSize = size(gMatVid);
 	intThreshNum = numel(vecPupilT);
 	vecRoundness = nan(1,intThreshNum);
@@ -78,7 +79,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		%get approximate estimate of pupil regions
 		dblPupilT=vecPupilT(intThresholdIdx);
 		boolLowest = dblPupilT==min(vecPupilT);
-		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest);
+		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevCentroid,boolLowest);
 		%assign values
 		vecRoundness(intThresholdIdx) = dblRoundness;
 		vecArea(intThresholdIdx) = dblArea;
@@ -88,7 +89,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	
 	%% define likelihood of pupil based on roundness, area, and
 	%calculate distance from previous location
-	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,vecPrevLoc(:)).^2,1));
+	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,vecPrevCentroid).^2,1));
 	dblSd = sqrt(sum(vecImSize.^2));
 	vecLikelihood = (vecRoundness - min(vecRoundness) + 1e-6) .* sqrt(vecArea) .* (1 - normcdf(vecDist,0,dblSd/2) + normcdf(-vecDist,0,dblSd/2));
 	vecProbChoose = vecLikelihood ./ nansum(vecLikelihood);
@@ -118,8 +119,14 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 	%matDbl = double(imBW);
 	
 	%for fitting, impose small penalty on pupil areas outside imBW
+	if numel(vecPrevLoc) > 2
+		vecP0 = vecPrevLoc;
+		vecP0(1:2) = vecApproxCentroid;
+	else
+		vecP0 = vecApproxCentroid;
+	end
 	try
-		[vecFitParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecApproxCentroid,dblApproxRadius,imReflection,imBW);
+		[vecFitParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matDbl,vecP0,dblApproxRadius,imReflection,imBW);
 		vecCentroid = vecFitParams(1:2);
 		dblRadius = vecFitParams(3);
 		dblRadius2 = vecFitParams(4);

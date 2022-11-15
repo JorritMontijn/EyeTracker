@@ -2,6 +2,7 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 	%ET_ImPrep Summary of this function goes here
 	%   [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,boolInvertImage)
 	
+	%% prep
 	%global
 	global sETC;
 	
@@ -9,6 +10,7 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 	gMatVid = (gMatVid - min(gMatVid(:)));
 	gMatVid = (gMatVid / max(gMatVid(:)))*255;
 	
+	%% smooth & detect reflection
 	%filter image
 	if ~isempty(gMatFilt) && ~isscalar(gMatFilt)
 		gMatVid = imfilt(gMatVid,gMatFilt);
@@ -24,6 +26,19 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 		gMatVid(gMatVid<0) = 255;
 	end
 	
+	%% remove specks (must be done on cpu)
+	imR = gather(gMatVid)/255;
+	imBW = imbinarize(imR,'adaptive','ForegroundPolarity','dark','Sensitivity',0.1);
+	CC = bwconncomp(~imBW,4);
+	indRemSpecks = cellfun(@numel,CC.PixelIdxList) < 5;
+	vecRemPixels = cell2vec(CC.PixelIdxList(indRemSpecks));
+	imBW = false(size(imBW));
+	imBW(vecRemPixels)=true;
+	imR = regionfill(imR, imBW);
+	delete('gMatVid');
+	gMatVid=gpuArray(imR);
+	
+	%% apply masks
 	%apply circular mask
 	if isfield(sETC,'dblCircMaskSize') && ~isempty(sETC.dblCircMaskSize) && sETC.dblCircMaskSize > 0 && sETC.dblCircMaskSize < 1
 		[intNy,intNx]=size(imReflection);

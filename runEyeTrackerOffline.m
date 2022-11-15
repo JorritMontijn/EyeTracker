@@ -5,7 +5,7 @@
 %You can set the algorithm's parameters manually, or set a limited number
 %of labelled frames and let the algorithm optimize by itself.
 %
-%	Version 1.1 - 2022-09-07 (YYYY-MM-DD)
+%	Version 1.2.4 - 2022-11-15 (YYYY-MM-DD)
 %	Created by Jorrit Montijn
 
 %Version history:
@@ -21,6 +21,8 @@
 %	Added circular mask [by JM]
 %1.2.3 - 11 Nov 2022
 %	Updated tooltips, manual, and made some cosmetic changes [by JM]
+%1.2.4 - 15 Nov 2022
+%	Increased offline pupil detection speed, added library progress, added speck removal [by JM]
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');

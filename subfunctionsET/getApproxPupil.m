@@ -52,7 +52,7 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	vecRoundness = vecAreaToPerim ./ vecCircAreaToPerim;
 	
 	%choose most likely object 
-	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,vecPrevLoc(:)).^2,1));
+	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,flat(vecPrevLoc(1:2))).^2,1));
 	dblSd = sqrt(sum(size(imBW).^2));
 	vecProbChoose = 1 - normcdf(vecDist,0,dblSd/2) + normcdf(-vecDist,0,dblSd/2);
 	

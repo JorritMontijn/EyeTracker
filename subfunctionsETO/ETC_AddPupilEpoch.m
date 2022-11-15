@@ -185,7 +185,6 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				matFrame = mean(im2double(matFrame),3);
 				%do detection as in offline
 				%[sPupilDetected,imPupil,imReflection,imBW,imGrey] = getPupil(matFrame,gMatFilt,dblReflT,mean(vecPupil),objSE,[60 60],vecPupil,sTrPar);
-				
 				if sETC.boolUseGPU
 					matFrame = gpuArray(single(matFrame));
 				else
@@ -342,7 +341,14 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 					end
 					
 					%detect
-					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLocForward,vecPupil,sETC.boolUseGPU);
+					%vecP0F = vecPrevLocForward;
+					vecP0F = [vecForwardX(intFrame-1)...
+						vecForwardY(intFrame-1)...
+						vecForwardR(intFrame-1)...
+						vecForwardR2(intFrame-1)...
+						vecForwardA(intFrame-1)];
+					
+					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecP0F,vecPupil,sETC.boolUseGPU);
 					vecCentroid = sPupilDetected.vecCentroid;
 					dblRadius = sPupilDetected.dblRadius;
 					dblRadius2 = sPupilDetected.dblRadius2;
@@ -366,7 +372,13 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 						gMatVid = matReverseFrame;
 					end
 					%reverse detect
-					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecPrevLocReverse,vecPupil,sETC.boolUseGPU);
+					%vecP0R = vecPrevLocReverse;
+					vecP0R = [vecReverseX(intRevFrame+1)...
+						vecReverseY(intRevFrame+1)...
+						vecReverseR(intRevFrame+1)...
+						vecReverseR2(intRevFrame+1)...
+						vecReverseA(intRevFrame+1)];
+					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecP0R,vecPupil,sETC.boolUseGPU);
 					vecCentroid = sPupilDetected.vecCentroid;
 					dblRadius = sPupilDetected.dblRadius;
 					dblRadius2 = sPupilDetected.dblRadius2;

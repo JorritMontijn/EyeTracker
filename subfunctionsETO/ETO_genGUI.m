@@ -382,7 +382,7 @@ function [sFigETO,sETO] = ETO_genGUI(varargin)
 		drawnow;
 		
 		%get data
-		sETO.sFiles = ETO_CompileVideoLibrary(sETO.strRootPath,cellExt);
+		sETO.sFiles = ETO_CompileVideoLibrary(sETO.strRootPath,cellExt,ptrText);
 		
 		%close msg
 		delete(ptrMsg);

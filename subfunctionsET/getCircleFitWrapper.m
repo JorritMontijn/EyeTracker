@@ -1,5 +1,7 @@
 function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,imBW)
 	
+	%vecApproxCentroid can be X-Y centroid or 5-element p0 vector for lsqcurvefit
+	
 	%% check if mask is supplied
 	if ~exist('imIgnore','var') || isempty(imIgnore)
 		imIgnore = false(size(matIn));
@@ -12,8 +14,11 @@ function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,ve
 	vecY = matY(~imIgnore);
 	vecZ = (matIn(~imIgnore)./max(matIn(~imIgnore)));
 	vecP = ~imBW(~imIgnore).*-1;
-	vecParams0 = [vecApproxCentroid(:)' dblApproxRadius/2 dblApproxRadius/2 0];
-	
+	if numel(vecApproxCentroid) == 2
+		vecParams0 = [vecApproxCentroid(:)' dblApproxRadius/2 dblApproxRadius/2 0];
+	else
+		vecParams0 = vecApproxCentroid(:)';
+	end
 	% build data grid
 	matXY = [vecX vecY];
 	

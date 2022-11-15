@@ -4,7 +4,7 @@ function ETC_KeyPress(hMain,eventdata)
 	global sFigETC;
 	if ~exist('eventdata','var')
 		eventdata = struct;
-		eventdata.Key = 'uparrow';
+		eventdata.Key = 'r';
 		eventdata.Modifier = [];
 	end
 	
