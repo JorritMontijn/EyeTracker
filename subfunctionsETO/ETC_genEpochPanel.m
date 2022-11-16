@@ -80,11 +80,11 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	%generate radio buttons
 	ptrGroup = uibuttongroup(ptrPanelEpoch,'Units','normalized','Position',vecLocRadioGroup);
 	vecLocRadio1 = [0 0 1 0.5];
-	ptrEpochAutoDetect = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio1,'String','Auto-detect','Callback',@ETC_ResetFocus,'FontSize',10,...
-		'Tooltip',sprintf('Each frame in an epoch will be detected using the pupil detection algorithm'));
+	ptrEpochAutoDetect = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio1,'String','Re-detect','Callback',@ETC_ResetFocus,'FontSize',10,...
+		'Tooltip',sprintf('Each frame in an epoch will be detected using the pupil detection algorithm \nKeyboard shortcut: r'));
 	vecLocRadio2 = [0 0.5 1 0.5];
 	ptrEpochInterpolate = uicontrol(ptrGroup,'Style','radiobutton','Units','normalized','Position',vecLocRadio2,'String','Interpolate','Callback',@ETC_ResetFocus,'FontSize',10,...
-		'Tooltip',sprintf('The pupil size/location will be interpolated between the first and last frames of the epoch'));
+		'Tooltip',sprintf('The pupil size/location will be interpolated between the first and last frames of the epoch \nKeyboard shortcut: i'));
 	
 	%% populate panel based on current epoch
 	%button 1: draw pupil begin; callback: draw pupil, save as temporary
@@ -123,8 +123,8 @@ function ETC_genEpochPanel(ptrMainGUI,vecLocation)
 	
 	%button 7: recalculate current epoch
 	vecLocButtonRecalc = [dblLeftStart+2*dblW*dblBS+0.02 vecLocButtonKeepEpoch(2) dblW*dblBS dblH];
-	ptrButtonRecalcEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonRecalc,'String','Recalc','ForegroundColor',[0.4 0 0],'Callback',@ETC_RecalcEpoch,'FontSize',10,...
-		'Tooltip',sprintf('Recalculate selected epoch \nKeyboard shortcut: r'));
+	ptrButtonRecalcEpoch = uicontrol(ptrPanelEpoch,'Style','pushbutton','Units','normalized','Position',vecLocButtonRecalc,'String','Rerun','ForegroundColor',[0.4 0 0],'Callback',@ETC_RecalcEpoch,'FontSize',10,...
+		'Tooltip',sprintf('Rerun selected epoch \nKeyboard shortcut: i for interpolation, r for detection'));
 	
 	%button 8: callback: delete selected epoch if selected is not new
 	vecLocButtonDelete = [dblLeftStart vecLocButtonKeepEpoch(2)-dblH-0.01 dblW dblH];

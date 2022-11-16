@@ -51,6 +51,12 @@ function ETC_KeyPress(hMain,eventdata)
 		ETC_redraw();
 	elseif strcmp(eventdata.Key,'r')
 		%recalc epoch
+		set(sFigETC.ptrEpochAutoDetect,'Value',1);
+		feval(sFigETC.ptrButtonRecalcEpoch.Callback);
+		ETC_redraw();
+	elseif strcmp(eventdata.Key,'i')
+		%interpolate epoch
+		set(sFigETC.ptrEpochInterpolate,'Value',1);
 		feval(sFigETC.ptrButtonRecalcEpoch.Callback);
 		ETC_redraw();
 	elseif strcmp(eventdata.Key,'d')

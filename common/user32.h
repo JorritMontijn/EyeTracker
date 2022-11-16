@@ -1,0 +1,1 @@
+short GetAsyncKeyState(int vKey); 

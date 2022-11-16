@@ -7,6 +7,9 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 	global sETC;
 	
 	%move to GPU and rescale
+	if ~ismatrix(gMatVid)
+		gMatVid = mean(gMatVid,3);
+	end
 	gMatVid = (gMatVid - min(gMatVid(:)));
 	gMatVid = (gMatVid / max(gMatVid(:)))*255;
 	
