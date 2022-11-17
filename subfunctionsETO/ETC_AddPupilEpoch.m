@@ -395,18 +395,32 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 					vecReverseR(intRevFrame) = dblRadius(1);
 					vecReverseR2(intRevFrame) = dblRadius2(1);
 					vecReverseA(intRevFrame) = dblAngle(1);
+					
+					%%
+					%{
+					figure%(hTemp);
+					cla;
+					imagesc(gMatVid);colormap(gray);
+					hold on
+					ellipse(vecReverseX(intRevFrame),vecReverseY(intRevFrame),vecReverseR(intRevFrame),vecReverseR2(intRevFrame),vecReverseA(intRevFrame));
+					hold off
+					title(sprintf('rev frame %d/%d',intRevFrame,intFrames))
+					%}
 				end
 				sEpoch.Blinks = [];
 				
 				%% assign closest match
 				vecInterpX = linspace(sEpoch.BeginLabels.X,sEpoch.EndLabels.X,intFrames);
 				vecInterpY = linspace(sEpoch.BeginLabels.Y,sEpoch.EndLabels.Y,intFrames);
+				vecInterpRmu = linspace(max(sEpoch.BeginLabels.R,sEpoch.BeginLabels.R2),max(sEpoch.EndLabels.R,sEpoch.EndLabels.R2),intFrames);
+				vecForwardRmu = max(vecForwardR,vecForwardR2);
+				vecReverseRmu = max(vecReverseR,vecReverseR2);
 				vecFinalX = zeros(1,intFrames);
 				vecFinalY = zeros(1,intFrames);
 				vecFinalR = zeros(1,intFrames);
 				
-				vecForwardDist = (vecForwardX - vecInterpX).^2 + (vecForwardY - vecInterpY).^2;
-				vecReverseDist = (vecReverseX - vecInterpX).^2 + (vecReverseY - vecInterpY).^2;
+				vecForwardDist = (vecForwardX - vecInterpX).^2 + (vecForwardY - vecInterpY).^2 + (vecForwardRmu - vecInterpRmu).^2;
+				vecReverseDist = (vecReverseX - vecInterpX).^2 + (vecReverseY - vecInterpY).^2 + (vecReverseRmu - vecInterpRmu).^2;
 				indUseForward = vecForwardDist < vecReverseDist;
 				vecFinalX(indUseForward) = vecForwardX(indUseForward);
 				vecFinalY(indUseForward) = vecForwardY(indUseForward);

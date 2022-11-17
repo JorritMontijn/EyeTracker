@@ -6,8 +6,13 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	vecHSD = diff(vecHistSmooth);
 	[dummy,vecTroughs] = findpeaks(-vecHistSmooth);
 	vecLumTroughs = vecEdges(vecTroughs+1);
-	[dummy,intIdx] = min(abs(vecTroughs-dblPupilT));
-	dblNewPupilT = vecLumTroughs(intIdx)+1;
+	[dblDiff,intIdx] = min(abs(vecLumTroughs-dblPupilT));
+	dblHistPupilT = vecLumTroughs(intIdx)+1;
+	if dblDiff > 5
+		dblNewPupilT = dblPupilT;
+	else
+		dblNewPupilT = dblHistPupilT;
+	end
 	
 	%% find areas
 	gMatVidOrig = gMatVid;

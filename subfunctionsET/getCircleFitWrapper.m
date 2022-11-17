@@ -26,7 +26,7 @@ function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,ve
 	sOpt = struct;
 	sOpt.Display = 'off';%'off'
 	vecLB = [0 0 0.5 0.5 -pi];
-	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1) size(matIn,1) pi];
+	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1)/2 size(matIn,1)/2 pi];
 	[vecOptimParams,dblVal,flag,out] = lsqcurvefit(@getCircFitPenalty,vecParams0,matXY,vecZ,vecLB(1:numel(vecParams0)),vecUB(1:numel(vecParams0)),sOpt);
 	
 	%% calculate edge hardness
