@@ -3,7 +3,6 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	%% take trough in histogram closest to requested pupil threshold as luminance cut-off
 	[vecHist,vecEdges] = histcounts(gMatVid(:),128);
 	vecHistSmooth = conv(vecHist(2:(end-1)),normpdf(-2:2),'same');
-	vecHSD = diff(vecHistSmooth);
 	[dummy,vecTroughs] = findpeaks(-vecHistSmooth);
 	vecLumTroughs = vecEdges(vecTroughs+1);
 	[dblDiff,intIdx] = min(abs(vecLumTroughs-dblPupilT));
@@ -15,28 +14,35 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	end
 	
 	%% find areas
-	gMatVidOrig = gMatVid;
 	sProps = [];
 	while isempty(sProps)
 		%calculate pupil threshold, binarize and invert so pupil is white (<15)
-		gMatVid = gMatVidOrig < dblNewPupilT;
+		gMatVidNew = gMatVid < dblNewPupilT;
+		boolIsValid = false;%any(gMatVidNew(:));
 		
 		%morphological closing (dilate+erode) to remove reflection boundary
-		gMatVid = imclose(gMatVid,objSE);
+		gMatVidNew = imclose(gMatVidNew,objSE);
 		
 		%fill small holes
-		gMatVid = imfill(gMatVid,4,'holes');
+		gMatVidNew = imfill(gMatVidNew,4,'holes');
 		%morphological opening (erode+dilate) to remove small connections
-		gMatVid = imopen(gMatVid,objSE);
+		gMatVidNew = imopen(gMatVidNew,objSE);
 		
 		%get regions of sufficient size
-		imBW = gather(gMatVid);
+		imBW = gather(gMatVidNew);
 		sCC = bwconncomp(imBW, 4);
 		sProps = regionprops(sCC, 'Centroid', 'Area','Perimeter','MajorAxisLength','MinorAxisLength');
 		
-		%increment threshold if nothing is found
-		if dblNewPupilT < 200 && boolLowest
+		if dblNewPupilT < 200 && boolLowest && ~boolIsValid
+			%increment threshold if nothing is found
 			dblNewPupilT = dblNewPupilT + 2;
+		elseif boolIsValid
+			%use unaltered image if spots were present
+			gMatVidNew = gMatVid < dblNewPupilT;
+			%get region
+			imBW = gather(gMatVidNew);
+			sCC = bwconncomp(imBW, 4);
+			sProps = regionprops(sCC, 'Centroid', 'Area','Perimeter','MajorAxisLength','MinorAxisLength');
 		else
 			break;
 		end
@@ -45,7 +51,7 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 		dblRoundness = nan;
 		dblArea = 0;
 		vecCentroid = vecPrevLoc(1:2);
-		imBW = false(size(gMatVid));
+		imBW = false(size(gMatVidNew));
 		return;
 	end
 	%get area properties

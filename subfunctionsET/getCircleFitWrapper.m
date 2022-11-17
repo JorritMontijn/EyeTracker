@@ -40,6 +40,20 @@ function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,ve
 		%get mask
 		imPupil = reshape(vecValues,size(matX))>0.5;
 		
+		%plot
+		%{
+		matPupil = reshape(vecValues,size(matX));
+		imZ = reshape(vecZ,size(matX));
+		imP = reshape(vecP,size(matX));
+		subplot(2,3,1)
+		imagesc(matPupil)
+		colorbar
+		subplot(2,3,2)
+		imagesc(imZ)
+		subplot(2,3,3)
+		imagesc(imP)
+		%}
+		
 		%get pixel identities
 		indBorder = (vecValues > 0) & (vecValues < 1);
 		matB = reshape(indBorder,size(matX));

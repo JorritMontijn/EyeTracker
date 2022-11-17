@@ -1,6 +1,6 @@
 function vecValues = getCircFit(vecOptimParams,matXY)
 	%getCircFit Returns values in the range 0-1 depending on x-y location
-	%	within (1) or outside (0) fitted area defined by vecParams (x, y, r) for a circle or 
+	%	within (1) or outside (0) fitted area defined by vecParams (x, y, r) for a circle or
 	%	(x, y, r1, r2, a) for an ellipse
 	%Syntax: vecValues = getCircFit(vecParams,matXY)
 	
@@ -35,14 +35,48 @@ function vecValues = getCircFit(vecOptimParams,matXY)
 		matStrXY = bsxfun(@rdivide,matRotXY,[dblR dblR2]);
 		
 		%get distance
-		vecDist = hypot(matStrXY(:,2),matStrXY(:,1));
-		indInner = vecDist < (1 - 1/dblR);
-		indOuter = vecDist > (1 +  1/dblR);
-		vecValues = zeros(size(vecDist));
-		vecValues(indInner) = 1;
-		vecValues(indOuter) = 0;
-		vecValues(~indInner & ~indOuter) = (dblR*(1 - vecDist(~indInner & ~indOuter)) + 1)/2;
-		
+		intType = 2;
+		if intType == 1
+			dblRmu = (dblR + dblR2)/2;
+			vecDist = hypot(matStrXY(:,2),matStrXY(:,1));
+			indInner = vecDist < (1 - 1/dblRmu);
+			indOuter = vecDist > (1 +  1/dblRmu);
+			vecValues = zeros(size(vecDist));
+			vecValues(indInner) = 1;
+			vecValues(indOuter) = 0;
+			vecValues(~indInner & ~indOuter) = (dblRmu*(1 - vecDist(~indInner & ~indOuter)) + 1)/2;
+		else
+			
+			%get distance
+			dblSlope = 0.01; %range:0-0.5
+			dblVi = 1-dblSlope;
+			dblVo = dblSlope;
+			dblRmu = (dblR + dblR2)/2;
+			vecDist = hypot(matStrXY(:,2),matStrXY(:,1));
+			indInner = vecDist < (1 - 1/dblRmu);
+			vecInner = vecDist(indInner);
+			vecInner=1-dblSlope*(vecInner./(1 - 1/dblRmu));
+			
+			indOuter = vecDist > (1 +  1/dblRmu);
+			vecOuter = vecDist(indOuter);
+			vecOuter=dblSlope*(1-((vecOuter-(1 +  1/dblRmu))./max(vecOuter(:)-(1 +  1/dblRmu))));
+			
+			vecValues = zeros(size(vecDist));
+			vecValues(indInner) = vecInner;%1
+			vecValues(indOuter) = vecOuter;%0
+			vecValues(~indInner & ~indOuter) = ((dblRmu*(1 - vecDist(~indInner & ~indOuter)) + 1)/2)*(dblVi-dblVo)+dblVo;
+			
+			%{
+		%% plot
+		matD = reshape(vecDist,max(matXY(:,[2 1])));
+		matV = reshape(vecValues,max(matXY(:,[2 1])));
+		subplot(2,3,1)
+		imagesc(matD)
+		colorbar
+		subplot(2,3,2)
+		imagesc(matV)
+			%}
+		end
 	else
 		error([mfilename ':WrongParamNum'],'number of params can only be 3 or 5');
 	end
