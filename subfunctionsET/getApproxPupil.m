@@ -1,15 +1,20 @@
 function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest)
 	
-	%%
-	%im
-	%gMatVid = matOrig;%gather(gMatVidOrig);
-	%gMatVid = (gMatVid - min(gMatVid(:)));
-	%gMatVid = (gMatVid / max(gMatVid(:)))*255;
+	%% take trough in histogram closest to requested pupil threshold as luminance cut-off
+	[vecHist,vecEdges] = histcounts(gMatVid(:),128);
+	vecHistSmooth = conv(vecHist(2:(end-1)),normpdf(-2:2),'same');
+	vecHSD = diff(vecHistSmooth);
+	[dummy,vecTroughs] = findpeaks(-vecHistSmooth);
+	vecLumTroughs = vecEdges(vecTroughs+1);
+	[dummy,intIdx] = min(abs(vecTroughs-dblPupilT));
+	dblNewPupilT = vecLumTroughs(intIdx)+1;
+	
+	%% find areas
 	gMatVidOrig = gMatVid;
 	sProps = [];
 	while isempty(sProps)
 		%calculate pupil threshold, binarize and invert so pupil is white (<15)
-		gMatVid = gMatVidOrig < dblPupilT;
+		gMatVid = gMatVidOrig < dblNewPupilT;
 		
 		%morphological closing (dilate+erode) to remove reflection boundary
 		gMatVid = imclose(gMatVid,objSE);
@@ -25,8 +30,8 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 		sProps = regionprops(sCC, 'Centroid', 'Area','Perimeter','MajorAxisLength','MinorAxisLength');
 		
 		%increment threshold if nothing is found
-		if dblPupilT < 200 && boolLowest
-			dblPupilT = dblPupilT + 2;
+		if dblNewPupilT < 200 && boolLowest
+			dblNewPupilT = dblNewPupilT + 2;
 		else
 			break;
 		end
@@ -34,7 +39,7 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	if isempty(sProps)
 		dblRoundness = nan;
 		dblArea = 0;
-		vecCentroid = vecPrevLoc;
+		vecCentroid = vecPrevLoc(1:2);
 		imBW = false(size(gMatVid));
 		return;
 	end
@@ -51,7 +56,7 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	vecCircAreaToPerim = (vecMinAx+vecMajAx)/8;
 	vecRoundness = vecAreaToPerim ./ vecCircAreaToPerim;
 	
-	%choose most likely object 
+	%choose most likely object
 	vecDist = sqrt(sum(bsxfun(@minus,matCentroids,flat(vecPrevLoc(1:2))).^2,1));
 	dblSd = sqrt(sum(size(imBW).^2));
 	vecProbChoose = 1 - normcdf(vecDist,0,dblSd/2) + normcdf(-vecDist,0,dblSd/2);
@@ -61,5 +66,5 @@ function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPup
 	dblArea = vecArea(intUseObject);
 	vecCentroid = matCentroids(:,intUseObject);
 	
-	end
-	%}
+end
+%}

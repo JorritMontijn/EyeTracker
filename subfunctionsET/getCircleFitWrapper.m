@@ -24,7 +24,7 @@ function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,ve
 	
 	%% fit ellipse
 	sOpt = struct;
-	sOpt.Display = 'off';
+	sOpt.Display = 'off';%'off'
 	vecLB = [0 0 0.5 0.5 -pi];
 	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1) size(matIn,1) pi];
 	[vecOptimParams,dblVal,flag,out] = lsqcurvefit(@getCircFitPenalty,vecParams0,matXY,vecZ,vecLB(1:numel(vecParams0)),vecUB(1:numel(vecParams0)),sOpt);

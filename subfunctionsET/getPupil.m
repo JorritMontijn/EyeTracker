@@ -79,7 +79,7 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		%get approximate estimate of pupil regions
 		dblPupilT=vecPupilT(intThresholdIdx);
 		boolLowest = dblPupilT==min(vecPupilT);
-		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevCentroid,boolLowest);
+		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest);
 		%assign values
 		vecRoundness(intThresholdIdx) = dblRoundness;
 		vecArea(intThresholdIdx) = dblArea;

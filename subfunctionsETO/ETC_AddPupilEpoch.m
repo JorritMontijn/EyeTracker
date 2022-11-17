@@ -5,7 +5,7 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 	
 	%get temporary epoch
 	sEpoch = sFigETC.sEpochTemp;
-	
+%hTemp=figure;
 	%get modifier
 	boolControlPressed = getAsyncKeyState(VirtualKeyCode.VK_CONTROL);
 	boolAltPressed = getAsyncKeyState(VirtualKeyCode.VK_MENU);
@@ -197,8 +197,6 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				if any(all(matFrame<(max(matFrame(:))/10),1))
 					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
 				end
-				matScaledFrame = imnorm(matFrame);
-				matFrame = matScaledFrame*255;
 				
 				%prep im
 				[matFrame,imReflection] = ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false);
@@ -224,9 +222,9 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				%find optimal pupil threshold
 				%dblPupilT0 = mean(matFrame(imPupil));
 				%dblBeginPupilT = ETC_FitPupilThreshold(dblPupilT0,matFrame,imPupil,imReflection,objSE);
-				dblPupilT0 = mean(matScaledFrame(imPupil));
+				dblPupilT0 = mean(matFrame(imPupil));
 				vecPrevLoc = [sEpoch.BeginLabels.X sEpoch.BeginLabels.Y];
-				dblBeginPupilT = ETC_FitPupilThreshold(dblPupilT0,matScaledFrame,imPupil,gMatFilt,dblReflT,objSE,vecPrevLoc,sETC.boolUseGPU);
+				dblBeginPupilT = ETC_FitPupilThreshold(dblPupilT0,matFrame,imPupil,gMatFilt,dblReflT,objSE,vecPrevLoc,sETC.boolUseGPU);
 				
 				%% load end video frame
 				if isfield(sETC,'matVid') && ~isempty(sETC.matVid)
@@ -242,8 +240,6 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				if any(all(matFrame<(max(matFrame(:))/10),1))
 					matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
 				end
-				matScaledFrame = imnorm(matFrame);
-				matFrame = matScaledFrame*255;
 				
 				%prep im
 				[matFrame,imReflection] = ET_ImPrep(matFrame,gMatFilt,dblReflT,objSE,false);
@@ -267,10 +263,10 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 				imPupil(imReflection)=false;
 				
 				%find optimal pupil threshold
-				dblPupilT0 = mean(matScaledFrame(imPupil));
-				dblEndPupilT = ETC_FitPupilThreshold(dblPupilT0,matScaledFrame,imPupil,gMatFilt,dblReflT,objSE,[sEpoch.EndLabels.X sEpoch.EndLabels.Y],sETC.boolUseGPU);
+				dblPupilT0 = mean(matFrame(imPupil));
+				dblEndPupilT = ETC_FitPupilThreshold(dblPupilT0,matFrame,imPupil,gMatFilt,dblReflT,objSE,[sEpoch.EndLabels.X sEpoch.EndLabels.Y],sETC.boolUseGPU);
 				vecPupil = linspace(dblBeginPupilT,dblEndPupilT,5);
-				dblPupilT = 255*max(vecPupil)*sETC.dblPupilFactor;
+				dblPupilT = max(vecPupil)*sETC.dblPupilFactor;
 				%dblPupilT = max(vecPupil)*200;
 				vecPupil = dblPupilT;
 				
@@ -311,13 +307,7 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 					matFrame = mean(matFrame,3);
 					
 					%rescale
-					%if any(all(matFrame<(max(matFrame(:))/10),2))
-					%	matFrame(all(matFrame<(max(matFrame(:))/10),2),:) = median(matFrame(:));
-					%end
-					%if any(all(matFrame<(max(matFrame(:))/10),1))
-					%	matFrame(:,all(matFrame<(max(matFrame(:))/10),1)) = median(matFrame(:));
-					%end
-					matEpochFrames(:,:,intFrame) = imnorm(matFrame);
+					matEpochFrames(:,:,intFrame) = matFrame;
 				end
 				
 				%% run
@@ -347,8 +337,10 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 						vecForwardR(intFrame-1)...
 						vecForwardR2(intFrame-1)...
 						vecForwardA(intFrame-1)];
-					
-					sPupilDetected = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecP0F,vecPupil,sETC.boolUseGPU);
+					%if intFrame == 8
+					%	disp check
+					%end
+					[sPupilDetected,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,dblReflT,dblPupilT,objSE,vecP0F,vecPupil,sETC.boolUseGPU);
 					vecCentroid = sPupilDetected.vecCentroid;
 					dblRadius = sPupilDetected.dblRadius;
 					dblRadius2 = sPupilDetected.dblRadius2;
@@ -361,6 +353,18 @@ function boolAddedEpoch = ETC_AddPupilEpoch(hObject,eventdata,strType)
 					vecForwardR(intFrame) = dblRadius(1);
 					vecForwardR2(intFrame) = dblRadius2(1);
 					vecForwardA(intFrame) = dblAngle(1);
+					
+					%{
+					%% show results
+					figure(hTemp);
+					cla;
+					imagesc(gMatVid);colormap(gray);
+					hold on
+					ellipse(vecForwardX(intFrame),vecForwardY(intFrame),vecForwardR(intFrame),vecForwardR2(intFrame),vecForwardA(intFrame));
+					hold off
+					title(sprintf('frame %d/%d',intFrame,intFrames))
+					pause
+					%}
 					
 					%% reverse detect
 					%send frame to gpu

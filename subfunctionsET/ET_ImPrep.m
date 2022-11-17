@@ -11,7 +11,7 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 		gMatVid = mean(gMatVid,3);
 	end
 	gMatVid = (gMatVid - min(gMatVid(:)));
-	gMatVid = (gMatVid / max(gMatVid(:)))*255;
+	gMatVid = (gMatVid / max(gMatVid(:)));
 	
 	%% smooth & detect reflection
 	%filter image
@@ -19,18 +19,18 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 		gMatVid = imfilt(gMatVid,gMatFilt);
 	end
 	%detect reflection; dilate area and ignore for fit later on
-	imReflection = gMatVid > sglReflT;
+	imReflection = gMatVid > (sglReflT/255);
 	imReflection = logical(gather(imdilate(imReflection,objSE)));
 	if boolInvertImage
 		if all(imReflection(:))
 			imReflection = false;
 		end
 		gMatVid = -(gMatVid - max(flat(gMatVid(~imReflection))));
-		gMatVid(gMatVid<0) = 255;
+		gMatVid(gMatVid<0) = 1;
 	end
 	
 	%% remove specks (must be done on cpu)
-	imR = gather(gMatVid)/255;
+	imR = gather(gMatVid);
 	imBW = imbinarize(imR,'adaptive','ForegroundPolarity','dark','Sensitivity',0.1);
 	CC = bwconncomp(~imBW,4);
 	indRemSpecks = cellfun(@numel,CC.PixelIdxList) < 5;
