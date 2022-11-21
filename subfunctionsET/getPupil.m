@@ -60,31 +60,41 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		boolInvertImage = sET.boolInvertImage;
 	end
 	
-	%% perform pupil detection
-	[gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,boolInvertImage);
-	if nargout > 4
-		imGrey = gather(gMatVid);
-		imGrey(imReflection) = 0;
-	end
 	
-	%% get pupil estimate at different thresholds
-	vecPrevCentroid = flat(vecPrevLoc(1:2));
-	vecImSize = size(gMatVid);
-	intThreshNum = numel(vecPupilT);
-	vecRoundness = nan(1,intThreshNum);
-	vecArea = nan(1,intThreshNum);
-	matCentroids = nan(2,intThreshNum);
-	imStack = false(vecImSize(1),vecImSize(2),intThreshNum);
-	for intThresholdIdx=1:numel(vecPupilT)
-		%get approximate estimate of pupil regions
-		dblPupilT=vecPupilT(intThresholdIdx);
-		boolLowest = dblPupilT==min(vecPupilT);
-		[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest);
-		%assign values
-		vecRoundness(intThresholdIdx) = dblRoundness;
-		vecArea(intThresholdIdx) = dblArea;
-		matCentroids(:,intThresholdIdx) = vecCentroid;
-		imStack(:,:,intThresholdIdx) = imBW;
+	%% get approximate pupil
+	gMatVidOrig = gMatVid;
+	imBW = false(size(gMatVid));
+	while all(~imBW(:))
+		%% prepare image
+		[gMatVid,imReflection] = ET_ImPrep(gMatVidOrig,gMatFilt,sglReflT,objSE,boolInvertImage);
+		if nargout > 4
+			imGrey = gather(gMatVid);
+			imGrey(imReflection) = 0;
+		end
+		
+		%% get pupil estimate at different pupil thresholds
+		vecPrevCentroid = flat(vecPrevLoc(1:2));
+		vecImSize = size(gMatVid);
+		intThreshNum = numel(vecPupilT);
+		vecRoundness = nan(1,intThreshNum);
+		vecArea = nan(1,intThreshNum);
+		matCentroids = nan(2,intThreshNum);
+		imStack = false(vecImSize(1),vecImSize(2),intThreshNum);
+		for intThresholdIdx=1:numel(vecPupilT)
+			%get approximate estimate of pupil regions
+			dblPupilT=vecPupilT(intThresholdIdx);
+			boolLowest = dblPupilT==min(vecPupilT);
+			[dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest);
+			%assign values
+			vecRoundness(intThresholdIdx) = dblRoundness;
+			vecArea(intThresholdIdx) = dblArea;
+			matCentroids(:,intThresholdIdx) = vecCentroid;
+			imStack(:,:,intThresholdIdx) = imBW;
+		end
+		%% increase reflection threshold if reflection is too high
+		if all(~imBW(:))
+			sglReflT=sglReflT*1.1;
+		end
 	end
 	
 	%% define likelihood of pupil based on roundness, area, and
@@ -131,7 +141,8 @@ function [sPupil,imPupil,imReflection,imBW,imGrey] = getPupil(gMatVid,gMatFilt,s
 		dblRadius = vecFitParams(3);
 		dblRadius2 = vecFitParams(4);
 		dblAngle = vecFitParams(5);
-	catch
+	catch ME
+		rethrow(ME)
 		vecCentroid = vecApproxCentroid;
 		dblRadius = dblApproxRadius;
 		dblRadius2 = dblRadius;

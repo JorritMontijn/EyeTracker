@@ -23,28 +23,49 @@ function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,ve
 	matXY = [vecX vecY];
 	
 	%% fit ellipse
+	fFunc = @getCircFit; %slower, but better quality
+	%fFunc = @getCircFitPenalty; %faster, but worse quality
 	sOpt = struct;
 	sOpt.Display = 'off';%'off'
 	vecLB = [0 0 0.5 0.5 -pi];
+	vecParams0(vecParams0<vecLB)=vecLB(vecParams0<vecLB);
 	vecUB = [size(matIn,2) size(matIn,1) size(matIn,1)/2 size(matIn,1)/2 pi];
-	[vecOptimParams,dblVal,flag,out] = lsqcurvefit(@getCircFitPenalty,vecParams0,matXY,vecZ,vecLB(1:numel(vecParams0)),vecUB(1:numel(vecParams0)),sOpt);
+	vecParams0(vecParams0>vecUB)=vecUB(vecParams0>vecUB);
+	[vecOptimParams,dblVal,flag,out] = lsqcurvefit(fFunc,vecParams0,matXY,vecZ,vecLB(1:numel(vecParams0)),vecUB(1:numel(vecParams0)),sOpt);
 	
 	%% calculate edge hardness
-	if nargout > 2
-		%add ignored areas back in
-		matXY = [matX(:) matY(:)];
-	
-		%get fitted pupil
-		vecValues = getCircFit(vecOptimParams,matXY);
+	if nargout > 1
 		
 		%get mask
-		imPupil = reshape(vecValues,size(matX))>0.5;
+		matXY_sq = [matX(:) matY(:)];
+		vecP = ~imBW(:).*-1;
+		matPupil = reshape(feval(fFunc,vecOptimParams,matXY_sq),size(matIn));
+		imPupil = matPupil>0.5;
+		
+		%get pixel identities
+		matB = (matPupil > 0.2) & (matPupil < 0.8);
+		matDilB = imdilate(matB,strel('disk',2,8));
+		indOuterBorder = matDilB & ~imPupil & ~imIgnore;
+		indInnerBorder = matDilB & imPupil & ~imIgnore;
+		
+		%get border sharpness
+		indInnerBorder = indInnerBorder(~imIgnore);
+		indOuterBorder = indOuterBorder(~imIgnore);
+		dblEdgeHardness = mean(vecZ(indInnerBorder)) - mean(vecZ(indOuterBorder));
+		
+		%{
+		%get fitted pupil
+		%vecV = getCircFitPenalty(vecOptimParams,matXY);
 		
 		%plot
-		%{
-		matPupil = reshape(vecValues,size(matX));
-		imZ = reshape(vecZ,size(matX));
-		imP = reshape(vecP,size(matX));
+		figure
+		
+		F = scatteredInterpolant(vecX,vecY,vecZ);
+		imZ = F(matX,matY);
+		
+		F = scatteredInterpolant(vecX,vecY,vecP);
+		imP = F(matX,matY)+1;
+		
 		subplot(2,3,1)
 		imagesc(matPupil)
 		colorbar
@@ -52,16 +73,17 @@ function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,ve
 		imagesc(imZ)
 		subplot(2,3,3)
 		imagesc(imP)
+		
+		subplot(2,3,4)
+		imRGB = matPupil;
+		imRGB(:,:,2) = imZ;
+		imRGB(:,:,3) = imIgnore;
+		
+		imshow(imRGB)
+		
+		subplot(2,3,5)
+		imagesc((imZ-matPupil).^2);colorbar
 		%}
 		
-		%get pixel identities
-		indBorder = (vecValues > 0) & (vecValues < 1);
-		matB = reshape(indBorder,size(matX));
-		matDilB = imdilate(matB,strel('disk',2,8));
-		indOuterBorder = matDilB & ~imPupil & ~imIgnore;
-		indInnerBorder = matDilB & imPupil & ~imIgnore;
-		
-		%get border sharpness
-		dblEdgeHardness = mean(vecZ(indInnerBorder)) - mean(vecZ(indOuterBorder));
 	end
 end

@@ -35,8 +35,9 @@ function vecValues = getCircFit(vecOptimParams,matXY)
 		matStrXY = bsxfun(@rdivide,matRotXY,[dblR dblR2]);
 		
 		%get distance
-		intType = 2;
+		intType = 1;
 		if intType == 1
+			%flat landscape; quick
 			dblRmu = (dblR + dblR2)/2;
 			vecDist = hypot(matStrXY(:,2),matStrXY(:,1));
 			indInner = vecDist < (1 - 1/dblRmu);
@@ -46,6 +47,7 @@ function vecValues = getCircFit(vecOptimParams,matXY)
 			vecValues(indOuter) = 0;
 			vecValues(~indInner & ~indOuter) = (dblRmu*(1 - vecDist(~indInner & ~indOuter)) + 1)/2;
 		else
+			%sloped landscape; more robust
 			
 			%get distance
 			dblSlope = 0.01; %range:0-0.5
