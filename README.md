@@ -2,7 +2,7 @@
 \
 This MATLAB toolbox was created to work with SpikeGLX to detect the location and size of a pupil. It will run online pupil detection during video acquisition, and automatically synchronize videos by creating a lookup table that logs pairs of SpikeGLX timestamps with video frame numbers. It also provides easy functionality to extract light pulses in the video that can be used to provide zero-lag synchronization between video frames and light pulse onsets. However, you can also use this toolbox as a standalone recording program without SpikeGLX.
 \
-To install & run, clone this repository as well as https://github.com/JorritMontijn/GeneralAnalysis and install your camera interface plugin. Add all subfolders to your matlab path and run:\
+To install & run, clone this repository and install your camera interface plugin. Add all subfolders to your matlab path and run:\
 `runEyeTracker`\
 in the matlab prompt.\
 \
