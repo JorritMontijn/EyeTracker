@@ -1,6 +1,9 @@
 function matOut = getPupilMaskFit(dblPupilT,matXY)
-	%getPupilMaskFit Summary of this function goes here
+	%getPupilMaskFit Optimizable function for lsqcurvefit to find the pupil threshold for an image
+	%					given a ground-truth pupil area
 	%   matOut = getPupilMaskFit(dblPupilT,matXY)
+	%
+	%getPupilMaskFit receives its constants from the global gStructFitPupilConstants
 	
 	global gStructFitPupilConstants;
 	matFrame = gStructFitPupilConstants.matFrame;

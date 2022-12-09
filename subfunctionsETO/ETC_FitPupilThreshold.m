@@ -1,6 +1,8 @@
 function dblOptimPupilT = ETC_FitPupilThreshold(dblPupilT0,matFrame,imPupil,gMatFilt,dblReflT,objSE,vecPrevLoc,boolUseGPU)
-	%ETC_FitPupilThreshold Summary of this function goes here
+	%ETC_FitPupilThreshold Calculates optimal pupil threshold for an image given a ground-truth pupil area
 	%   dblOptimPupilT = ETC_FitPupilThreshold(dblPupilT0,matFrame,imPupil,gMatFilt,dblReflT,objSE,vecPrevLoc,boolUseGPU)
+	%
+	%Uses getPupilMaskFit and lsqcurvefit
 	
 	%% check if mask is supplied
 	global gStructFitPupilConstants;

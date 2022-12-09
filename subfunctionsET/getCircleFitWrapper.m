@@ -1,4 +1,6 @@
 function [vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,imBW)
+	%getCircleFitWrapper Optimizes a circular or ellipsoid fit on an input image (range: 0-1)
+	%	[vecOptimParams,dblEdgeHardness,imPupil] = getCircleFitWrapper(matIn,vecApproxCentroid,dblApproxRadius,imIgnore,imBW)
 	
 	%vecApproxCentroid can be X-Y centroid or 5-element p0 vector for lsqcurvefit
 	

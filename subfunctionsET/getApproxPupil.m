@@ -1,5 +1,7 @@
 function [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest)
-	
+	%getApproxPupil Thresholds an image to find a potential pupil area
+	%   [dblRoundness,dblArea,vecCentroid,imBW] = getApproxPupil(gMatVid,dblPupilT,objSE,vecPrevLoc,boolLowest)
+
 	%% take trough in histogram closest to requested pupil threshold as luminance cut-off
 	[vecHist,vecEdges] = histcounts(gMatVid(:),128);
 	vecHistSmooth = conv(vecHist(2:(end-1)),normpdf(-2:2),'same');

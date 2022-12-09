@@ -38,7 +38,8 @@ function [gMatVid,imReflection] = ET_ImPrep(gMatVid,gMatFilt,sglReflT,objSE,bool
 	imBW = false(size(imBW));
 	imBW(vecRemPixels)=true;
 	imR = regionfill(imR, imBW);
-	delete('gMatVid');
+	clear gMatVid;
+	wait(gpuDevice);
 	gMatVid=gpuArray(imR);
 	
 	%% apply masks
