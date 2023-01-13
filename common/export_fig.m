@@ -18,28 +18,20 @@ function varargout = export_fig(varargin)
 			feval(fFunc,varargin{:});
 		end
 	else
-		%just use print
+		%just use saveas
 		if numel(varargin) == 1
 			strFile = varargin{1};
 			[a,b,strExt]=fileparts(strFile);
-			if strcmp(strExt,'.jpg') || strcmp(strExt,'.jpeg')
-				strFormat = '-djpeg';
-			elseif strcmp(strExt,'.tif') || strcmp(strExt,'.tiff')
-				strFormat = '-dtiff';
-			else
-				%just try -d prefix...
-				strFormat = ['-d' strExt(2:end)];
-			end
 			if nargout > 0
-				varargout{:} = print(strFile,strFormat);
+				varargout{:} = saveas(gcf,[strFile,strExt]);
 			else
-				print(strFile,strFormat);
+				saveas(gcf,[strFile,strExt]);
 			end
 		else
 			if nargout > 0
-				varargout{:} = print(varargin{:});
+				varargout{:} = saveas(varargin{:});
 			else
-				print(varargin{:});
+				saveas(varargin{:});
 			end
 		end
 	end
