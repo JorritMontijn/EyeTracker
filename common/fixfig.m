@@ -24,6 +24,16 @@ function fixfig(handle,boolMakeActive,dblLineWidth)
 		axes(handle);
 	end
 	
+	%remove box
+	set(handle, 'box','off');
+	
+	%move axes
+	if range(handle.ZLim)==0
+		drawnow;
+		offsetaxes(handle);
+	end
+	
+	drawnow;
 	dblFontSize=14; %change the figure font size
 	try 
 		grid(handle,'on'); %show grid
