@@ -82,6 +82,7 @@ function vecValues = getCircFit(vecOptimParams,matXY)
 	else
 		error([mfilename ':WrongParamNum'],'number of params can only be 3 or 5');
 	end
+	vecValues(isnan(vecValues))=0;
 end
 
 function plot
