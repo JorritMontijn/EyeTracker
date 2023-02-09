@@ -25,6 +25,8 @@
 %	Increased offline pupil detection speed, added library progress, added speck removal [by JM]
 %1.2.5 - 17 Nov 2022
 %	Dynamic pupil threshold selection based on image histogram [by JM]
+%1.2.6 - 09 Feb 2023
+%	Enhanced fitting stability [by JM]
 
 %% add subfolder to path
 cellPaths = strsplit(path(),';');

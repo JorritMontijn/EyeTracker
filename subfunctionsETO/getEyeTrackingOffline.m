@@ -203,6 +203,7 @@ function sPupil = getEyeTrackingOffline(sFile,strTempDir)
 		catch
 			pause(0.5);
 			warning([mfilename ':ReadError'],sprintf('Frame %d/%d (t=%.3s) could not be read',intFrame,intTotFrames,dblCurTime));
+			matVidRaw = readFrame(objVid);
 		end
 		dblCurTime = objVid.CurrentTime;
 		

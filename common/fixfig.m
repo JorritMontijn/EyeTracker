@@ -26,17 +26,9 @@ function fixfig(handle,boolMakeActive,dblLineWidth)
 	
 	%remove box
 	set(handle, 'box','off');
-	
-	%move axes
-	if range(handle.ZLim)==0
-		drawnow;
-		offsetaxes(handle);
-	end
-	
 	drawnow;
 	dblFontSize=14; %change the figure font size
 	try 
-		grid(handle,'on'); %show grid
 		xlabel(get(get(handle,'xlabel'), 'String'),'FontSize',dblFontSize); %set x-label and change font size
 		ylabel(get(get(handle,'ylabel'), 'String'),'FontSize',dblFontSize);%set y-label and change font size
 	catch
