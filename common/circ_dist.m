@@ -23,9 +23,7 @@ function r =  circ_dist(x,y)
 if nargin == 1 && numel(x) == 2
 	y = x(end);
 	x = x(1);
-elseif size(x,1)~=size(y,1) && size(x,2)~=size(y,2) && length(y)~=1
-  error('Input dimensions do not match.')
 end
 
-z=exp(1i*x)./exp(1i*y);
+z=bsxfun(@rdivide,exp(1i*x),exp(1i*y));
 r = atan2(imag(z), real(z));
