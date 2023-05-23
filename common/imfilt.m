@@ -19,13 +19,19 @@ function matImage = imfilt(matImageIn,matFilt,strPadVal)
 	end
 	
 	%pad array
-	matImage = padarray(matImageIn,floor(size(matFilt)/2),strPadVal);
+	vecSizeIn = size(matImageIn);
+	matImageIn = padarray(matImageIn,floor(size(matFilt)/2),strPadVal);
 	
 	%filter
-	if ndims(matImage) < 3 && ndims(matFilt) < 3
-		matImage = conv2(matImage,matFilt,'valid');
+	if ndims(matImageIn) < 3 && ndims(matFilt) < 3
+		matImage = conv2(matImageIn,matFilt,'valid');
+		%ensure size is the same
+		if vecSizeIn(1) > size(matImage,1),matImage((end+1):vecSizeIn(1),:)=matImage(end,:);end
+		if vecSizeIn(2) > size(matImage,2),matImage(:,(end+1):vecSizeIn(2))=matImage(:,end);end
+		if vecSizeIn(1) < size(matImage,1),matImage((vecSizeIn(1)+1):end,:) = [];end
+		if vecSizeIn(2) < size(matImage,2),matImage(:,(vecSizeIn(2)+1):end) = [];end
 	else
-		matImage = convn(matImage,matFilt,'valid');
+		matImage = convn(matImageIn,matFilt,'valid');
 	end
 end
 
